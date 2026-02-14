@@ -1,0 +1,19 @@
+﻿@import "tailwindcss";
+
+:root {
+  /* KSTAY Signature: Celadon Teal */
+  --brand: 172 66% 42%;
+  --brand-foreground: 0 0% 100%;
+  --brand-soft: 172 66% 96%;
+}
+
+@layer base {
+  html,
+  body {
+    @apply bg-white text-neutral-900 antialiased;
+  }
+
+  ::selection {
+    background: hsl(var(--brand) / 0.25);
+  }
+}

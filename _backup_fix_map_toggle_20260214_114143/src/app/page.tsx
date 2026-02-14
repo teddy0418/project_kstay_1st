@@ -1,7 +1,8 @@
 import Container from "@/components/layout/Container";
 import CategoryPills from "@/features/search/components/CategoryPills";
 import ViewToggle from "@/features/search/components/ViewToggle";
-import ResultsView from "@/features/browse/components/ResultsView";
+import BrowseMapLayout from "@/features/browse/components/BrowseMapLayout";
+import ListingCard from "@/features/listings/components/ListingCard";
 import { listings } from "@/lib/mockData";
 import { formatDateRange } from "@/lib/format";
 
@@ -25,6 +26,7 @@ export default function Page({
   const start = safeStr(searchParams?.start);
   const end = safeStr(searchParams?.end);
   const guests = Math.min(16, Math.max(0, safeInt(searchParams?.guests, 0)));
+  const view = safeStr(searchParams?.view); // "map" or ""
 
   // Category filter
   const categoryFiltered =
@@ -97,8 +99,14 @@ export default function Page({
               Try a different destination or clear filters.
             </p>
           </div>
+        ) : view === "map" ? (
+          <BrowseMapLayout items={filtered} />
         ) : (
-          <ResultsView items={filtered} />
+          <div className="grid gap-x-6 gap-y-10 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 2xl:grid-cols-5">
+            {filtered.map((l) => (
+              <ListingCard key={l.id} listing={l} />
+            ))}
+          </div>
         )}
       </Container>
     </>

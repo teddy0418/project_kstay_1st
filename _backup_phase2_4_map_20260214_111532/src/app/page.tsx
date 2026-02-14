@@ -1,7 +1,6 @@
 import Container from "@/components/layout/Container";
 import CategoryPills from "@/features/search/components/CategoryPills";
-import ViewToggle from "@/features/search/components/ViewToggle";
-import ResultsView from "@/features/browse/components/ResultsView";
+import ListingCard from "@/features/listings/components/ListingCard";
 import { listings } from "@/lib/mockData";
 import { formatDateRange } from "@/lib/format";
 
@@ -74,20 +73,17 @@ export default function Page({
             <button className="rounded-full border border-neutral-200 px-4 py-2 text-sm hover:bg-neutral-50">
               Filters
             </button>
-            <ViewToggle />
+            <button className="rounded-full border border-neutral-200 px-4 py-2 text-sm hover:bg-neutral-50">
+              Show map
+            </button>
           </div>
         </div>
 
         <div className="mb-4 flex items-center justify-between text-sm text-neutral-600">
           <span>{filtered.length} stays</span>
-          <div className="flex gap-2">
-            <button className="rounded-full border border-neutral-200 px-4 py-2 hover:bg-neutral-50">
-              Sort
-            </button>
-            <div className="md:hidden">
-              <ViewToggle />
-            </div>
-          </div>
+          <button className="rounded-full border border-neutral-200 px-4 py-2 hover:bg-neutral-50">
+            Sort
+          </button>
         </div>
 
         {filtered.length === 0 ? (
@@ -98,7 +94,11 @@ export default function Page({
             </p>
           </div>
         ) : (
-          <ResultsView items={filtered} />
+          <div className="grid gap-x-6 gap-y-10 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 2xl:grid-cols-5">
+            {filtered.map((l) => (
+              <ListingCard key={l.id} listing={l} />
+            ))}
+          </div>
         )}
       </Container>
     </>
