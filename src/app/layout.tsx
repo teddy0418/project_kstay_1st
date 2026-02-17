@@ -1,26 +1,42 @@
-﻿import "./globals.css";
-import type { Metadata } from "next";
-import { Inter } from "next/font/google";
-import Header from "@/components/layout/Header";
+import "./globals.css";
+import type { Metadata, Viewport } from "next";
+import { cookies } from "next/headers";
+import Providers from "@/components/ui/Providers";
 
-const inter = Inter({
-  subsets: ["latin"],
-  variable: "--font-inter",
-});
+type Lang = "en" | "ko" | "ja" | "zh";
 
 export const metadata: Metadata = {
-  title: "KSTAY | Stay Korea, feel local",
-  description: "A global booking platform for stays in Korea.",
+  title: "KSTAY",
+  description: "KSTAY — Best value stays in Korea (MVP)",
+  manifest: "/manifest.webmanifest",
+  icons: {
+    apple: "/icons/apple-touch-icon.png",
+    icon: [
+      { url: "/icons/icon-192.png", sizes: "192x192", type: "image/png" },
+      { url: "/icons/icon-512.png", sizes: "512x512", type: "image/png" },
+    ],
+  },
 };
 
-export default function RootLayout({ children }: { children: React.ReactNode }) {
+export const viewport: Viewport = {
+  themeColor: "#171717",
+};
+
+function normalizeLang(raw?: string): Lang {
+  return raw === "ko" || raw === "ja" || raw === "zh" ? raw : "en";
+}
+
+export default async function RootLayout({ children }: { children: React.ReactNode }) {
+  const c = await cookies();
+  const langRaw = c.get("kstay_lang")?.value || c.get("kst_lang")?.value;
+  const initialLang = normalizeLang(langRaw);
+
   return (
-    <html lang="en">
-      <body className={`${inter.variable} font-sans antialiased bg-white text-neutral-900`}>
-        <div className="min-h-screen flex flex-col">
-          <Header />
-          <main className="flex-1">{children}</main>
-        </div>
+    <html lang={initialLang} suppressHydrationWarning>
+      <body className="min-h-screen bg-white text-neutral-900 antialiased">
+        <Providers initialLang={initialLang}>
+          {children}
+        </Providers>
       </body>
     </html>
   );

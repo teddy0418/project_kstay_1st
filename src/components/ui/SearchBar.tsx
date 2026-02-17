@@ -1,292 +1,265 @@
 "use client";
 
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
-import { Minus, Plus, Search, X } from "lucide-react";
-import { formatDateRange } from "@/lib/format";
+import { Search } from "lucide-react";
+import type { DateRange } from "react-day-picker";
+import WhereDropdown from "@/components/ui/searchbar/WhereDropdown";
+import DateDropdown from "@/components/ui/searchbar/DateDropdown";
+import GuestsDropdown from "@/components/ui/searchbar/GuestsDropdown";
 import { cn } from "@/lib/utils";
+import { useI18n } from "@/components/ui/LanguageProvider";
 
-type Draft = {
-  where: string;
-  start: string;
-  end: string;
-  guests: number; // 0 = unset
-};
+type Panel = "where" | "date" | "guests" | null;
 
-function clampGuests(n: number) {
-  return Math.min(16, Math.max(0, n));
+function startOfDay(d: Date) {
+  const x = new Date(d);
+  x.setHours(0, 0, 0, 0);
+  return x;
 }
-
-function safeInt(v: string | null, fallback = 0) {
-  if (!v) return fallback;
-  const n = Number.parseInt(v, 10);
-  return Number.isFinite(n) ? n : fallback;
+function addDays(d: Date, days: number) {
+  const x = new Date(d);
+  x.setDate(x.getDate() + days);
+  return x;
+}
+function toISODateLocal(d: Date) {
+  const y = d.getFullYear();
+  const m = String(d.getMonth() + 1).padStart(2, "0");
+  const day = String(d.getDate()).padStart(2, "0");
+  return `${y}-${m}-${day}`;
+}
+function nightsBetween(from: Date, to: Date) {
+  const a = startOfDay(from).getTime();
+  const b = startOfDay(to).getTime();
+  const n = Math.round((b - a) / (1000 * 60 * 60 * 24));
+  return Math.max(1, n);
 }
 
 export default function SearchBar() {
   const router = useRouter();
   const sp = useSearchParams();
+  const { t, locale } = useI18n();
 
-  const current = useMemo(() => {
+  const wrapRef = useRef<HTMLDivElement | null>(null);
+  const whereRef = useRef<HTMLButtonElement | null>(null);
+  const dateRef = useRef<HTMLButtonElement | null>(null);
+  const guestsRef = useRef<HTMLButtonElement | null>(null);
+
+  const initial = useMemo(() => {
     const where = sp.get("where") ?? "";
-    const start = sp.get("start") ?? "";
-    const end = sp.get("end") ?? "";
-    const guests = clampGuests(safeInt(sp.get("guests"), 0));
-    return { where, start, end, guests };
+    const adults = Number(sp.get("adults") ?? "2");
+    const children = Number(sp.get("children") ?? "0");
+    const start = sp.get("start");
+    const end = sp.get("end");
+    const rangeFromUrl: DateRange | undefined =
+      start && end ? { from: new Date(`${start}T00:00:00`), to: new Date(`${end}T00:00:00`) } : undefined;
+
+    return {
+      where,
+      adults: Number.isFinite(adults) ? adults : 2,
+      children: Number.isFinite(children) ? children : 0,
+      rangeFromUrl,
+    };
   }, [sp]);
 
-  const [open, setOpen] = useState(false);
-  const [draft, setDraft] = useState<Draft>(current);
+  const defaultRange = useMemo<DateRange>(() => {
+    const today = startOfDay(new Date());
+    return { from: today, to: addDays(today, 1) };
+  }, []);
 
-  // When opening, sync draft from URL
-  useEffect(() => {
-    if (open) setDraft(current);
-  }, [open, current]);
+  const [where, setWhere] = useState(initial.where);
+  const [range, setRange] = useState<DateRange | undefined>(initial.rangeFromUrl ?? defaultRange);
+  const [adults, setAdults] = useState(Math.max(0, initial.adults));
+  const [children, setChildren] = useState(Math.max(0, initial.children));
 
-  // Lock scroll + ESC close
-  useEffect(() => {
-    if (!open) return;
-    const prev = document.body.style.overflow;
-    document.body.style.overflow = "hidden";
+  const [open, setOpen] = useState<Panel>(null);
+  const [entered, setEntered] = useState(false);
 
-    const onKeyDown = (e: KeyboardEvent) => {
-      if (e.key === "Escape") setOpen(false);
-    };
-    window.addEventListener("keydown", onKeyDown);
+  const [pos, setPos] = useState<{ top: number; left: number; width: number } | null>(null);
 
-    return () => {
-      document.body.style.overflow = prev;
-      window.removeEventListener("keydown", onKeyDown);
-    };
-  }, [open]);
+  const totalGuests = Math.max(0, adults + children);
 
-  const summaryWhere = current.where.trim() ? current.where.trim() : "Anywhere";
-  const summaryWhen =
-    current.start && current.end ? formatDateRange(current.start, current.end) : "Any week";
-  const summaryGuests =
-    current.guests > 0 ? `${current.guests} ${current.guests === 1 ? "guest" : "guests"}` : "Add guests";
+  const formatShort = (d: Date) =>
+    new Intl.DateTimeFormat(locale, { month: "short", day: "numeric" }).format(d);
 
-  const openModal = () => setOpen(true);
+  const dateLabel = useMemo(() => {
+    const r = range ?? defaultRange;
+    const from = r.from ?? defaultRange.from!;
+    const to = r.to ?? defaultRange.to!;
+    const n = nightsBetween(from, to);
+    const nightWord = n === 1 ? t("night") : t("nights");
+    return `${formatShort(from)} – ${formatShort(to)} (${n} ${nightWord})`;
+  }, [range, defaultRange, locale, t]);
 
-  const applySearch = () => {
-    // Preserve existing params (e.g., category)
-    const params = new URLSearchParams(sp.toString());
+  const whereLabel = where.trim() ? where.trim() : t("where_to");
+  const guestsLabel = `${t("guests")} ${totalGuests || 2}`;
 
-    const where = draft.where.trim();
-    if (where) params.set("where", where);
-    else params.delete("where");
+  const desiredWidthFor = (p: Exclude<Panel, null>) => {
+    if (p === "date") return 920;
+    if (p === "where") return 560;
+    return 440;
+  };
 
-    // Only set dates if both exist
-    if (draft.start && draft.end) {
-      params.set("start", draft.start);
-      params.set("end", draft.end);
+  const getAnchorEl = (p: Exclude<Panel, null>) => {
+    if (p === "where") return whereRef.current;
+    if (p === "date") return dateRef.current;
+    return guestsRef.current;
+  };
+
+  const measure = (p: Exclude<Panel, null>) => {
+    const root = wrapRef.current;
+    const anchor = getAnchorEl(p);
+    if (!root || !anchor) return;
+
+    const r = root.getBoundingClientRect();
+    const a = anchor.getBoundingClientRect();
+
+    const rootWidth = r.width;
+    const desired = desiredWidthFor(p);
+    const width = Math.min(desired, rootWidth);
+
+    let left: number;
+    if (p === "date") {
+      left = Math.max(0, (rootWidth - width) / 2);
     } else {
-      params.delete("start");
-      params.delete("end");
+      left = a.left - r.left;
+      left = Math.max(0, Math.min(left, rootWidth - width));
     }
 
-    const guests = clampGuests(draft.guests);
-    if (guests > 0) params.set("guests", String(guests));
-    else params.delete("guests");
-
-    const qs = params.toString();
-    router.push(qs ? `/?${qs}` : "/");
-    setOpen(false);
+    const top = a.bottom - r.top + 10;
+    setPos({ top, left, width });
   };
 
-  const clearSearch = () => {
-    // Clear only search-related keys, keep category if present
-    const params = new URLSearchParams(sp.toString());
-    params.delete("where");
-    params.delete("start");
-    params.delete("end");
-    params.delete("guests");
-    const qs = params.toString();
-    router.push(qs ? `/?${qs}` : "/");
-    setOpen(false);
+  const openPanel = (p: Exclude<Panel, null>) => {
+    setOpen((cur) => (cur === p ? null : p));
   };
 
-  // Date guard: if start > end, auto-fix end
-  const setStart = (v: string) => {
-    setDraft((d) => {
-      const next: Draft = { ...d, start: v };
-      if (next.end && v && next.end < v) next.end = v;
-      return next;
-    });
+  useEffect(() => {
+    const onKey = (e: KeyboardEvent) => {
+      if (e.key === "Escape") setOpen(null);
+    };
+    window.addEventListener("keydown", onKey);
+    return () => window.removeEventListener("keydown", onKey);
+  }, []);
+
+  useEffect(() => {
+    if (!open) {
+      queueMicrotask(() => {
+        setEntered(false);
+        setPos(null);
+      });
+      return;
+    }
+    measure(open);
+    queueMicrotask(() => setEntered(false));
+    const id = requestAnimationFrame(() => setEntered(true));
+
+    const onResize = () => measure(open);
+    window.addEventListener("resize", onResize);
+    window.addEventListener("scroll", onResize, true);
+
+    return () => {
+      cancelAnimationFrame(id);
+      window.removeEventListener("resize", onResize);
+      window.removeEventListener("scroll", onResize, true);
+    };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [open]);
+
+  const runSearch = () => {
+    const r = range ?? defaultRange;
+    const from = r.from ?? defaultRange.from!;
+    const to = r.to ?? defaultRange.to!;
+
+    const params = new URLSearchParams();
+    if (where.trim()) params.set("where", where.trim());
+    params.set("start", toISODateLocal(from));
+    params.set("end", toISODateLocal(to));
+    params.set("adults", String(adults));
+    params.set("children", String(children));
+    params.set("guests", String(totalGuests || 2));
+
+    router.push(`/browse?${params.toString()}`);
+    setOpen(null);
   };
 
-  const setEnd = (v: string) => {
-    setDraft((d) => {
-      const next: Draft = { ...d, end: v };
-      if (next.start && v && v < next.start) next.start = v;
-      return next;
-    });
-  };
+  const sectionBtn =
+    "w-full sm:w-auto flex-1 rounded-2xl sm:rounded-full px-5 py-4 sm:py-3 text-left text-sm font-semibold text-neutral-900 transition hover:bg-neutral-50 focus:outline-none focus:ring-2 focus:ring-neutral-200";
+
+  const dividerV = <div className="hidden sm:block h-8 w-px bg-neutral-200" />;
+  const dividerH = <div className="sm:hidden h-px bg-neutral-200" />;
 
   return (
-    <div className="flex flex-1 justify-center">
-      {/* Desktop button */}
-      <button
-        type="button"
-        onClick={openModal}
-        className="hidden md:flex items-center rounded-full border border-neutral-200 bg-white shadow-soft hover:shadow-elevated transition px-2 py-2"
-        aria-label="Open search"
-      >
-        <span className="px-4 text-sm font-medium text-neutral-900">{summaryWhere}</span>
-        <span className="h-6 w-px bg-neutral-200" />
-        <span className="px-4 text-sm font-medium text-neutral-900">{summaryWhen}</span>
-        <span className="h-6 w-px bg-neutral-200" />
-        <span className="pl-4 pr-2 text-sm text-neutral-600 flex items-center gap-2">
-          {summaryGuests}
-          <span className="inline-flex h-9 w-9 items-center justify-center rounded-full bg-brand text-brand-foreground">
-            <Search className="h-4 w-4" />
-          </span>
-        </span>
-      </button>
-
-      {/* Mobile button */}
-      <button
-        type="button"
-        onClick={openModal}
-        className="md:hidden w-full max-w-[520px] flex items-center gap-3 rounded-full border border-neutral-200 bg-white shadow-soft px-4 py-3"
-        aria-label="Open search"
-      >
-        <span className="inline-flex h-10 w-10 items-center justify-center rounded-full bg-brand/10">
-          <Search className="h-5 w-5 text-brand" />
-        </span>
-        <div className="text-left min-w-0">
-          <div className="text-sm font-semibold text-neutral-900 truncate">{summaryWhere}</div>
-          <div className="text-xs text-neutral-600 truncate">{summaryWhen} · {summaryGuests}</div>
-        </div>
-      </button>
-
-      {/* Modal */}
-      {open && (
-        <div className="fixed inset-0 z-[60]">
-          {/* Backdrop */}
+    <div ref={wrapRef} className="mx-auto w-full max-w-[1200px] relative">
+      <div className="relative z-10 rounded-2xl sm:rounded-full border border-neutral-200 bg-white shadow-md">
+        <div className="flex flex-col sm:flex-row sm:items-center">
           <button
-            aria-label="Close"
-            onClick={() => setOpen(false)}
-            className="absolute inset-0 bg-black/35"
+            ref={whereRef}
             type="button"
-          />
-
-          {/* Panel */}
-          <div
-            role="dialog"
-            aria-modal="true"
-            className="absolute left-1/2 top-[84px] w-[min(760px,calc(100%-24px))] -translate-x-1/2 rounded-3xl bg-white shadow-elevated overflow-hidden"
+            onClick={() => openPanel("where")}
+            className={cn(sectionBtn, open === "where" && "bg-neutral-50")}
           >
-            <div className="flex items-center justify-between px-6 py-4 border-b border-neutral-200">
-              <div className="text-sm font-semibold">Search</div>
-              <button
-                type="button"
-                onClick={() => setOpen(false)}
-                className="inline-flex h-9 w-9 items-center justify-center rounded-full hover:bg-neutral-100"
-                aria-label="Close"
-              >
-                <X className="h-5 w-5" />
-              </button>
-            </div>
+            {whereLabel}
+          </button>
 
-            <div className="px-6 py-6 grid gap-6">
-              {/* Where */}
-              <div className="rounded-2xl border border-neutral-200 p-4">
-                <div className="text-xs font-semibold text-neutral-700">WHERE</div>
-                <input
-                  value={draft.where}
-                  onChange={(e) => setDraft((d) => ({ ...d, where: e.target.value }))}
-                  placeholder="Search destinations (e.g., Seoul, Busan, Jeju)"
-                  className="mt-2 w-full text-sm outline-none placeholder:text-neutral-400"
-                />
-              </div>
+          {dividerV}{dividerH}
 
-              {/* When */}
-              <div className="rounded-2xl border border-neutral-200 p-4">
-                <div className="text-xs font-semibold text-neutral-700">WHEN</div>
-                <div className="mt-3 grid gap-3 sm:grid-cols-2">
-                  <label className="grid gap-1">
-                    <span className="text-xs text-neutral-600">Check-in</span>
-                    <input
-                      type="date"
-                      value={draft.start}
-                      onChange={(e) => setStart(e.target.value)}
-                      className="w-full rounded-xl border border-neutral-200 px-3 py-2 text-sm outline-none focus:ring-2 focus:ring-brand/20"
-                    />
-                  </label>
-                  <label className="grid gap-1">
-                    <span className="text-xs text-neutral-600">Check-out</span>
-                    <input
-                      type="date"
-                      value={draft.end}
-                      onChange={(e) => setEnd(e.target.value)}
-                      className="w-full rounded-xl border border-neutral-200 px-3 py-2 text-sm outline-none focus:ring-2 focus:ring-brand/20"
-                    />
-                  </label>
-                </div>
-                <div className="mt-2 text-xs text-neutral-500">
-                  Tip: dates are optional — set both for a range.
-                </div>
-              </div>
+          <button
+            ref={dateRef}
+            type="button"
+            onClick={() => openPanel("date")}
+            className={cn(sectionBtn, open === "date" && "bg-neutral-50")}
+          >
+            <span suppressHydrationWarning>{dateLabel}</span>
+          </button>
 
-              {/* Guests */}
-              <div className="rounded-2xl border border-neutral-200 p-4">
-                <div className="text-xs font-semibold text-neutral-700">GUESTS</div>
-                <div className="mt-3 flex items-center justify-between">
-                  <div>
-                    <div className="text-sm font-medium">Guests</div>
-                    <div className="text-xs text-neutral-500">How many people are staying?</div>
-                  </div>
-                  <div className="flex items-center gap-3">
-                    <button
-                      type="button"
-                      onClick={() => setDraft((d) => ({ ...d, guests: clampGuests(d.guests - 1) }))}
-                      className={cn(
-                        "inline-flex h-9 w-9 items-center justify-center rounded-full border",
-                        draft.guests <= 0 ? "border-neutral-200 text-neutral-300" : "border-neutral-300 hover:bg-neutral-50"
-                      )}
-                      aria-label="Decrease guests"
-                      disabled={draft.guests <= 0}
-                    >
-                      <Minus className="h-4 w-4" />
-                    </button>
-                    <div className="w-10 text-center text-sm font-semibold">
-                      {draft.guests <= 0 ? "Any" : draft.guests}
-                    </div>
-                    <button
-                      type="button"
-                      onClick={() => setDraft((d) => ({ ...d, guests: clampGuests(d.guests + 1) }))}
-                      className={cn(
-                        "inline-flex h-9 w-9 items-center justify-center rounded-full border border-neutral-300 hover:bg-neutral-50",
-                        draft.guests >= 16 && "opacity-50 pointer-events-none"
-                      )}
-                      aria-label="Increase guests"
-                    >
-                      <Plus className="h-4 w-4" />
-                    </button>
-                  </div>
-                </div>
-              </div>
-            </div>
+          {dividerV}{dividerH}
 
-            <div className="px-6 py-4 border-t border-neutral-200 flex items-center justify-between">
-              <button
-                type="button"
-                onClick={clearSearch}
-                className="text-sm font-semibold text-neutral-700 hover:text-neutral-900"
-              >
-                Clear all
-              </button>
-              <button
-                type="button"
-                onClick={applySearch}
-                className="inline-flex items-center gap-2 rounded-xl bg-brand px-5 py-3 text-sm font-semibold text-brand-foreground hover:opacity-95"
-              >
-                <Search className="h-4 w-4" />
-                Search
-              </button>
-            </div>
+          <button
+            ref={guestsRef}
+            type="button"
+            onClick={() => openPanel("guests")}
+            className={cn(sectionBtn, open === "guests" && "bg-neutral-50")}
+          >
+            {guestsLabel}
+          </button>
+
+          <div className="p-2 sm:p-1">
+            <button
+              type="button"
+              onClick={runSearch}
+              className="w-full sm:w-12 h-12 inline-flex items-center justify-center gap-2 rounded-full bg-neutral-900 text-white hover:opacity-95 transition"
+            >
+              <Search className="h-5 w-5" />
+              <span className="sm:hidden text-sm font-semibold">{t("search")}</span>
+            </button>
           </div>
+        </div>
+      </div>
+
+      {open && (
+        <button type="button" onClick={() => setOpen(null)} className="fixed inset-0 z-40 bg-transparent" aria-label="Close" />
+      )}
+
+      {open && pos && (
+        <div
+          className={cn(
+            "absolute z-[60] transition-all duration-200 ease-out",
+            entered ? "opacity-100 translate-y-0" : "opacity-0 translate-y-2"
+          )}
+          style={{ top: pos.top, left: pos.left, width: pos.width }}
+        >
+          {open === "where" && <WhereDropdown value={where} onSelect={setWhere} onClose={() => setOpen(null)} />}
+          {open === "date" && <DateDropdown range={range ?? defaultRange} onChange={setRange} onClose={() => setOpen(null)} />}
+          {open === "guests" && (
+            <GuestsDropdown
+              adults={adults}
+              childCount={children}
+              onChangeAdults={setAdults}
+              onChangeChildren={setChildren}
+              onClose={() => setOpen(null)}
+            />
+          )}
         </div>
       )}
     </div>

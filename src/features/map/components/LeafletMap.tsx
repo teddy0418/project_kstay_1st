@@ -3,32 +3,17 @@
 import { useEffect, useMemo, useRef } from "react";
 import type { Listing } from "@/types";
 import L from "leaflet";
-import { MapContainer, TileLayer, Marker, Popup, useMapEvents, useMap } from "react-leaflet";
+import { MapContainer, TileLayer, Marker, Popup, useMap, useMapEvents } from "react-leaflet";
 import { formatKRW } from "@/lib/format";
+import { totalGuestPriceKRW } from "@/lib/policy";
+import { formatMainCompactFromKRW } from "@/lib/currency";
+import { useCurrency } from "@/components/ui/CurrencyProvider";
 
-export type ViewBounds = {
-  south: number;
-  west: number;
-  north: number;
-  east: number;
-};
+export type ViewBounds = { south: number; west: number; north: number; east: number };
 
 function getBounds(map: L.Map): ViewBounds {
   const b = map.getBounds();
-  return {
-    south: b.getSouth(),
-    west: b.getWest(),
-    north: b.getNorth(),
-    east: b.getEast(),
-  };
-}
-
-function formatKRWCompact(amount: number) {
-  const compact = new Intl.NumberFormat("en-US", {
-    notation: "compact",
-    maximumFractionDigits: 1,
-  }).format(amount);
-  return `₩${compact}`;
+  return { south: b.getSouth(), west: b.getWest(), north: b.getNorth(), east: b.getEast() };
 }
 
 function makePriceIcon(label: string, active: boolean) {
@@ -45,16 +30,10 @@ function FitOnce({ items }: { items: Listing[] }) {
 
   useEffect(() => {
     if (fitted.current) return;
-
-    const pts = items
-      .filter((i) => Number.isFinite(i.lat) && Number.isFinite(i.lng))
-      .map((i) => [i.lat, i.lng] as [number, number]);
-
+    const pts = items.map((i) => [i.lat, i.lng] as [number, number]);
     if (pts.length === 0) return;
-
     const bounds = L.latLngBounds(pts);
     if (!bounds.isValid()) return;
-
     map.fitBounds(bounds, { padding: [40, 40], maxZoom: 13 });
     fitted.current = true;
   }, [items, map]);
@@ -70,18 +49,13 @@ function MapEvents({
   onUserMoved?: () => void;
 }) {
   const ignoreRef = useRef(true);
-
   useEffect(() => {
-    const t = setTimeout(() => {
-      ignoreRef.current = false;
-    }, 900);
+    const t = setTimeout(() => (ignoreRef.current = false), 900);
     return () => clearTimeout(t);
   }, []);
 
   const map = useMapEvents({
-    moveend: () => {
-      onBoundsChange?.(getBounds(map));
-    },
+    moveend: () => onBoundsChange?.(getBounds(map)),
     dragend: () => {
       if (ignoreRef.current) return;
       onUserMoved?.();
@@ -117,6 +91,7 @@ export default function LeafletMap({
   onBoundsChange?: (b: ViewBounds) => void;
   onUserMoved?: () => void;
 }) {
+  const { currency } = useCurrency();
   const center = useMemo<[number, number]>(() => [36.5, 127.8], []);
 
   return (
@@ -131,7 +106,8 @@ export default function LeafletMap({
 
       {items.map((l) => {
         const active = hoveredId === l.id;
-        const label = formatKRWCompact(l.pricePerNightKRW);
+        const allIn = totalGuestPriceKRW(l.pricePerNightKRW);
+        const label = formatMainCompactFromKRW(allIn, currency);
 
         return (
           <Marker
@@ -149,7 +125,11 @@ export default function LeafletMap({
                 <div style={{ fontWeight: 800 }}>{l.location}</div>
                 <div>{l.title}</div>
                 <div style={{ marginTop: 6, fontWeight: 800 }}>
-                  {formatKRW(l.pricePerNightKRW)} / night
+                  {label} / night{" "}
+                  <span style={{ opacity: 0.7 }}> (≈ {formatKRW(allIn)})</span>
+                </div>
+                <div style={{ marginTop: 4, fontSize: 11, opacity: 0.75 }}>
+                  Tax & Service Fee Included
                 </div>
               </div>
             </Popup>

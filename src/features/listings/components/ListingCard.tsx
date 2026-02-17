@@ -1,62 +1,84 @@
 "use client";
 
 import Link from "next/link";
-import Image from "next/image";
-import { Heart, Star } from "lucide-react";
-import type { Listing } from "@/types";
-import { formatDateRange, formatKRW } from "@/lib/format";
-import { cn } from "@/lib/utils";
+import { Heart } from "lucide-react";
+import { useMemo } from "react";
+import { useWishlist } from "@/components/ui/WishlistProvider";
+import { useAuth } from "@/components/ui/AuthProvider";
+import { useAuthModal } from "@/components/ui/AuthModalProvider";
 
-export default function ListingCard({
-  listing,
-  active,
-  onHoverChange,
-}: {
-  listing: Listing;
-  active?: boolean;
-  onHoverChange?: (id: string | null) => void;
-}) {
+export default function ListingCard(props: Record<string, unknown>) {
+  const { isAuthed } = useAuth();
+  const { open } = useAuthModal();
+  const { has, toggle } = useWishlist();
+
+  const listing = (props?.listing ?? props) as Record<string, unknown>;
+  const id = String(listing?.id ?? "");
+  const href = (props?.href as string) ?? `/listings/${id}`;
+
+  const title = (listing?.title ?? listing?.name ?? "Stay") as string;
+  const area = (listing?.area ?? listing?.neighborhood ?? "") as string;
+  const city = (listing?.city ?? listing?.region ?? "") as string;
+  const rating = (listing?.rating ?? 0) as number;
+  const priceUsd = (listing?.priceUsd ?? listing?.priceUSD ?? listing?.pricePerNightUsd ?? listing?.usd ?? 0) as number;
+
+  const image = useMemo(() => {
+    const arr = listing?.images;
+    if (Array.isArray(arr) && arr.length) return arr[0] as string;
+    return (listing?.image ?? listing?.coverImage ?? "") as string;
+  }, [listing]);
+
+  const liked = isAuthed && id ? has(id) : false;
+
+  const onToggle = (e: React.MouseEvent) => {
+    e.preventDefault();
+    e.stopPropagation();
+
+    if (!id) return;
+
+    if (!isAuthed) {
+      open({ role: "GUEST" });
+      return;
+    }
+
+    toggle(id);
+  };
+
   return (
-    <Link
-      id={`card-${listing.id}`}
-      href={`/listings/${listing.id}`}
-      className={cn(
-        "group block scroll-mt-[140px]",
-        active && "outline outline-2 outline-brand/30 rounded-2xl outline-offset-2"
-      )}
-      onMouseEnter={() => onHoverChange?.(listing.id)}
-      onMouseLeave={() => onHoverChange?.(null)}
-    >
-      <div className="relative aspect-[4/3] overflow-hidden rounded-2xl bg-neutral-100">
-        <Image
-          src={listing.imageUrl}
-          alt={listing.title}
-          fill
-          className="object-cover transition duration-300 group-hover:scale-[1.03]"
-          sizes="(min-width: 1280px) 320px, (min-width: 768px) 33vw, 100vw"
-        />
+    <Link href={href} className="group block">
+      <div className="relative overflow-hidden rounded-2xl bg-neutral-100">
+        {image ? (
+          <img src={image} alt={title} className="h-[220px] w-full object-cover" loading="lazy" />
+        ) : (
+          <div className="h-[220px] w-full" />
+        )}
 
-        {/* MVP visual only */}
-        <div className="absolute right-3 top-3 inline-flex h-9 w-9 items-center justify-center rounded-full bg-white/90 shadow-soft">
-          <Heart className="h-5 w-5 text-neutral-800" />
-        </div>
+        <button
+          type="button"
+          onClick={onToggle}
+          className="absolute right-3 top-3 inline-flex h-10 w-10 items-center justify-center rounded-full bg-white/95 shadow-md hover:shadow-lg transition"
+          aria-label="Wishlist"
+          title={liked ? "Saved" : "Save"}
+        >
+          <Heart className={liked ? "h-5 w-5 fill-red-500 text-red-500" : "h-5 w-5"} />
+        </button>
       </div>
 
-      <div className="mt-3 flex items-start justify-between gap-4">
+      <div className="mt-3 grid grid-cols-[1fr,auto] gap-2">
         <div className="min-w-0">
-          <div className="font-medium text-neutral-900 truncate">{listing.location}</div>
-          <div className="mt-0.5 text-sm text-neutral-600 truncate">{listing.title}</div>
-          <div className="mt-0.5 text-sm text-neutral-600">
-            {formatDateRange(listing.startDate, listing.endDate)}
+          <div className="text-sm font-semibold truncate">
+            {city ? `${city}${area ? ` · ${area}` : ""}` : title}
           </div>
-          <div className="mt-1 text-sm text-neutral-900">
-            <span className="font-semibold">{formatKRW(listing.pricePerNightKRW)}</span> / night
+          <div className="mt-1 text-xs text-neutral-500 truncate">{title}</div>
+          <div className="mt-2 text-sm font-semibold">
+            ${priceUsd} <span className="font-normal text-neutral-500">/ night</span>
           </div>
+          <div className="mt-1 text-xs text-neutral-500">Tax & Service Fee Included</div>
         </div>
 
-        <div className="flex shrink-0 items-center gap-1 text-sm text-neutral-900">
-          <Star className="h-4 w-4" />
-          <span>{listing.rating.toFixed(2)}</span>
+        <div className="text-sm text-neutral-700 inline-flex items-center gap-1">
+          <span>★</span>
+          <span className="font-semibold">{Number(rating || 0).toFixed(2)}</span>
         </div>
       </div>
     </Link>

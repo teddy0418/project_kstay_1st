@@ -1,0 +1,75 @@
+@import "tailwindcss";
+@import "leaflet/dist/leaflet.css";
+
+:root {
+  /* KSTAY Signature: Celadon Teal */
+  --brand: 172 66% 42%;
+  --brand-foreground: 0 0% 100%;
+  --brand-soft: 172 66% 96%;
+}
+
+@layer base {
+  html,
+  body {
+    @apply bg-white text-neutral-900 antialiased;
+  }
+
+  ::selection {
+    background: hsl(var(--brand) / 0.25);
+  }
+}
+
+.leaflet-container { height: 100%; width: 100%; }
+
+/* Leaflet divIcon wrapper reset */
+.kst-marker-wrap,
+.kst-price-wrap {
+  background: transparent !important;
+  border: none !important;
+}
+
+/* Dot marker (kept for future) */
+.kst-marker {
+  width: 14px;
+  height: 14px;
+  border-radius: 9999px;
+  background: hsl(var(--brand));
+  border: 2px solid white;
+  box-shadow: 0 8px 18px rgba(0,0,0,0.18);
+  transform: translateZ(0);
+  transition: transform 160ms ease, filter 160ms ease;
+}
+.kst-marker--active {
+  transform: scale(1.35);
+  filter: saturate(1.1);
+}
+
+/* Price marker (Airbnb-ish MVP) */
+.kst-price {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  padding: 6px 10px;
+  border-radius: 9999px;
+  background: white;
+  color: #111;
+  border: 1px solid rgba(17, 17, 17, 0.12);
+  box-shadow: 0 10px 22px rgba(0,0,0,0.14);
+  font-weight: 700;
+  font-size: 12px;
+  white-space: nowrap;
+  transform: translate(-50%, -50%);
+  transition: transform 160ms ease, background 160ms ease, color 160ms ease, border-color 160ms ease;
+}
+
+.kst-price--active {
+  background: hsl(var(--brand));
+  color: white;
+  border-color: transparent;
+  transform: translate(-50%, -50%) scale(1.06);
+}
+
+/* Leaflet controls: softer */
+.leaflet-control a {
+  border-radius: 10px !important;
+}

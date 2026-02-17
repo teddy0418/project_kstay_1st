@@ -1,0 +1,75 @@
+import Container from "@/components/layout/Container";
+import CategoryPills from "@/features/search/components/CategoryPills";
+import ViewToggle from "@/features/search/components/ViewToggle";
+import ResultsView from "@/features/browse/components/ResultsView";
+import { listings } from "@/lib/mockData";
+
+function safeStr(v: unknown) {
+  return typeof v === "string" ? v : "";
+}
+
+export default function BrowsePage({
+  searchParams,
+}: {
+  searchParams?: { [key: string]: string | string[] | undefined };
+}) {
+  const category = safeStr(searchParams?.category) || "trending";
+  const where = safeStr(searchParams?.where).trim();
+
+  const categoryFiltered =
+    category === "trending" ? listings : listings.filter((l) => l.categories.includes(category));
+
+  const whereLower = where.toLowerCase();
+  const filtered = where
+    ? categoryFiltered.filter((l) =>
+        `${l.location} ${l.title}`.toLowerCase().includes(whereLower)
+      )
+    : categoryFiltered;
+
+  return (
+    <>
+      <CategoryPills />
+
+      <Container className="py-8">
+        <div className="mb-6 flex items-end justify-between gap-4">
+          <div>
+            <h1 className="text-2xl font-semibold tracking-tight">Explore stays</h1>
+            <p className="mt-1 text-sm text-neutral-600">
+              Best Value stays with transparent all-in pricing.
+            </p>
+          </div>
+
+          <div className="hidden md:flex gap-2">
+            <button className="rounded-full border border-neutral-200 px-4 py-2 text-sm hover:bg-neutral-50">
+              Filters
+            </button>
+            <ViewToggle />
+          </div>
+        </div>
+
+        <div className="mb-4 flex items-center justify-between text-sm text-neutral-600">
+          <span>{filtered.length} stays</span>
+          <div className="flex gap-2">
+            <button className="rounded-full border border-neutral-200 px-4 py-2 hover:bg-neutral-50">
+              Sort
+            </button>
+            <div className="md:hidden">
+              <ViewToggle />
+            </div>
+          </div>
+        </div>
+
+        {filtered.length === 0 ? (
+          <div className="rounded-2xl border border-neutral-200 p-10 text-center">
+            <div className="text-lg font-semibold">No results</div>
+            <p className="mt-2 text-sm text-neutral-600">
+              Try a different destination or clear filters.
+            </p>
+          </div>
+        ) : (
+          <ResultsView items={filtered} />
+        )}
+      </Container>
+    </>
+  );
+}
