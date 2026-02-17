@@ -1,0 +1,193 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+}
+
+enum Role {
+  GUEST
+  HOST
+  ADMIN
+}
+
+enum ListingStatus {
+  PENDING
+  APPROVED
+  REJECTED
+}
+
+enum BookingStatus {
+  PENDING_PAYMENT
+  CONFIRMED
+  CANCELLED
+}
+
+enum PaymentProvider {
+  MOCK
+  PORTONE
+}
+
+enum PaymentStatus {
+  INITIATED
+  PAID
+  FAILED
+  CANCELLED
+}
+
+model User {
+  id        String   @id @default(cuid())
+  role      Role     @default(GUEST)
+  email     String?  @unique
+  name      String   @default("Guest")
+  image     String?
+  locale    String   @default("en-US")
+  currency  String   @default("USD")
+  phone     String?
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  hostProfile HostProfile?
+  listings    Listing[]      @relation("HostListings")
+  bookings    Booking[]      @relation("GuestBookings")
+  wishlist    WishlistItem[]
+}
+
+model HostProfile {
+  userId    String  @id
+  displayName String?
+  payoutBank  String?
+  payoutAccount String?
+  payoutName  String?
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+}
+
+model Listing {
+  id        String        @id @default(cuid())
+  hostId    String
+  status    ListingStatus @default(PENDING)
+  approvedAt DateTime?
+
+  title     String
+  city      String
+  area      String
+  address   String
+  location  String?
+  lat       Float?
+  lng       Float?
+
+  basePriceKrw Int
+  rating    Float   @default(4.9)
+  reviewCount Int  @default(0)
+  hostBio   String?
+  checkInTime String @default("15:00")
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  host   User          @relation("HostListings", fields: [hostId], references: [id], onDelete: Restrict)
+  images ListingImage[]
+  bookings Booking[]
+  wishlist WishlistItem[]
+}
+
+model ListingImage {
+  id        String @id @default(cuid())
+  listingId String
+  url       String
+  sortOrder Int    @default(0)
+
+  listing Listing @relation(fields: [listingId], references: [id], onDelete: Cascade)
+
+  @@index([listingId])
+}
+
+model Booking {
+  id            String        @id @default(cuid())
+  publicToken   String        @unique
+  listingId     String
+  guestUserId   String?
+  guestEmail    String
+  guestName     String?
+
+  checkIn       DateTime
+  checkOut      DateTime
+  nights        Int
+
+  guestsAdults  Int @default(1)
+  guestsChildren Int @default(0)
+  guestsInfants Int @default(0)
+  guestsPets    Int @default(0)
+
+  currency      String @default("USD")
+  totalUsd      Int
+  totalKrw      Int
+
+  status        BookingStatus @default(PENDING_PAYMENT)
+  confirmedAt   DateTime?
+  cancellationDeadlineKst DateTime
+  confirmationEmailSentAt DateTime?
+
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
+
+  listing       Listing @relation(fields: [listingId], references: [id], onDelete: Restrict)
+  guestUser     User?   @relation("GuestBookings", fields: [guestUserId], references: [id], onDelete: SetNull)
+  payments      Payment[]
+
+  @@index([listingId])
+  @@index([guestUserId])
+  @@index([publicToken])
+}
+
+model Payment {
+  id         String          @id @default(cuid())
+  bookingId  String
+  provider   PaymentProvider @default(MOCK)
+  status     PaymentStatus   @default(INITIATED)
+  amountUsd  Int
+  providerPaymentId String?
+  storeId    String?
+  pgTid      String?
+  rawJson    String?
+  createdAt  DateTime @default(now())
+  paidAt     DateTime?
+
+  booking    Booking @relation(fields: [bookingId], references: [id], onDelete: Cascade)
+
+  @@index([bookingId])
+  @@index([providerPaymentId])
+}
+
+model PaymentWebhookEvent {
+  id               String   @id @default(cuid())
+  provider         String
+  webhookId        String
+  webhookTimestamp String
+  webhookSignature String
+  payloadRaw       String
+  parsedType       String?
+  paymentId        String?
+  receivedAt       DateTime @default(now())
+
+  @@unique([provider, webhookId])
+  @@index([paymentId])
+}
+
+model WishlistItem {
+  userId    String
+  listingId String
+  createdAt DateTime @default(now())
+
+  user    User    @relation(fields: [userId], references: [id], onDelete: Cascade)
+  listing Listing @relation(fields: [listingId], references: [id], onDelete: Cascade)
+
+  @@id([userId, listingId])
+  @@index([listingId])
+}
