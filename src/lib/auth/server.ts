@@ -1,8 +1,9 @@
-import type { Role as DbRole } from "@prisma/client";
 import { cookies } from "next/headers";
 import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/auth/options";
 import { prisma } from "@/lib/db";
+
+type DbRole = "GUEST" | "HOST" | "ADMIN";
 
 export type ServerSessionUser = {
   id: string;
