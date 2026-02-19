@@ -1,4 +1,3 @@
-import { Prisma } from "@prisma/client";
 import { prisma } from "@/lib/db";
 import { getServerSessionUser, requireAdminUser } from "@/lib/auth/server";
 import { apiError, apiOk } from "@/lib/api/response";
@@ -20,11 +19,17 @@ const approvalItemSelect = {
       role: true,
     },
   },
-} as const satisfies Prisma.ListingSelect;
+} as const;
 
-type ApprovalItem = Prisma.ListingGetPayload<{
-  select: typeof approvalItemSelect;
-}>;
+async function getPendingApprovalItems() {
+  return prisma.listing.findMany({
+    where: { status: "PENDING" },
+    select: approvalItemSelect,
+    orderBy: { createdAt: "asc" },
+  });
+}
+
+type ApprovalItem = Awaited<ReturnType<typeof getPendingApprovalItems>>[number];
 
 export async function GET() {
   const sessionUser = await getServerSessionUser();
@@ -33,11 +38,7 @@ export async function GET() {
   const admin = await requireAdminUser();
   if (!admin) return apiError(403, "FORBIDDEN", "Admin access required");
 
-  const items: ApprovalItem[] = await prisma.listing.findMany({
-    where: { status: "PENDING" },
-    select: approvalItemSelect,
-    orderBy: { createdAt: "asc" },
-  });
+  const items: ApprovalItem[] = await getPendingApprovalItems();
 
   return apiOk(
     items.map((item) => ({
