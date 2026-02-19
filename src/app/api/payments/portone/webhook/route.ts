@@ -6,6 +6,12 @@ import BookingConfirmedEmail from "@/emails/BookingConfirmedEmail";
 import { sendEmailWithResend } from "@/lib/email/resend";
 
 export const runtime = "nodejs";
+type TransactionClient = Parameters<typeof prisma.$transaction>[0] extends (
+  tx: infer T,
+  ...args: never[]
+) => unknown
+  ? T
+  : never;
 
 export async function POST(req: Request) {
   const webhookSecret = String(process.env.PORTONE_WEBHOOK_SECRET ?? "").trim();
@@ -127,7 +133,7 @@ async function syncPaymentAndBookingFromPortOne(paymentId: string) {
   const targetPayment = booking.payments.find((p) => p.providerPaymentId === paymentId) ?? booking.payments[0];
 
   if (paymentStatus === "PAID") {
-    const confirmed = await prisma.$transaction(async (tx) => {
+    const confirmed = await prisma.$transaction(async (tx: TransactionClient) => {
       const updatedBooking = await tx.booking.update({
         where: { id: booking.id },
         data: {
@@ -161,7 +167,7 @@ async function syncPaymentAndBookingFromPortOne(paymentId: string) {
   }
 
   if (paymentStatus === "FAILED" || paymentStatus === "CANCELLED" || paymentStatus === "PARTIAL_CANCELLED") {
-    await prisma.$transaction(async (tx) => {
+    await prisma.$transaction(async (tx: TransactionClient) => {
       await tx.booking.update({
         where: { id: booking.id },
         data: {

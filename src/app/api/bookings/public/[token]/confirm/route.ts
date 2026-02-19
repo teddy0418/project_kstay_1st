@@ -6,6 +6,12 @@ import BookingConfirmedEmail from "@/emails/BookingConfirmedEmail";
 import { sendEmailWithResend } from "@/lib/email/resend";
 
 export const runtime = "nodejs";
+type TransactionClient = Parameters<typeof prisma.$transaction>[0] extends (
+  tx: infer T,
+  ...args: never[]
+) => unknown
+  ? T
+  : never;
 
 export async function POST(_: Request, ctx: { params: Promise<{ token: string }> }) {
   const providerMode = (process.env.PAYMENT_PROVIDER || "MOCK").toUpperCase();
@@ -36,7 +42,7 @@ export async function POST(_: Request, ctx: { params: Promise<{ token: string }>
     return apiError(409, "CONFLICT", "Booking cannot be confirmed in current status");
   }
 
-  const confirmed = await prisma.$transaction(async (tx) => {
+  const confirmed = await prisma.$transaction(async (tx: TransactionClient) => {
     const booking = await tx.booking.update({
       where: { id: existing.id },
       data: {
