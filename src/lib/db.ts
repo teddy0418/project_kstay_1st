@@ -10,7 +10,8 @@ export const prisma =
   globalForPrisma.prisma ??
   new PrismaClient({
     adapter,
-    log: process.env.NODE_ENV === "development" ? ["error"] : ["error"],
+    // Avoid noisy Prisma error logs in build/SSG fallback paths.
+    log: process.env.NODE_ENV === "development" ? ["error"] : [],
   });
 
 if (process.env.NODE_ENV !== "production") {

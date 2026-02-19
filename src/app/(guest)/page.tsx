@@ -5,7 +5,6 @@ import { getPublicListings } from "@/lib/repositories/listings";
 
 export default async function Page() {
   const listings = await getPublicListings();
-  console.log("[KSTAY:server] 3. Home page render", { listingsCount: listings.length });
   return (
     <>
       <PopularDestinations />
