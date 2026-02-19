@@ -6,17 +6,23 @@ type WishlistBody = {
   listingId?: string;
 };
 
+async function getWishlistItemsForUser(userId: string) {
+  return prisma.wishlistItem.findMany({
+    where: { userId },
+    select: { listingId: true },
+    orderBy: { createdAt: "desc" },
+  });
+}
+
+type WishlistItemRow = Awaited<ReturnType<typeof getWishlistItemsForUser>>[number];
+
 export async function GET() {
   const user = await getOrCreateServerUser();
   if (!user) return apiError(401, "UNAUTHORIZED", "Login required");
 
-  const items = await prisma.wishlistItem.findMany({
-    where: { userId: user.id },
-    select: { listingId: true },
-    orderBy: { createdAt: "desc" },
-  });
+  const items: WishlistItemRow[] = await getWishlistItemsForUser(user.id);
 
-  return apiOk(items.map((x) => x.listingId));
+  return apiOk(items.map((x: WishlistItemRow) => x.listingId));
 }
 
 export async function POST(req: Request) {
