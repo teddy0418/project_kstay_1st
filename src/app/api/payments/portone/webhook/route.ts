@@ -12,6 +12,16 @@ type TransactionClient = Parameters<typeof prisma.$transaction>[0] extends (
 ) => unknown
   ? T
   : never;
+async function getBookingForPayment(paymentId: string) {
+  return prisma.booking.findUnique({
+    where: { publicToken: paymentId },
+    include: {
+      listing: { select: { title: true } },
+      payments: { orderBy: { createdAt: "asc" } },
+    },
+  });
+}
+type BookingForPayment = NonNullable<Awaited<ReturnType<typeof getBookingForPayment>>>;
 
 export async function POST(req: Request) {
   const webhookSecret = String(process.env.PORTONE_WEBHOOK_SECRET ?? "").trim();
@@ -121,16 +131,12 @@ async function syncPaymentAndBookingFromPortOne(paymentId: string) {
   const pgTid = typeof parsed?.transactionId === "string" ? parsed.transactionId : null;
   const storeId = typeof parsed?.storeId === "string" ? parsed.storeId : null;
 
-  const booking = await prisma.booking.findUnique({
-    where: { publicToken: paymentId },
-    include: {
-      listing: { select: { title: true } },
-      payments: { orderBy: { createdAt: "asc" } },
-    },
-  });
+  const booking = await getBookingForPayment(paymentId);
   if (!booking) return;
 
-  const targetPayment = booking.payments.find((p) => p.providerPaymentId === paymentId) ?? booking.payments[0];
+  const targetPayment =
+    booking.payments.find((p: BookingForPayment["payments"][number]) => p.providerPaymentId === paymentId) ??
+    booking.payments[0];
 
   if (paymentStatus === "PAID") {
     const confirmed = await prisma.$transaction(async (tx: TransactionClient) => {
