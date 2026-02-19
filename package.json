@@ -4,6 +4,7 @@
   "private": true,
   "scripts": {
     "dev": "next dev --webpack -p 3001",
+    "prebuild": "npm run prisma:generate",
     "build": "next build --webpack",
     "start": "next start",
     "lint": "eslint",
