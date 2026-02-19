@@ -8,11 +8,13 @@
 5. Security scan: `npm audit`
 
 ## Required Env / Runtime
-- `.env` should exist for local runtime needs.
+- Local development uses `.env.local` as the source of truth for secrets and DB URLs.
+- `.env.example` is key-only template and must not contain real values.
 - Dev server runs on port `3001` by default.
 - Database must be PostgreSQL in staging/production.
 - Required env values for runtime:
   - `DATABASE_URL` (Vercel Postgres pooled URL)
+  - `DATABASE_URL_UNPOOLED` (direct URL for migrations/long transactions)
   - `AUTH_URL`
   - `AUTH_SECRET`
   - `GOOGLE_CLIENT_ID`
@@ -26,12 +28,14 @@
   - `PORTONE_API_SECRET`
   - `PORTONE_WEBHOOK_SECRET`
   - `NEXT_PUBLIC_SITE_URL`
-- For Google OAuth, configure `.env.local`:
+- For local setup, configure `.env.local`:
   - `AUTH_URL=http://localhost:3001`
   - `AUTH_SECRET=<openssl rand -base64 32>`
   - `GOOGLE_CLIENT_ID=<from Google Cloud>`
   - `GOOGLE_CLIENT_SECRET=<from Google Cloud>`
   - `DATABASE_URL=postgresql://...`
+  - `DATABASE_URL_UNPOOLED=postgresql://...`
+  - Never use `file:./dev.db` for Prisma datasource.
 
 ## Local Run
 - Dev: `npm run dev`
@@ -41,6 +45,7 @@
 - Prisma migrate (deploy-safe): `npm run prisma:migrate`
 - Prisma migrate for local dev: `npm run prisma:migrate:dev`
 - Prisma seed: `npm run db:seed`
+- DB health check endpoint: `GET /api/health/db` (returns `{ ok: true|false }`)
 - Booking/Payment schema updates:
   1. update Prisma schema
   2. create migration in dev via `npm run prisma:migrate:dev`
