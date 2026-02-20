@@ -5,6 +5,7 @@ import DetailActions from "@/features/listings/components/DetailActions";
 import MapModal from "@/features/listings/components/MapModal";
 import BookingWidget from "@/features/listings/components/BookingWidget";
 import Link from "next/link";
+import Image from "next/image";
 import { ChevronRight, MapPin, Star, Wifi, Dumbbell, Bath, Coffee, Sparkles, CheckCircle2, Key, MessageCircle, Tag } from "lucide-react";
 
 function normalizeId(v: unknown) {
@@ -319,12 +320,13 @@ export default async function ListingDetailPage({
         <section className="min-w-0">
           {/* Host card */}
           <div className="flex items-center gap-4 rounded-2xl border border-neutral-200 p-5">
-            <div className="h-12 w-12 overflow-hidden rounded-full bg-neutral-100">
-              <img
+            <div className="relative h-12 w-12 overflow-hidden rounded-full bg-neutral-100">
+              <Image
                 src={listing.hostProfileImageUrl}
                 alt={listing.hostName}
-                className="h-full w-full object-cover"
-                loading="lazy"
+                className="object-cover"
+                fill
+                sizes="48px"
               />
             </div>
             <div className="min-w-0">

@@ -1,6 +1,7 @@
 "use client";
 
 import Link from "next/link";
+import Image from "next/image";
 import { Heart } from "lucide-react";
 import { useMemo } from "react";
 import { useWishlist } from "@/components/ui/WishlistProvider";
@@ -48,7 +49,14 @@ export default function ListingCard(props: Record<string, unknown>) {
     <Link href={href} className="group block">
       <div className="relative overflow-hidden rounded-2xl bg-neutral-100">
         {image ? (
-          <img src={image} alt={title} className="h-[220px] w-full object-cover" loading="lazy" />
+          <Image
+            src={image}
+            alt={title}
+            className="h-[220px] w-full object-cover"
+            width={800}
+            height={440}
+            sizes="(max-width: 640px) 100vw, (max-width: 1280px) 50vw, 25vw"
+          />
         ) : (
           <div className="h-[220px] w-full" />
         )}

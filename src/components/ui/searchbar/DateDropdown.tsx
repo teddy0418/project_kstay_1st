@@ -3,7 +3,7 @@
 import { DayPicker } from "react-day-picker";
 import type { DateRange } from "react-day-picker";
 import { X } from "lucide-react";
-import { useEffect, useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useState } from "react";
 import { useI18n } from "@/components/ui/LanguageProvider";
 
 function startOfDay(d: Date) {
@@ -44,11 +44,17 @@ export default function DateDropdown({
     return () => mq.removeEventListener?.("change", apply);
   }, []);
 
-  const formatFull = (d: Date) => {
-    const date = new Intl.DateTimeFormat(locale, { month: "short", day: "numeric", year: "numeric" }).format(d);
-    const wd = new Intl.DateTimeFormat(locale, { weekday: "short" }).format(d);
+  const fullDateFormatter = useMemo(
+    () => new Intl.DateTimeFormat(locale, { month: "short", day: "numeric", year: "numeric" }),
+    [locale]
+  );
+  const weekdayFormatter = useMemo(() => new Intl.DateTimeFormat(locale, { weekday: "short" }), [locale]);
+
+  const formatFull = useCallback((d: Date) => {
+    const date = fullDateFormatter.format(d);
+    const wd = weekdayFormatter.format(d);
     return `${date} (${wd})`;
-  };
+  }, [fullDateFormatter, weekdayFormatter]);
 
   const summary = useMemo(() => {
     if (range?.from && range?.to) {
@@ -57,7 +63,7 @@ export default function DateDropdown({
       return `${formatFull(range.from)} → ${formatFull(range.to)} · ${n} ${nightWord}`;
     }
     return "Select your dates";
-  }, [range, locale, t]);
+  }, [range, formatFull, t]);
 
   return (
     <div className="w-full rounded-2xl border border-neutral-200 bg-white shadow-md">

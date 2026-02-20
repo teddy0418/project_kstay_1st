@@ -1,6 +1,7 @@
 "use client";
 
 import Link from "next/link";
+import Image from "next/image";
 import Container from "@/components/layout/Container";
 import { useI18n } from "@/components/ui/LanguageProvider";
 import { getBoardPosts } from "@/lib/boardMock";
@@ -22,7 +23,14 @@ export default function BoardPage() {
             className="rounded-2xl border border-neutral-200 bg-white overflow-hidden shadow-sm hover:shadow-md transition"
           >
             <div className="h-[180px] bg-neutral-100">
-              <img src={p.cover} alt={p.title[lang]} className="h-full w-full object-cover" loading="lazy" />
+              <Image
+                src={p.cover}
+                alt={p.title[lang]}
+                className="h-full w-full object-cover"
+                width={1200}
+                height={480}
+                sizes="(max-width: 768px) 100vw, 50vw"
+              />
             </div>
             <div className="p-5">
               <div className="mt-1 text-lg font-semibold leading-snug">{p.title[lang]}</div>

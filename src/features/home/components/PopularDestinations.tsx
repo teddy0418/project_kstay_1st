@@ -1,7 +1,8 @@
 "use client";
 
 import Link from "next/link";
-import { useEffect, useMemo, useRef, useState } from "react";
+import Image from "next/image";
+import { useEffect, useRef, useState } from "react";
 import Container from "@/components/layout/Container";
 import { ChevronLeft, ChevronRight } from "lucide-react";
 import { useI18n } from "@/components/ui/LanguageProvider";
@@ -12,19 +13,16 @@ function DestinationImage({ slug, label }: { slug: string; label: string }) {
   const candidates = destinationImageCandidates(slug);
   const [idx, setIdx] = useState(0);
 
-  const bust = useMemo(
-    () => (process.env.NODE_ENV === "development" ? "?v=dev" : ""),
-    []
-  );
-
   const src = candidates[Math.min(idx, candidates.length - 1)];
 
   return (
-    <img
-      src={`${src}${bust}`}
+    <Image
+      src={src}
       alt={label}
       className="h-full w-full object-cover"
-      loading="lazy"
+      width={800}
+      height={480}
+      sizes="220px"
       draggable={false}
       onError={() => setIdx((v) => v + 1)}
     />

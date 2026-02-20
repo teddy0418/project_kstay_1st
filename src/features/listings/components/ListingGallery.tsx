@@ -1,6 +1,7 @@
 "use client";
 
 import { useMemo, useState } from "react";
+import Image from "next/image";
 import { X } from "lucide-react";
 import { cn } from "@/lib/utils";
 
@@ -19,7 +20,7 @@ function Tile({
 }) {
   return (
     <button type="button" onClick={onClick} className={cn("relative overflow-hidden rounded-xl", className)}>
-      <img src={src} alt={alt} className="absolute inset-0 h-full w-full object-cover" loading="lazy" />
+      <Image src={src} alt={alt} className="absolute inset-0 h-full w-full object-cover" fill sizes="50vw" />
       {overlay}
     </button>
   );
@@ -161,7 +162,7 @@ export default function ListingGallery({
               <div className="mt-5 grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
                 {safe.map((src) => (
                   <div key={src} className="relative aspect-[4/3] overflow-hidden rounded-2xl bg-neutral-900">
-                    <img src={src} alt={title} className="h-full w-full object-cover" loading="lazy" />
+                    <Image src={src} alt={title} className="h-full w-full object-cover" fill sizes="33vw" />
                   </div>
                 ))}
               </div>

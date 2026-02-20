@@ -10,7 +10,7 @@ type AuthCtx = {
   user: AuthUser | null;
   isAuthed: boolean;
   isLoading: boolean;
-  signInWithGoogle: (nextPath?: string) => Promise<void>;
+  signInWithGoogle: (nextPath?: string) => Promise<unknown>;
   signOut: (callbackUrl?: string) => Promise<void>;
 };
 
@@ -34,7 +34,7 @@ export default function AuthProvider({
 
   const signInWithGoogle = async (nextPath?: string) => {
     const callbackUrl = nextPath && nextPath.startsWith("/") ? nextPath : "/";
-    await nextAuthSignIn("google", { callbackUrl });
+    return nextAuthSignIn("google", { callbackUrl });
   };
 
   const signOut = async (callbackUrl = "/") => {

@@ -1,4 +1,3 @@
-/* eslint-disable no-restricted-globals */
 import { NetworkOnly, Serwist, type PrecacheEntry } from "serwist";
 import { defaultCache } from "@serwist/next/worker";
 

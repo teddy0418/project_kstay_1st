@@ -1,6 +1,7 @@
 "use client";
 
 import Link from "next/link";
+import Image from "next/image";
 import { useParams } from "next/navigation";
 import Container from "@/components/layout/Container";
 import { useI18n } from "@/components/ui/LanguageProvider";
@@ -33,7 +34,14 @@ export default function BoardDetailPage() {
 
       <div className="mt-6 overflow-hidden rounded-2xl border border-neutral-200 bg-white shadow-sm">
         <div className="h-[260px] bg-neutral-100">
-          <img src={post.cover} alt={post.title[lang]} className="h-full w-full object-cover" />
+          <Image
+            src={post.cover}
+            alt={post.title[lang]}
+            className="h-full w-full object-cover"
+            width={1200}
+            height={520}
+            sizes="100vw"
+          />
         </div>
         <div className="p-6">
           <div className="text-2xl font-extrabold tracking-tight">{post.title[lang]}</div>

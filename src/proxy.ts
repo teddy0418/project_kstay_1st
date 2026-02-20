@@ -14,7 +14,7 @@ export default withAuth({
       }
 
       if (pathname.startsWith("/host")) {
-        return role === "HOST" || role === "ADMIN";
+        return !!token;
       }
 
       return !!token;

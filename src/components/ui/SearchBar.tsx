@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useMemo, useRef, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import { Search } from "lucide-react";
 import type { DateRange } from "react-day-picker";
@@ -79,8 +79,11 @@ export default function SearchBar() {
 
   const totalGuests = Math.max(0, adults + children);
 
-  const formatShort = (d: Date) =>
-    new Intl.DateTimeFormat(locale, { month: "short", day: "numeric" }).format(d);
+  const shortDateFormatter = useMemo(
+    () => new Intl.DateTimeFormat(locale, { month: "short", day: "numeric" }),
+    [locale]
+  );
+  const formatShort = useCallback((d: Date) => shortDateFormatter.format(d), [shortDateFormatter]);
 
   const dateLabel = useMemo(() => {
     const r = range ?? defaultRange;
@@ -89,7 +92,7 @@ export default function SearchBar() {
     const n = nightsBetween(from, to);
     const nightWord = n === 1 ? t("night") : t("nights");
     return `${formatShort(from)} – ${formatShort(to)} (${n} ${nightWord})`;
-  }, [range, defaultRange, locale, t]);
+  }, [range, defaultRange, formatShort, t]);
 
   const whereLabel = where.trim() ? where.trim() : t("where_to");
   const guestsLabel = `${t("guests")} ${totalGuests || 2}`;

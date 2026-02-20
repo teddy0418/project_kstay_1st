@@ -18,10 +18,6 @@ export async function POST(req: Request) {
     return apiError(401, "UNAUTHORIZED", "Login required");
   }
 
-  if (user.role !== "HOST" && user.role !== "ADMIN") {
-    return apiError(403, "FORBIDDEN", "Host role required");
-  }
-
   const body = (await req.json()) as Body;
   const title = String(body.title ?? "").trim();
   const city = String(body.city ?? "").trim();
@@ -38,6 +34,13 @@ export async function POST(req: Request) {
     create: { userId: user.id, displayName: user.name },
     update: { displayName: user.name },
   });
+
+  if (user.role !== "ADMIN") {
+    await prisma.user.update({
+      where: { id: user.id },
+      data: { role: "HOST" },
+    });
+  }
 
   const listing = await prisma.listing.create({
     data: {

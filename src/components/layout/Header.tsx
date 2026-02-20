@@ -43,7 +43,6 @@ export default function Header() {
 
   const role = user?.role?.toLowerCase() ?? null;
   const loggedIn = isAuthed;
-  const isHost = role === "host" || role === "admin";
   const isAdmin = role === "admin";
 
   useEffect(() => {
@@ -72,8 +71,9 @@ export default function Header() {
   };
 
   const guardHost = () => {
-    if (!isHost) {
-      openAuthModal({ next: `${pathname || "/"}${window.location.search || ""}`, role: "HOST" });
+    if (!loggedIn) {
+      openAuthModal({ next: "/host", role: "HOST" });
+      setOpenMenu(false);
       return;
     }
     router.push("/host");

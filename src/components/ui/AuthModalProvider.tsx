@@ -5,6 +5,7 @@ import { X } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { useAuth, type UserRole } from "@/components/ui/AuthProvider";
 import { useComingSoon } from "@/hooks/useComingSoon";
+import { useOptionalToast } from "@/components/ui/ToastProvider";
 
 type OpenOpts = {
   next?: string;
@@ -28,7 +29,10 @@ export default function AuthModalProvider({ children }: { children: React.ReactN
     setIsOpen(true);
   };
 
-  const close = () => setIsOpen(false);
+  const close = () => {
+    setIsOpen(false);
+    setNextPath(undefined);
+  };
 
   const value = useMemo(() => ({ isOpen, open, close }), [isOpen]);
 
@@ -56,9 +60,11 @@ function AuthModal({
   nextPath?: string;
 }) {
   const router = useRouter();
-  const { signInWithGoogle } = useAuth();
+  const { signInWithGoogle, isAuthed } = useAuth();
   const comingSoon = useComingSoon();
+  const toastApi = useOptionalToast();
   const panelRef = useRef<HTMLDivElement | null>(null);
+  const [isSubmitting, setIsSubmitting] = useState(false);
 
   useEffect(() => {
     if (!isOpen) return;
@@ -80,16 +86,41 @@ function AuthModal({
     };
   }, [isOpen, onClose]);
 
+  useEffect(() => {
+    if (!isOpen) {
+      setIsSubmitting(false);
+    }
+  }, [isOpen]);
+
+  useEffect(() => {
+    if (!isOpen || !isAuthed || !nextPath) return;
+    const safeNext = nextPath.startsWith("/") ? nextPath : "/";
+    onClose();
+    router.replace(safeNext);
+    router.refresh();
+  }, [isAuthed, isOpen, nextPath, onClose, router]);
+
   if (!isOpen) return null;
 
   const onGoogle = async () => {
+    if (isSubmitting) return;
     const callbackUrl =
       nextPath && nextPath.startsWith("/")
         ? nextPath
         : `${window.location.pathname}${window.location.search || ""}`;
-    onClose();
-    await signInWithGoogle(callbackUrl);
-    router.refresh();
+
+    setIsSubmitting(true);
+    try {
+      await signInWithGoogle(callbackUrl);
+      onClose();
+    } catch {
+      if (toastApi) {
+        toastApi.toast("Google login failed. Please try again.");
+      } else {
+        alert("Google login failed. Please try again.");
+      }
+      setIsSubmitting(false);
+    }
   };
 
   return (
@@ -125,9 +156,10 @@ function AuthModal({
               <button
                 type="button"
                 onClick={onGoogle}
-                className="w-full rounded-2xl bg-neutral-900 px-5 py-4 text-white text-sm font-semibold hover:opacity-95 transition"
+                disabled={isSubmitting}
+                className="w-full rounded-2xl bg-neutral-900 px-5 py-4 text-white text-sm font-semibold hover:opacity-95 transition disabled:opacity-60"
               >
-                Continue with Google
+                {isSubmitting ? "Signing in..." : "Continue with Google"}
               </button>
 
               <button

@@ -2,6 +2,7 @@
 
 import { useMemo, useState } from "react";
 import Container from "@/components/layout/Container";
+import Image from "next/image";
 import { useAuthModal } from "@/components/ui/auth/AuthModalProvider";
 import { useAuth } from "@/components/ui/AuthProvider";
 import { useI18n } from "@/components/ui/LanguageProvider";
@@ -104,7 +105,14 @@ export default function ProfilePage() {
           <div className="flex items-center gap-4">
             <div className="h-16 w-16 overflow-hidden rounded-full border border-neutral-200 bg-neutral-100 grid place-items-center">
               {photoUrl ? (
-                <img src={photoUrl} alt="Profile" className="h-full w-full object-cover" />
+                <Image
+                  src={photoUrl}
+                  alt="Profile"
+                  width={64}
+                  height={64}
+                  className="h-full w-full object-cover"
+                  unoptimized
+                />
               ) : (
                 <div className="text-lg font-semibold text-neutral-700">{initial}</div>
               )}
