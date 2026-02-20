@@ -2,6 +2,18 @@ import type { NextAuthOptions } from "next-auth";
 import GoogleProvider from "next-auth/providers/google";
 import { prisma } from "@/lib/db";
 
+const DEFAULT_ADMIN_EMAILS = ["official.kstay@gmail.com"];
+
+function isAdminEmail(email: string) {
+  const normalized = email.trim().toLowerCase();
+  const configured = String(process.env.ADMIN_EMAILS ?? "")
+    .split(",")
+    .map((v) => v.trim().toLowerCase())
+    .filter(Boolean);
+  const allowlist = new Set([...DEFAULT_ADMIN_EMAILS, ...configured]);
+  return allowlist.has(normalized);
+}
+
 export const authOptions: NextAuthOptions = {
   providers: [
     GoogleProvider({
@@ -18,24 +30,28 @@ export const authOptions: NextAuthOptions = {
       if (account?.provider !== "google") return false;
       if (!user.email) return false;
 
+      const normalizedEmail = user.email.trim().toLowerCase();
+      const shouldBeAdmin = isAdminEmail(normalizedEmail);
       const existing = await prisma.user.findUnique({
-        where: { email: user.email },
+        where: { email: normalizedEmail },
       });
 
       const dbUser = existing
         ? await prisma.user.update({
             where: { id: existing.id },
             data: {
+              email: normalizedEmail,
               name: user.name || existing.name,
               image: user.image || existing.image,
+              role: shouldBeAdmin ? "ADMIN" : existing.role,
             },
           })
         : await prisma.user.create({
             data: {
-              email: user.email,
+              email: normalizedEmail,
               name: user.name || "Guest",
               image: user.image,
-              role: "GUEST",
+              role: shouldBeAdmin ? "ADMIN" : "GUEST",
             },
           });
 
