@@ -73,7 +73,7 @@ async function main() {
       data: [
         {
           listingId: listing.id,
-          url: "https://images.unsplash.com/photo-1522708323590-d24dbb6b0267?auto=format&fit=crop&w=1600&q=80",
+          url: "https://images.unsplash.com/photo-1586023492125-27b2c045efd7?auto=format&fit=crop&w=1600&q=80",
           sortOrder: 0,
         },
         {

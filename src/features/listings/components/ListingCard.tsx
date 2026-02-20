@@ -7,11 +7,20 @@ import { useMemo } from "react";
 import { useWishlist } from "@/components/ui/WishlistProvider";
 import { useAuth } from "@/components/ui/AuthProvider";
 import { useAuthModal } from "@/components/ui/AuthModalProvider";
+import { totalGuestPriceKRW } from "@/lib/policy";
+import { formatMainFromKRW } from "@/lib/currency";
+import { useCurrency } from "@/components/ui/CurrencyProvider";
+
+function toNumber(value: unknown, fallback = 0) {
+  const n = Number(value);
+  return Number.isFinite(n) ? n : fallback;
+}
 
 export default function ListingCard(props: Record<string, unknown>) {
   const { isAuthed } = useAuth();
   const { open } = useAuthModal();
   const { has, toggle } = useWishlist();
+  const { currency } = useCurrency();
 
   const listing = (props?.listing ?? props) as Record<string, unknown>;
   const id = String(listing?.id ?? "");
@@ -20,8 +29,13 @@ export default function ListingCard(props: Record<string, unknown>) {
   const title = (listing?.title ?? listing?.name ?? "Stay") as string;
   const area = (listing?.area ?? listing?.neighborhood ?? "") as string;
   const city = (listing?.city ?? listing?.region ?? "") as string;
-  const rating = (listing?.rating ?? 0) as number;
-  const priceUsd = (listing?.priceUsd ?? listing?.priceUSD ?? listing?.pricePerNightUsd ?? listing?.usd ?? 0) as number;
+  const rating = toNumber(listing?.rating, 0);
+  const pricePerNightKRW = toNumber(
+    listing?.pricePerNightKRW ?? listing?.basePriceKrw ?? listing?.priceKrw,
+    0
+  );
+  const nightlyAllInKRW = totalGuestPriceKRW(Math.max(0, pricePerNightKRW));
+  const nightlyText = formatMainFromKRW(nightlyAllInKRW, currency);
 
   const image = useMemo(() => {
     const arr = listing?.images;
@@ -79,7 +93,7 @@ export default function ListingCard(props: Record<string, unknown>) {
           </div>
           <div className="mt-1 text-xs text-neutral-500 truncate">{title}</div>
           <div className="mt-2 text-sm font-semibold">
-            ${priceUsd} <span className="font-normal text-neutral-500">/ night</span>
+            {nightlyText} <span className="font-normal text-neutral-500">/ night</span>
           </div>
           <div className="mt-1 text-xs text-neutral-500">Tax & Service Fee Included</div>
         </div>

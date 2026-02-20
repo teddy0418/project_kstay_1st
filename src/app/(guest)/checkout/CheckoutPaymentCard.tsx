@@ -29,6 +29,13 @@ type CreateBookingResponse = {
   };
 };
 
+function resolvePayMethod() {
+  const raw = (process.env.NEXT_PUBLIC_PORTONE_PAY_METHOD || "").trim().toUpperCase();
+  if (raw === "CARD") return PaymentPayMethod.CARD;
+  if (raw === "EASY_PAY") return PaymentPayMethod.EASY_PAY;
+  return PaymentPayMethod.EASY_PAY;
+}
+
 export default function CheckoutPaymentCard(props: Props) {
   const router = useRouter();
   const { user } = useAuth();
@@ -130,6 +137,7 @@ export default function CheckoutPaymentCard(props: Props) {
           throw new ApiClientError(500, "INTERNAL_ERROR", "PortOne payment request data is missing");
         }
 
+        const payMethod = resolvePayMethod();
         const result = await requestPayment({
           storeId: created.portone.storeId,
           channelKey: created.portone.channelKey,
@@ -137,7 +145,7 @@ export default function CheckoutPaymentCard(props: Props) {
           orderName: created.portone.orderName,
           totalAmount: created.portone.totalAmount,
           currency: created.portone.currency === "KRW" ? PaymentCurrency.KRW : PaymentCurrency.USD,
-          payMethod: PaymentPayMethod.CARD,
+          payMethod,
           customer: {
             fullName: guestName.trim() || user?.name || c.guestFallback,
             email: guestEmail,
@@ -165,6 +173,8 @@ export default function CheckoutPaymentCard(props: Props) {
       router.refresh();
     } catch (err) {
       if (err instanceof ApiClientError) {
+        alert(err.message);
+      } else if (err instanceof Error && err.message) {
         alert(err.message);
       } else {
         alert(c.requestFailed);

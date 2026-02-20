@@ -98,6 +98,10 @@ model Listing {
   images ListingImage[]
   bookings Booking[]
   wishlist WishlistItem[]
+
+  @@index([status, createdAt])
+  @@index([hostId, createdAt])
+  @@index([hostId, status, createdAt])
 }
 
 model ListingImage {
@@ -147,6 +151,9 @@ model Booking {
   @@index([listingId])
   @@index([guestUserId])
   @@index([publicToken])
+  @@index([status, createdAt])
+  @@index([listingId, status])
+  @@index([guestUserId, status])
 }
 
 model Payment {
@@ -165,6 +172,7 @@ model Payment {
   booking    Booking @relation(fields: [bookingId], references: [id], onDelete: Cascade)
 
   @@index([bookingId])
+  @@index([bookingId, createdAt])
   @@index([providerPaymentId])
 }
 
@@ -193,4 +201,5 @@ model WishlistItem {
 
   @@id([userId, listingId])
   @@index([listingId])
+  @@index([userId, createdAt])
 }

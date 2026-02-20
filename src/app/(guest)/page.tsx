@@ -1,6 +1,6 @@
 import Container from "@/components/layout/Container";
 import PopularDestinations from "@/features/home/components/PopularDestinations";
-import ListingCard from "@/features/listings/components/ListingCard";
+import RecommendedListings from "@/features/home/components/RecommendedListings";
 import { getPublicListings } from "@/lib/repositories/listings";
 import { getServerLang } from "@/lib/i18n/server";
 
@@ -39,11 +39,7 @@ export default async function Page() {
           </div>
         </div>
 
-        <div className="mt-6 grid gap-x-6 gap-y-10 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
-          {listings.slice(0, 8).map((l) => (
-            <ListingCard key={l.id} listing={l} />
-          ))}
-        </div>
+        <RecommendedListings listings={listings} />
       </Container>
     </>
   );

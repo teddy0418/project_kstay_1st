@@ -1,8 +1,8 @@
 import Container from "@/components/layout/Container";
 import { redirect } from "next/navigation";
-import { listings } from "@/lib/mockData";
 import { diffNights, formatKRW } from "@/lib/format";
 import { calcGuestServiceFeeKRW } from "@/lib/policy";
+import { getPublicListingById } from "@/lib/repositories/listings";
 import CheckoutPaymentCard from "./CheckoutPaymentCard";
 import { getServerLang } from "@/lib/i18n/server";
 
@@ -66,16 +66,17 @@ function safeInt(v: unknown, fallback = 1) {
 export default async function CheckoutPage({
   searchParams,
 }: {
-  searchParams?: { [key: string]: string | string[] | undefined };
+  searchParams?: Promise<{ [key: string]: string | string[] | undefined }>;
 }) {
   const lang = await getServerLang();
   const c = COPY[lang];
-  const listingId = safeStr(searchParams?.listingId);
-  const start = safeStr(searchParams?.start);
-  const end = safeStr(searchParams?.end);
-  const guests = safeInt(searchParams?.guests, 1);
+  const resolvedSearchParams = searchParams ? await searchParams : undefined;
+  const listingId = safeStr(resolvedSearchParams?.listingId);
+  const start = safeStr(resolvedSearchParams?.start);
+  const end = safeStr(resolvedSearchParams?.end);
+  const guests = safeInt(resolvedSearchParams?.guests, 1);
 
-  const listing = listings.find((l) => l.id === listingId);
+  const listing = await getPublicListingById(listingId);
   if (!listing) redirect("/coming-soon");
 
   const nights = diffNights(start, end);

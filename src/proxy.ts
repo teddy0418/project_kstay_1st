@@ -25,11 +25,14 @@ const authMiddleware = withAuth({
   },
 });
 
+type AuthMiddlewareRequest = Parameters<typeof authMiddleware>[0];
+
 export default async function proxy(req: NextRequest, ev: NextFetchEvent) {
   const pathname = req.nextUrl.pathname;
   const protectedRoute = pathname.startsWith("/admin") || pathname.startsWith("/host");
   const response =
-    (protectedRoute ? ((await authMiddleware(req as any, ev)) as NextResponse | undefined) : undefined) ?? NextResponse.next();
+    (protectedRoute ? ((await authMiddleware(req as AuthMiddlewareRequest, ev)) as NextResponse | undefined) : undefined) ??
+    NextResponse.next();
 
   const hasLangCookie = Boolean(req.cookies.get("kstay_lang")?.value || req.cookies.get("kst_lang")?.value);
   if (!hasLangCookie) {

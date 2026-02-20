@@ -1,27 +1,14 @@
-import React from "react";
 import { Webhook } from "@portone/server-sdk";
-import { prisma } from "@/lib/db";
-import { formatCancellationDeadlineKst, formatDateEn, formatUsdFromCents } from "@/lib/bookings/utils";
-import BookingConfirmedEmail from "@/emails/BookingConfirmedEmail";
-import { sendEmailWithResend } from "@/lib/email/resend";
+import {
+  applyFailedOrCancelledPaymentSync,
+  applyInitiatedPaymentSync,
+  applyPaidPaymentSync,
+  createPortoneWebhookEvent,
+  findBookingForPaymentSync,
+} from "@/lib/repositories/payment-processing";
+import { sendBookingConfirmedEmailIfNeeded } from "@/lib/services/booking-confirmation-email";
 
 export const runtime = "nodejs";
-type TransactionClient = Parameters<typeof prisma.$transaction>[0] extends (
-  tx: infer T,
-  ...args: never[]
-) => unknown
-  ? T
-  : never;
-async function getBookingForPayment(paymentId: string) {
-  return prisma.booking.findUnique({
-    where: { publicToken: paymentId },
-    include: {
-      listing: { select: { title: true } },
-      payments: { orderBy: { createdAt: "asc" } },
-    },
-  });
-}
-type BookingForPayment = NonNullable<Awaited<ReturnType<typeof getBookingForPayment>>>;
 
 export async function POST(req: Request) {
   const webhookSecret = String(process.env.PORTONE_WEBHOOK_SECRET ?? "").trim();
@@ -53,16 +40,13 @@ export async function POST(req: Request) {
   const paymentId = getWebhookPaymentId(verified);
 
   try {
-    await prisma.paymentWebhookEvent.create({
-      data: {
-        provider: "PORTONE",
-        webhookId,
-        webhookTimestamp,
-        webhookSignature,
-        payloadRaw,
-        parsedType,
-        paymentId,
-      },
+    await createPortoneWebhookEvent({
+      webhookId,
+      webhookTimestamp,
+      webhookSignature,
+      payloadRaw,
+      parsedType,
+      paymentId,
     });
   } catch (e) {
     if (isUniqueConflict(e)) {
@@ -131,41 +115,22 @@ async function syncPaymentAndBookingFromPortOne(paymentId: string) {
   const pgTid = typeof parsed?.transactionId === "string" ? parsed.transactionId : null;
   const storeId = typeof parsed?.storeId === "string" ? parsed.storeId : null;
 
-  const booking = await getBookingForPayment(paymentId);
+  const booking = await findBookingForPaymentSync(paymentId);
   if (!booking) return;
 
   const targetPayment =
-    booking.payments.find((p: BookingForPayment["payments"][number]) => p.providerPaymentId === paymentId) ??
+    booking.payments.find((p) => p.providerPaymentId === paymentId) ??
     booking.payments[0];
 
   if (paymentStatus === "PAID") {
-    const confirmed = await prisma.$transaction(async (tx: TransactionClient) => {
-      const updatedBooking = await tx.booking.update({
-        where: { id: booking.id },
-        data: {
-          status: "CONFIRMED",
-          confirmedAt: booking.confirmedAt ?? new Date(),
-        },
-        include: {
-          listing: { select: { title: true } },
-        },
-      });
-
-      if (targetPayment) {
-        await tx.payment.update({
-          where: { id: targetPayment.id },
-          data: {
-            status: "PAID",
-            paidAt: new Date(),
-            providerPaymentId: paymentId,
-            storeId,
-            pgTid,
-            rawJson: paymentRawJson,
-          },
-        });
-      }
-
-      return updatedBooking;
+    const confirmed = await applyPaidPaymentSync({
+      bookingId: booking.id,
+      currentConfirmedAt: booking.confirmedAt,
+      paymentRowId: targetPayment?.id,
+      paymentId,
+      storeId,
+      pgTid,
+      paymentRawJson,
     });
 
     await sendBookingConfirmedEmailIfNeeded(confirmed.id);
@@ -173,40 +138,25 @@ async function syncPaymentAndBookingFromPortOne(paymentId: string) {
   }
 
   if (paymentStatus === "FAILED" || paymentStatus === "CANCELLED" || paymentStatus === "PARTIAL_CANCELLED") {
-    await prisma.$transaction(async (tx: TransactionClient) => {
-      await tx.booking.update({
-        where: { id: booking.id },
-        data: {
-          status: "CANCELLED",
-        },
-      });
-
-      if (targetPayment) {
-        await tx.payment.update({
-          where: { id: targetPayment.id },
-          data: {
-            status: paymentStatus === "FAILED" ? "FAILED" : "CANCELLED",
-            providerPaymentId: paymentId,
-            storeId,
-            pgTid,
-            rawJson: paymentRawJson,
-          },
-        });
-      }
+    await applyFailedOrCancelledPaymentSync({
+      bookingId: booking.id,
+      paymentRowId: targetPayment?.id,
+      paymentStatus: paymentStatus === "FAILED" ? "FAILED" : "CANCELLED",
+      paymentId,
+      storeId,
+      pgTid,
+      paymentRawJson,
     });
     return;
   }
 
   if (targetPayment) {
-    await prisma.payment.update({
-      where: { id: targetPayment.id },
-      data: {
-        status: "INITIATED",
-        providerPaymentId: paymentId,
-        storeId,
-        pgTid,
-        rawJson: paymentRawJson,
-      },
+    await applyInitiatedPaymentSync({
+      paymentRowId: targetPayment.id,
+      paymentId,
+      storeId,
+      pgTid,
+      paymentRawJson,
     });
   }
 }
@@ -219,45 +169,3 @@ function safeParseJson(value: string): { status?: unknown; transactionId?: unkno
   }
 }
 
-async function sendBookingConfirmedEmailIfNeeded(bookingId: string) {
-  const booking = await prisma.booking.findUnique({
-    where: { id: bookingId },
-    include: {
-      listing: { select: { title: true } },
-    },
-  });
-  if (!booking || booking.confirmationEmailSentAt || !booking.guestEmail) return;
-
-  try {
-    await sendEmailWithResend({
-      to: booking.guestEmail,
-      subject: "KSTAY booking confirmed",
-      react: React.createElement(BookingConfirmedEmail, {
-        bookingToken: booking.publicToken,
-        listingTitle: booking.listing.title,
-        checkIn: formatDateEn(booking.checkIn),
-        checkOut: formatDateEn(booking.checkOut),
-        guestsText: `${booking.guestsAdults} adults, ${booking.guestsChildren} children, ${booking.guestsInfants} infants, ${booking.guestsPets} pets`,
-        totalText: `${formatUsdFromCents(booking.totalUsd)} / ₩${booking.totalKrw.toLocaleString()}`,
-        cancellationDeadlineKst: formatCancellationDeadlineKst(booking.cancellationDeadlineKst),
-        manageUrl: `${process.env.NEXT_PUBLIC_SITE_URL || process.env.AUTH_URL || "http://localhost:3001"}/profile`,
-      }),
-    });
-
-    await prisma.booking.updateMany({
-      where: {
-        id: booking.id,
-        confirmationEmailSentAt: null,
-      },
-      data: {
-        confirmationEmailSentAt: new Date(),
-      },
-    });
-  } catch (e) {
-    console.error("[portone-webhook] email send failed", {
-      bookingId: booking.id,
-      token: booking.publicToken,
-      error: e instanceof Error ? e.message : String(e),
-    });
-  }
-}

@@ -91,3 +91,14 @@
 body {
   font-family: var(--font-sans);
 }
+
+/* 달력이 좁은 영역(예: 상세 예약 위젯)에서 넘치지 않도록 */
+.rdp-compact .rdp-month_grid,
+.rdp-compact .rdp-day {
+  min-width: 0;
+}
+.rdp-compact .rdp-day_button {
+  width: 2rem;
+  height: 2rem;
+  font-size: 0.875rem;
+}

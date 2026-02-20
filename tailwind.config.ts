@@ -1,4 +1,4 @@
-﻿import type { Config } from "tailwindcss";
+import type { Config } from "tailwindcss";
 
 const config: Config = {
   content: [
@@ -10,6 +10,10 @@ const config: Config = {
   ],
   theme: {
     extend: {
+      screens: {
+        // Browse: show 목록/지도 tabs below this; desktop two-column above (배포/모바일 뷰포트 대비 넉넉하게)
+        browseDesktop: "1920px",
+      },
       colors: {
         brand: {
           DEFAULT: "hsl(var(--brand) / <alpha-value>)",

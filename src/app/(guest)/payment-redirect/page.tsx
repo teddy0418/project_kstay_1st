@@ -5,6 +5,13 @@ import Link from "next/link";
 import { useRouter, useSearchParams } from "next/navigation";
 import { useI18n } from "@/components/ui/LanguageProvider";
 
+type BookingLookup = {
+  listing: { id: string };
+  checkIn: string;
+  checkOut: string;
+  guests: { adults: number };
+};
+
 export default function PaymentRedirectPage() {
   const { lang } = useI18n();
   const c =
@@ -45,13 +52,54 @@ export default function PaymentRedirectPage() {
   const paymentId = searchParams.get("paymentId") || "";
   const code = searchParams.get("code") || "";
   const message = searchParams.get("message") || "";
+  const isFailure = code.startsWith("FAILURE_");
 
   useEffect(() => {
     if (!paymentId) return;
     const qs = searchParams.toString();
+
+    if (isFailure) {
+      void (async () => {
+        try {
+          const res = await fetch(`/api/bookings/public/${encodeURIComponent(paymentId)}`, {
+            cache: "no-store",
+          });
+          if (!res.ok) {
+            router.replace("/?payment=cancelled");
+            return;
+          }
+          const text = await res.text();
+          let json: { data?: BookingLookup } = {};
+          if (text) {
+            try {
+              json = JSON.parse(text) as { data?: BookingLookup };
+            } catch {
+              router.replace("/?payment=cancelled");
+              return;
+            }
+          }
+          const booking = json.data;
+          if (!booking?.listing?.id) {
+            router.replace("/?payment=cancelled");
+            return;
+          }
+          const next = new URLSearchParams();
+          if (booking.checkIn) next.set("start", booking.checkIn.slice(0, 10));
+          if (booking.checkOut) next.set("end", booking.checkOut.slice(0, 10));
+          if (booking.guests?.adults) next.set("guests", String(booking.guests.adults));
+          next.set("payment", "cancelled");
+          next.set("code", code || "FAILURE");
+          router.replace(`/listings/${encodeURIComponent(booking.listing.id)}?${next.toString()}`);
+        } catch {
+          router.replace("/?payment=cancelled");
+        }
+      })();
+      return;
+    }
+
     const target = `/checkout/success/${encodeURIComponent(paymentId)}${qs ? `?${qs}` : ""}`;
     router.replace(target);
-  }, [paymentId, router, searchParams]);
+  }, [code, isFailure, paymentId, router, searchParams]);
 
   if (!paymentId) {
     return (

@@ -3,8 +3,7 @@
 import { useEffect, useMemo, useRef } from "react";
 import type { Listing } from "@/types";
 import L from "leaflet";
-import { MapContainer, TileLayer, Marker, Popup, useMap, useMapEvents } from "react-leaflet";
-import { formatKRW } from "@/lib/format";
+import { MapContainer, TileLayer, Marker, useMap, useMapEvents } from "react-leaflet";
 import { totalGuestPriceKRW } from "@/lib/policy";
 import { formatMainCompactFromKRW } from "@/lib/currency";
 import { useCurrency } from "@/components/ui/CurrencyProvider";
@@ -79,6 +78,7 @@ function MapEvents({
 export default function LeafletMap({
   items,
   hoveredId,
+  selectedId = null,
   onHoverChange,
   onMarkerClick,
   onBoundsChange,
@@ -86,6 +86,7 @@ export default function LeafletMap({
 }: {
   items: Listing[];
   hoveredId: string | null;
+  selectedId?: string | null;
   onHoverChange?: (id: string | null) => void;
   onMarkerClick?: (id: string) => void;
   onBoundsChange?: (b: ViewBounds) => void;
@@ -105,7 +106,7 @@ export default function LeafletMap({
       <MapEvents onBoundsChange={onBoundsChange} onUserMoved={onUserMoved} />
 
       {items.map((l) => {
-        const active = hoveredId === l.id;
+        const active = selectedId === l.id;
         const allIn = totalGuestPriceKRW(l.pricePerNightKRW);
         const label = formatMainCompactFromKRW(allIn, currency);
 
@@ -119,21 +120,7 @@ export default function LeafletMap({
               mouseout: () => onHoverChange?.(null),
               click: () => onMarkerClick?.(l.id),
             }}
-          >
-            <Popup>
-              <div style={{ fontSize: 12, lineHeight: 1.3 }}>
-                <div style={{ fontWeight: 800 }}>{l.location}</div>
-                <div>{l.title}</div>
-                <div style={{ marginTop: 6, fontWeight: 800 }}>
-                  {label} / night{" "}
-                  <span style={{ opacity: 0.7 }}> (≈ {formatKRW(allIn)})</span>
-                </div>
-                <div style={{ marginTop: 4, fontSize: 11, opacity: 0.75 }}>
-                  Tax & Service Fee Included
-                </div>
-              </div>
-            </Popup>
-          </Marker>
+          />
         );
       })}
     </MapContainer>

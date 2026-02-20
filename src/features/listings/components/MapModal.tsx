@@ -81,9 +81,12 @@ export default function MapModal({
       </button>
 
       {open && (
-        <div className="fixed inset-0 z-[90] bg-black/45">
-          <div className="absolute left-1/2 top-1/2 w-[min(900px,calc(100%-24px))] -translate-x-1/2 -translate-y-1/2 rounded-3xl bg-white shadow-elevated overflow-hidden">
-            <div className="flex items-center justify-between px-6 py-4 border-b border-neutral-200">
+        <div className="fixed inset-0 z-[90] bg-black/45" onClick={() => setOpen(false)}>
+          <div
+            className="absolute left-1/2 top-1/2 w-[min(900px,calc(100%-24px))] max-h-[calc(100vh-48px)] -translate-x-1/2 -translate-y-1/2 rounded-3xl bg-white shadow-elevated overflow-hidden flex flex-col md:max-h-[90vh] lg:max-h-[85vh]"
+            onClick={(e) => e.stopPropagation()}
+          >
+            <div className="flex shrink-0 items-center justify-between px-4 py-3 border-b border-neutral-200 md:px-6 md:py-4">
               <div className="text-sm font-semibold">{c.location}</div>
               <button
                 type="button"
@@ -95,20 +98,20 @@ export default function MapModal({
               </button>
             </div>
 
-            <div className="px-6 py-4">
-              <div className="flex items-start justify-between gap-3">
-                <div className="text-sm text-neutral-700">{address}</div>
+            <div className="flex flex-1 flex-col overflow-auto px-4 py-3 md:px-6 md:py-4">
+              <div className="flex flex-col gap-2 sm:flex-row sm:items-start sm:justify-between">
+                <div className="text-sm text-neutral-700 min-w-0">{address}</div>
                 <button
                   type="button"
                   onClick={copy}
-                  className="inline-flex items-center gap-2 rounded-full border border-neutral-200 px-3 py-2 text-sm hover:bg-neutral-50"
+                  className="inline-flex shrink-0 items-center gap-2 rounded-full border border-neutral-200 px-3 py-2 text-sm hover:bg-neutral-50"
                 >
                   <Copy className="h-4 w-4" />
                   {c.copy}
                 </button>
               </div>
 
-              <div className="mt-4 overflow-hidden rounded-2xl border border-neutral-200 bg-neutral-100 h-[420px]">
+              <div className="mt-3 overflow-hidden rounded-2xl border border-neutral-200 bg-neutral-100 h-[220px] md:h-[320px] lg:h-[420px]">
                 <iframe title="map" src={src} className="h-full w-full" />
               </div>
 

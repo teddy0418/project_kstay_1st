@@ -320,8 +320,8 @@ function ReviewsSection({ rating, count, lang }: { rating: number; count: number
           </div>
         </div>
 
-        {/* categories */}
-        <div className="grid min-w-0 gap-4 sm:grid-cols-2 lg:grid-cols-2 xl:grid-cols-[repeat(3,minmax(0,1fr))]">
+        {/* categories: 모바일·작은 화면에서 한 줄에 2개씩 */}
+        <div className="grid min-w-0 grid-cols-2 gap-4 xl:grid-cols-3">
           {cats.map((c) => {
             const Icon = c.icon;
             return (
@@ -554,6 +554,17 @@ export default async function ListingDetailPage({
         <ListingGallery title={listing.title} images={listing.images} />
       </div>
 
+      {/* 모바일/작은 화면: 숙소 사진 바로 아래 → 리뷰 카드 위에 예약칸 */}
+      <div className="mt-6 lg:hidden">
+        <BookingWidget
+          listingId={String(listing.id)}
+          basePricePerNightKRW={listing.pricePerNightKRW}
+          defaultStart={start}
+          defaultEnd={end}
+          defaultGuests={Number.isFinite(guests) ? guests : undefined}
+        />
+      </div>
+
       {/* ✅ 사진 아래 3카드 (리뷰/부대시설/위치) */}
       <div className="mt-6 grid gap-4 md:grid-cols-3">
         {/* Reviews card */}
@@ -646,27 +657,16 @@ export default async function ListingDetailPage({
             </div>
           </div>
 
-          {/* Location big map */}
+          {/* Location – map only in modal (no big inline map) */}
           <section className="mt-12">
             <h2 className="text-lg font-semibold">{tx.location}</h2>
-            <div className="mt-3 flex items-center justify-between gap-3">
+            <div className="mt-3 flex flex-wrap items-center justify-between gap-3">
               <div className="text-sm text-neutral-700">{listing.address}</div>
               <MapModal address={listing.address} lat={listing.lat} lng={listing.lng} />
             </div>
-
-            <div className="mt-4 overflow-hidden rounded-2xl border border-neutral-200 bg-neutral-100">
-              {mapSrc ? (
-                <iframe
-                  title="map"
-                  src={mapSrc}
-                  className="h-[360px] w-full"
-                  loading="lazy"
-                  referrerPolicy="no-referrer-when-downgrade"
-                />
-              ) : (
-                <div className="h-[360px] grid place-items-center text-sm text-neutral-500">{tx.mapPreview}</div>
-              )}
-            </div>
+            <p className="mt-2 text-xs text-neutral-500">
+              {lang === "ko" ? "지도는 '지도 보기' 버튼을 눌러 확인하세요." : lang === "ja" ? "地図は「地図を見る」ボタンでご確認ください。" : lang === "zh" ? "请点击「查看地图」按钮查看地图。" : "Click ‘View map’ to see the location."}
+            </p>
           </section>
 
           {/* Reviews */}
@@ -696,8 +696,8 @@ export default async function ListingDetailPage({
           </section>
         </section>
 
-        {/* Right */}
-        <aside className="h-fit lg:sticky lg:top-28">
+        {/* Right: 데스크톱에서만 표시 (모바일은 위 블록 사용) */}
+        <aside className="hidden h-fit lg:block lg:sticky lg:top-28">
           <BookingWidget
             listingId={String(listing.id)}
             basePricePerNightKRW={listing.pricePerNightKRW}

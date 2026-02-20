@@ -42,7 +42,14 @@ async function request<T>(input: string, options: RequestOptions = {}): Promise<
     });
 
     const text = await res.text();
-    const payload = text ? (JSON.parse(text) as unknown) : null;
+    let payload: unknown = null;
+    if (text) {
+      try {
+        payload = JSON.parse(text) as unknown;
+      } catch {
+        payload = null;
+      }
+    }
 
     if (!res.ok) {
       const err = payload as ApiErrorShape | null;
@@ -51,6 +58,9 @@ async function request<T>(input: string, options: RequestOptions = {}): Promise<
       throw new ApiClientError(res.status, code, message);
     }
 
+    if (payload == null) {
+      throw new ApiClientError(500, "INVALID_JSON", "Invalid or empty JSON response");
+    }
     const wrapped = payload as { data: T };
     return wrapped.data;
   } catch (err) {

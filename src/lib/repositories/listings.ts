@@ -55,7 +55,10 @@ export async function getPublicListings(): Promise<Listing[]> {
       orderBy: { createdAt: "desc" },
     });
     if (rows.length > 0) {
-      return rows.map((r) => toListing(r as DbListing));
+      const dbListings = rows.map((r) => toListing(r as DbListing));
+      const dbIds = new Set(dbListings.map((l) => l.id));
+      const fromMock = mockListings.filter((m) => !dbIds.has(m.id));
+      return [...dbListings, ...fromMock];
     }
   } catch {
     // fall through to mock data

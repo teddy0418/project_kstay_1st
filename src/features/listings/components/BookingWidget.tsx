@@ -1,11 +1,14 @@
 "use client";
 
-import { useMemo, useState } from "react";
+import { useCallback, useMemo, useRef, useState } from "react";
 import { useRouter } from "next/navigation";
+import type { DateRange } from "react-day-picker";
 import { totalGuestPriceKRW } from "@/lib/policy";
 import { formatDualPriceFromKRW } from "@/lib/currency";
 import { useCurrency } from "@/components/ui/CurrencyProvider";
 import { useI18n } from "@/components/ui/LanguageProvider";
+import DateDropdown from "@/components/ui/searchbar/DateDropdown";
+import GuestsDropdown from "@/components/ui/searchbar/GuestsDropdown";
 
 function startOfDay(d: Date) {
   const x = new Date(d);
@@ -26,19 +29,17 @@ function toISO(d: Date) {
 function parseISO(s: string) {
   return new Date(`${s}T00:00:00`);
 }
-function nightsBetween(fromISO: string, toISODate: string) {
-  const a = startOfDay(parseISO(fromISO)).getTime();
-  const b = startOfDay(parseISO(toISODate)).getTime();
+function nightsBetween(from: Date, to: Date) {
+  const a = startOfDay(from).getTime();
+  const b = startOfDay(to).getTime();
   const n = Math.round((b - a) / (1000 * 60 * 60 * 24));
   return Math.max(1, n);
 }
 function formatDateEN(d: Date) {
   return new Intl.DateTimeFormat("en-US", { month: "short", day: "numeric", year: "numeric" }).format(d);
 }
-function freeCancelUntilKST(checkInISO: string) {
-  const checkIn = parseISO(checkInISO);
-  const deadline = addDays(checkIn, -7);
-  // KST 기준 23:59 표기용 (실제 TZ 변환은 MVP에서 생략)
+function freeCancelUntilKST(checkInDate: Date) {
+  const deadline = addDays(checkInDate, -7);
   return `${formatDateEN(deadline)} 23:59 (KST)`;
 }
 
@@ -57,17 +58,77 @@ export default function BookingWidget({
 }) {
   const router = useRouter();
   const { currency } = useCurrency();
-  const { lang } = useI18n();
+  const { lang, t, locale } = useI18n();
+  const today = useMemo(() => startOfDay(new Date()), []);
+  const defaultRange = useMemo<DateRange>(
+    () => ({ from: today, to: addDays(today, 1) }),
+    [today]
+  );
+
+  const initialRange = useMemo((): DateRange => {
+    if (defaultStart && defaultEnd) {
+      const from = parseISO(defaultStart);
+      const to = parseISO(defaultEnd);
+      if (from.getTime() < to.getTime()) return { from, to };
+    }
+    return defaultRange;
+  }, [defaultStart, defaultEnd, defaultRange]);
+
+  const [range, setRange] = useState<DateRange | undefined>(initialRange);
+  const [adults, setAdults] = useState(Math.max(1, defaultGuests ?? 2));
+  const [childCount, setChildCount] = useState(0);
+  const [openPanel, setOpenPanel] = useState<"date" | "guests" | null>(null);
+  const dateRef = useRef<HTMLButtonElement>(null);
+  const guestsRef = useRef<HTMLButtonElement>(null);
+
+  const totalGuests = Math.max(0, adults + childCount);
+  const effectiveRange = useMemo(() => {
+    if (range?.from) {
+      const to = range.to && range.to > range.from ? range.to : addDays(range.from, 1);
+      return { from: range.from, to };
+    }
+    return { from: today, to: addDays(today, 1) };
+  }, [range?.from, range?.to, today]);
+  const nights = useMemo(
+    () => nightsBetween(effectiveRange.from, effectiveRange.to),
+    [effectiveRange.from, effectiveRange.to]
+  );
+  const checkInISO = toISO(effectiveRange.from);
+  const checkOutISO = toISO(effectiveRange.to);
+
+  const nightlyAllInKRW = totalGuestPriceKRW(basePricePerNightKRW);
+  const totalKRW = nightlyAllInKRW * nights;
+  const totalDual = formatDualPriceFromKRW(totalKRW, currency);
+  const nightlyDual = formatDualPriceFromKRW(nightlyAllInKRW, currency);
+  const cancelText = freeCancelUntilKST(effectiveRange.from);
+
+  const shortDateFormatter = useMemo(
+    () => new Intl.DateTimeFormat(locale, { month: "short", day: "numeric" }),
+    [locale]
+  );
+  const formatShort = useCallback((d: Date) => shortDateFormatter.format(d), [shortDateFormatter]);
+  const dateLabel = useMemo(() => {
+    const n = nights;
+    const nightWord = n === 1 ? t("night") : t("nights");
+    return `${formatShort(effectiveRange.from)} – ${formatShort(effectiveRange.to)} (${n} ${nightWord})`;
+  }, [effectiveRange, formatShort, nights, t]);
+  const guestsLabel = `${t("guests")} ${totalGuests || 2}`;
+
+  const reserve = () => {
+    const params = new URLSearchParams();
+    params.set("listingId", String(listingId));
+    params.set("start", checkInISO);
+    params.set("end", checkOutISO);
+    params.set("guests", String(totalGuests));
+    router.push(`/checkout?${params.toString()}`);
+  };
+
   const c =
     lang === "ko"
       ? {
           total: "총 결제금액",
           included: "세금/서비스 요금 포함 · (약 {approx})",
           perNight: "1박 기준",
-          checkIn: "체크인",
-          checkOut: "체크아웃",
-          guests: "인원",
-          guest: "명",
           freeCancel: "무료 취소 가능 기한",
           reserve: "예약하기",
           notCharged: "아직 결제되지 않습니다. (MVP)",
@@ -77,10 +138,6 @@ export default function BookingWidget({
             total: "合計金額",
             included: "税・サービス料込み · (約 {approx})",
             perNight: "1泊あたり",
-            checkIn: "チェックイン",
-            checkOut: "チェックアウト",
-            guests: "人数",
-            guest: "名",
             freeCancel: "無料キャンセル期限",
             reserve: "予約する",
             notCharged: "まだ課金されません。(MVP)",
@@ -90,10 +147,6 @@ export default function BookingWidget({
               total: "总金额",
               included: "含税及服务费 · (约 {approx})",
               perNight: "每晚",
-              checkIn: "入住",
-              checkOut: "退房",
-              guests: "人数",
-              guest: "位",
               freeCancel: "免费取消截止",
               reserve: "预订",
               notCharged: "目前不会扣款。(MVP)",
@@ -102,62 +155,10 @@ export default function BookingWidget({
               total: "Total",
               included: "Tax & service fee included · (≈ {approx})",
               perNight: "per night",
-              checkIn: "CHECK-IN",
-              checkOut: "CHECK-OUT",
-              guests: "GUESTS",
-              guest: "guest",
               freeCancel: "Free cancellation until",
               reserve: "Reserve",
               notCharged: "You won't be charged yet. (MVP)",
             };
-
-  const today = useMemo(() => startOfDay(new Date()), []);
-  const isoToday = toISO(today);
-  const isoTomorrow = toISO(addDays(today, 1));
-
-  const [checkIn, setCheckIn] = useState(defaultStart ?? isoToday);
-  const [checkOut, setCheckOut] = useState(defaultEnd ?? isoTomorrow);
-  const [guests, setGuests] = useState(Math.max(1, defaultGuests ?? 2));
-
-  // keep valid
-  const nights = useMemo(() => nightsBetween(checkIn, checkOut), [checkIn, checkOut]);
-
-  const nightlyAllInKRW = totalGuestPriceKRW(basePricePerNightKRW);
-  const totalKRW = nightlyAllInKRW * nights;
-
-  const totalDual = formatDualPriceFromKRW(totalKRW, currency);
-  const nightlyDual = formatDualPriceFromKRW(nightlyAllInKRW, currency);
-
-  const cancelText = freeCancelUntilKST(checkIn);
-
-  const onChangeCheckIn = (v: string) => {
-    setCheckIn(v);
-    // if invalid, push checkout +1
-    if (parseISO(v).getTime() >= parseISO(checkOut).getTime()) {
-      const next = toISO(addDays(parseISO(v), 1));
-      setCheckOut(next);
-    }
-  };
-
-  const onChangeCheckOut = (v: string) => {
-    // if invalid, force +1
-    if (parseISO(v).getTime() <= parseISO(checkIn).getTime()) {
-      const next = toISO(addDays(parseISO(checkIn), 1));
-      setCheckOut(next);
-      return;
-    }
-    setCheckOut(v);
-  };
-
-  const reserve = () => {
-    const params = new URLSearchParams();
-    params.set("listingId", String(listingId));
-    params.set("start", checkIn);
-    params.set("end", checkOut);
-    params.set("guests", String(guests));
-
-    router.push(`/checkout?${params.toString()}`);
-  };
 
   return (
     <div className="rounded-2xl border border-neutral-200 bg-white p-5 shadow-md">
@@ -169,7 +170,6 @@ export default function BookingWidget({
             {c.included.replace("{approx}", totalDual.approxKRW)}
           </div>
         </div>
-
         <div className="text-right text-xs text-neutral-500">
           <div className="font-semibold text-neutral-900">{nightlyDual.main}</div>
           <div>{c.perNight}</div>
@@ -177,44 +177,46 @@ export default function BookingWidget({
       </div>
 
       <div className="mt-4 overflow-hidden rounded-2xl border border-neutral-200">
-        <div className="grid grid-cols-2">
-          <div className="border-r border-neutral-200 p-3">
-            <div className="text-[11px] font-semibold text-neutral-500">{c.checkIn}</div>
-            <input
-              type="date"
-              value={checkIn}
-              min={isoToday}
-              onChange={(e) => onChangeCheckIn(e.target.value)}
-              className="mt-1 w-full bg-transparent text-sm font-semibold text-neutral-900 outline-none"
-            />
-          </div>
-
-          <div className="p-3">
-            <div className="text-[11px] font-semibold text-neutral-500">{c.checkOut}</div>
-            <input
-              type="date"
-              value={checkOut}
-              min={toISO(addDays(parseISO(checkIn), 1))}
-              onChange={(e) => onChangeCheckOut(e.target.value)}
-              className="mt-1 w-full bg-transparent text-sm font-semibold text-neutral-900 outline-none"
-            />
-          </div>
-        </div>
-
-        <div className="border-t border-neutral-200 p-3">
-          <div className="text-[11px] font-semibold text-neutral-500">{c.guests}</div>
-          <select
-            value={guests}
-            onChange={(e) => setGuests(Number(e.target.value))}
-            className="mt-1 w-full bg-transparent text-sm font-semibold text-neutral-900 outline-none"
+        <div className="flex flex-col">
+          <button
+            ref={dateRef}
+            type="button"
+            onClick={() => setOpenPanel((p) => (p === "date" ? null : "date"))}
+            className="flex w-full items-center justify-between border-b border-neutral-200 px-4 py-3 text-left text-sm font-semibold text-neutral-900 hover:bg-neutral-50 transition"
           >
-            {Array.from({ length: 16 }).map((_, i) => (
-              <option key={i + 1} value={i + 1}>
-                {i + 1} {c.guest}
-              </option>
-            ))}
-          </select>
+            <span suppressHydrationWarning>{dateLabel}</span>
+          </button>
+          <button
+            ref={guestsRef}
+            type="button"
+            onClick={() => setOpenPanel((p) => (p === "guests" ? null : "guests"))}
+            className="flex w-full items-center justify-between px-4 py-3 text-left text-sm font-semibold text-neutral-900 hover:bg-neutral-50 transition"
+          >
+            {guestsLabel}
+          </button>
         </div>
+
+        {openPanel === "date" && (
+          <div className="border-t border-neutral-200 p-3">
+            <DateDropdown
+              range={range}
+              onChange={setRange}
+              onClose={() => setOpenPanel(null)}
+              numberOfMonths={1}
+            />
+          </div>
+        )}
+        {openPanel === "guests" && (
+          <div className="border-t border-neutral-200 p-3">
+            <GuestsDropdown
+              adults={adults}
+              childCount={childCount}
+              onChangeAdults={(n) => setAdults(Math.max(0, Math.min(16, n)))}
+              onChangeChildren={(n) => setChildCount(Math.max(0, Math.min(16, n)))}
+              onClose={() => setOpenPanel(null)}
+            />
+          </div>
+        )}
       </div>
 
       <div className="mt-3 rounded-xl bg-neutral-50 px-3 py-2 text-xs text-neutral-700">

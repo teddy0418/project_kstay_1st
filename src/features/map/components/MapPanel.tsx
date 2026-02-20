@@ -16,6 +16,7 @@ const LeafletMap = dynamic(() => import("./LeafletMap"), {
 export default function MapPanel({
   items,
   hoveredId,
+  selectedId,
   onHoverChange,
   onMarkerClick,
   onBoundsChange,
@@ -23,6 +24,7 @@ export default function MapPanel({
 }: {
   items: Listing[];
   hoveredId: string | null;
+  selectedId?: string | null;
   onHoverChange?: (id: string | null) => void;
   onMarkerClick?: (id: string) => void;
   onBoundsChange?: (b: ViewBounds) => void;
@@ -32,6 +34,7 @@ export default function MapPanel({
     <LeafletMap
       items={items}
       hoveredId={hoveredId}
+      selectedId={selectedId ?? null}
       onHoverChange={onHoverChange}
       onMarkerClick={onMarkerClick}
       onBoundsChange={onBoundsChange}

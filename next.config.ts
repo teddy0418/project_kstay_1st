@@ -10,6 +10,13 @@ const nextConfig: NextConfig = {
   images: {
     remotePatterns: [{ protocol: "https", hostname: "images.unsplash.com" }],
   },
+  // Reduce chance of "Unexpected end of JSON input" from loadManifest (empty/corrupt cache)
+  webpack: (config, { dev }) => {
+    if (dev && config.cache) {
+      config.cache = false;
+    }
+    return config;
+  },
 };
 
 export default withSerwist(nextConfig);

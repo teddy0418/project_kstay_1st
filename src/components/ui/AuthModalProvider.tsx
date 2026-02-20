@@ -40,7 +40,7 @@ export default function AuthModalProvider({ children }: { children: React.ReactN
   return (
     <AuthModalContext.Provider value={value}>
       {children}
-      <AuthModal isOpen={isOpen} onClose={close} nextPath={nextPath} />
+      <AuthModal key={`${isOpen ? "open" : "closed"}:${nextPath ?? ""}`} isOpen={isOpen} onClose={close} nextPath={nextPath} />
     </AuthModalContext.Provider>
   );
 }
@@ -87,12 +87,6 @@ function AuthModal({
       document.removeEventListener("mousedown", onDown);
     };
   }, [isOpen, onClose]);
-
-  useEffect(() => {
-    if (!isOpen) {
-      setIsSubmitting(false);
-    }
-  }, [isOpen]);
 
   useEffect(() => {
     if (!isOpen || !isAuthed || !nextPath) return;

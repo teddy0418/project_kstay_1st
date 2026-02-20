@@ -27,22 +27,27 @@ export default function DateDropdown({
   range,
   onChange,
   onClose,
+  numberOfMonths: numberOfMonthsProp,
 }: {
   range: DateRange | undefined;
   onChange: (r: DateRange | undefined) => void;
   onClose: () => void;
+  /** 좁은 영역(예: 상세 예약 위젯)에서는 1로 지정해 한 달만 표시 */
+  numberOfMonths?: number;
 }) {
   const { t, locale } = useI18n();
-  const [months, setMonths] = useState(1);
+  const [monthsResponsive, setMonthsResponsive] = useState(1);
   const today = useMemo(() => startOfDay(new Date()), []);
+  const months = numberOfMonthsProp ?? monthsResponsive;
 
   useEffect(() => {
+    if (numberOfMonthsProp != null) return;
     const mq = window.matchMedia("(min-width: 640px)");
-    const apply = () => setMonths(mq.matches ? 2 : 1);
+    const apply = () => setMonthsResponsive(mq.matches ? 2 : 1);
     apply();
     mq.addEventListener?.("change", apply);
     return () => mq.removeEventListener?.("change", apply);
-  }, []);
+  }, [numberOfMonthsProp]);
 
   const fullDateFormatter = useMemo(
     () => new Intl.DateTimeFormat(locale, { month: "short", day: "numeric", year: "numeric" }),
@@ -84,7 +89,7 @@ export default function DateDropdown({
           <span className="font-semibold">{t("selected")}:</span> {summary}
         </div>
 
-        <div className="rounded-2xl border border-neutral-200 p-3">
+        <div className="min-w-0 overflow-x-auto rounded-2xl border border-neutral-200 p-3">
           <DayPicker
             mode="range"
             selected={range}
@@ -93,6 +98,7 @@ export default function DateDropdown({
             showOutsideDays
             fromDate={today}
             disabled={{ before: today }}
+            className="rdp-compact"
           />
         </div>
 
