@@ -18,6 +18,11 @@ export type Listing = {
   lng: number;
   hostName: string;
   hostBio: string;
+  hostBioI18n?: {
+    ko?: string;
+    ja?: string;
+    zh?: string;
+  };
   hostProfileImageUrl: string;
   checkInTime: string;
 };

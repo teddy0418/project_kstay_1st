@@ -86,6 +86,9 @@ model Listing {
   rating    Float   @default(4.9)
   reviewCount Int  @default(0)
   hostBio   String?
+  hostBioKo String?
+  hostBioJa String?
+  hostBioZh String?
   checkInTime String @default("15:00")
 
   createdAt DateTime @default(now())

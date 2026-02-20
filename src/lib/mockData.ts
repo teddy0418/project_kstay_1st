@@ -45,6 +45,11 @@ export const listings: Listing[] = [
     lng: 127.0376,
     hostName: "Hana",
     hostBio: "Local host in Seoul. Clear English check-in guide and simple house rules.",
+    hostBioI18n: {
+      ko: "서울 로컬 호스트입니다. 명확한 체크인 가이드와 간단한 하우스 룰을 제공합니다.",
+      ja: "ソウル在住ホストです。分かりやすいチェックイン案内とシンプルなハウスルールをご用意しています。",
+      zh: "首尔本地房东，提供清晰的入住指引和简洁的房屋规则。"
+    },
     hostProfileImageUrl: "https://images.unsplash.com/photo-1524504388940-b1c1722653e1?auto=format&fit=crop&w=800&q=80",
     checkInTime: "15:00",
   },
@@ -67,6 +72,11 @@ export const listings: Listing[] = [
     lng: 126.9837,
     hostName: "Jisoo",
     hostBio: "Peaceful hanok stay with detailed instructions for international guests.",
+    hostBioI18n: {
+      ko: "해외 게스트도 쉽게 이용할 수 있도록 상세 안내를 제공하는 조용한 한옥 숙소입니다.",
+      ja: "海外ゲスト向けの詳細案内がある、静かな韓屋ステイです。",
+      zh: "安静的韩屋住宿，并为国际旅客提供详细入住说明。"
+    },
     hostProfileImageUrl: "https://images.unsplash.com/photo-1544723795-3fb6469f5b39?auto=format&fit=crop&w=800&q=80",
     checkInTime: "15:00",
   },
@@ -89,6 +99,11 @@ export const listings: Listing[] = [
     lng: 129.1636,
     hostName: "Sora",
     hostBio: "Busan local host. Quick replies and easy check-in.",
+    hostBioI18n: {
+      ko: "부산 로컬 호스트로 빠른 응답과 쉬운 체크인을 제공합니다.",
+      ja: "釜山ローカルホスト。返信が早く、チェックインも簡単です。",
+      zh: "釜山本地房东，回复及时，入住流程简单。"
+    },
     hostProfileImageUrl: "https://images.unsplash.com/photo-1544005313-94ddf0286df2?auto=format&fit=crop&w=800&q=80",
     checkInTime: "15:00",
   },
@@ -111,6 +126,11 @@ export const listings: Listing[] = [
     lng: 126.3092,
     hostName: "Doyoon",
     hostBio: "Jeju host. Slow, peaceful vibes and clear English guidance.",
+    hostBioI18n: {
+      ko: "제주의 느리고 평화로운 분위기를 담은 숙소로, 명확한 영어 안내를 제공합니다.",
+      ja: "済州のゆったりした空気を感じられる宿で、英語案内も分かりやすいです。",
+      zh: "济州风格的慢节奏宁静住宿，并提供清晰的英文引导。"
+    },
     hostProfileImageUrl: "https://images.unsplash.com/photo-1502685104226-ee32379fefbe?auto=format&fit=crop&w=800&q=80",
     checkInTime: "15:00",
   },
@@ -133,6 +153,11 @@ export const listings: Listing[] = [
     lng: 126.4407,
     hostName: "Seojun",
     hostBio: "Airport-friendly host. Great for late arrivals with quick check-in.",
+    hostBioI18n: {
+      ko: "공항 접근이 좋아 늦은 도착에도 빠르게 체크인할 수 있는 숙소입니다.",
+      ja: "空港アクセスに優れ、深夜到着でもスムーズにチェックインできます。",
+      zh: "靠近机场，适合晚到旅客，可快速办理入住。"
+    },
     hostProfileImageUrl: "https://images.unsplash.com/photo-1535713875002-d1d0cf377fde?auto=format&fit=crop&w=800&q=80",
     checkInTime: "15:00",
   },

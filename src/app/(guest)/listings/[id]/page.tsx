@@ -40,10 +40,14 @@ function freeCancelUntilKST(checkInISO?: string) {
 }
 
 function localizeHostBio(
-  listingId: string,
+  listing: { id: string; hostBio: string; hostBioI18n?: { ko?: string; ja?: string; zh?: string } },
   fallbackBio: string,
   lang: "en" | "ko" | "ja" | "zh"
 ) {
+  if (lang === "ko" && listing.hostBioI18n?.ko) return listing.hostBioI18n.ko;
+  if (lang === "ja" && listing.hostBioI18n?.ja) return listing.hostBioI18n.ja;
+  if (lang === "zh" && listing.hostBioI18n?.zh) return listing.hostBioI18n.zh;
+
   const table: Record<string, Record<"en" | "ko" | "ja" | "zh", string>> = {
     "seoul-seongsu-studio": {
       en: "Local host in Seoul. Clear English check-in guide and simple house rules.",
@@ -77,7 +81,7 @@ function localizeHostBio(
     },
   };
 
-  return table[listingId]?.[lang] ?? fallbackBio;
+  return table[listing.id]?.[lang] ?? fallbackBio;
 }
 
 function ReviewsSection({ rating, count, lang }: { rating: number; count: number; lang: "en" | "ko" | "ja" | "zh" }) {
@@ -635,7 +639,7 @@ export default async function ListingDetailPage({
           <div className="mt-6 rounded-2xl border border-neutral-200 p-5">
             <h2 className="text-lg font-semibold">{tx.about}</h2>
             <p className="mt-3 text-sm text-neutral-700 leading-7 whitespace-pre-line">
-              {localizeHostBio(String(listing.id), listing.hostBio, lang)}
+              {localizeHostBio(listing, listing.hostBio, lang)}
             </p>
             <div className="mt-4 text-xs text-neutral-500">
               {tx.noSurprise}

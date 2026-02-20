@@ -9,6 +9,10 @@ type UpdateBody = {
   address?: string;
   basePriceKrw?: number;
   status?: "PENDING" | "APPROVED" | "REJECTED";
+  hostBio?: string;
+  hostBioKo?: string;
+  hostBioJa?: string;
+  hostBioZh?: string;
 };
 
 export async function PATCH(req: Request, ctx: { params: Promise<{ id: string }> }) {
@@ -35,6 +39,10 @@ export async function PATCH(req: Request, ctx: { params: Promise<{ id: string }>
   const city = body.city?.trim();
   const area = body.area?.trim();
   const address = body.address?.trim();
+  const hostBio = typeof body.hostBio === "string" ? body.hostBio.trim() : undefined;
+  const hostBioKo = typeof body.hostBioKo === "string" ? body.hostBioKo.trim() : undefined;
+  const hostBioJa = typeof body.hostBioJa === "string" ? body.hostBioJa.trim() : undefined;
+  const hostBioZh = typeof body.hostBioZh === "string" ? body.hostBioZh.trim() : undefined;
 
   const updated = await prisma.listing.update({
     where: { id },
@@ -46,6 +54,10 @@ export async function PATCH(req: Request, ctx: { params: Promise<{ id: string }>
       basePriceKrw: typeof body.basePriceKrw === "number" && body.basePriceKrw > 0 ? Math.floor(body.basePriceKrw) : undefined,
       status: body.status,
       location: city && area ? `${city} · ${area}` : undefined,
+      hostBio: hostBio === "" ? null : hostBio,
+      hostBioKo: hostBioKo === "" ? null : hostBioKo,
+      hostBioJa: hostBioJa === "" ? null : hostBioJa,
+      hostBioZh: hostBioZh === "" ? null : hostBioZh,
     },
     select: {
       id: true,

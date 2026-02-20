@@ -10,6 +10,10 @@ type Body = {
   basePriceKrw?: number;
   checkInTime?: string;
   checkOutTime?: string;
+  hostBio?: string;
+  hostBioKo?: string;
+  hostBioJa?: string;
+  hostBioZh?: string;
 };
 
 export async function POST(req: Request) {
@@ -24,6 +28,10 @@ export async function POST(req: Request) {
   const area = String(body.area ?? "").trim();
   const address = String(body.address ?? "").trim();
   const basePriceKrw = Number(body.basePriceKrw ?? 0);
+  const hostBio = String(body.hostBio ?? "").trim() || null;
+  const hostBioKo = String(body.hostBioKo ?? "").trim() || null;
+  const hostBioJa = String(body.hostBioJa ?? "").trim() || null;
+  const hostBioZh = String(body.hostBioZh ?? "").trim() || null;
 
   if (title.length < 2 || city.length < 2 || area.length < 1 || address.length < 5 || basePriceKrw <= 0) {
     return apiError(400, "BAD_REQUEST", "Invalid listing input");
@@ -53,6 +61,10 @@ export async function POST(req: Request) {
       basePriceKrw,
       status: "PENDING",
       checkInTime: body.checkInTime || "15:00",
+      hostBio,
+      hostBioKo,
+      hostBioJa,
+      hostBioZh,
       images: {
         create: [
           {

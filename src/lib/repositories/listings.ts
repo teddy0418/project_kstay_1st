@@ -15,6 +15,9 @@ type DbListing = {
   rating: number;
   reviewCount: number;
   hostBio: string | null;
+  hostBioKo: string | null;
+  hostBioJa: string | null;
+  hostBioZh: string | null;
   checkInTime: string;
   images: Array<{ url: string; sortOrder: number }>;
 };
@@ -33,6 +36,11 @@ function toListing(row: DbListing): Listing {
     lng: row.lng ?? 126.978,
     hostName: "KSTAY Host",
     hostBio: row.hostBio ?? "Welcome to KSTAY.",
+    hostBioI18n: {
+      ko: row.hostBioKo ?? undefined,
+      ja: row.hostBioJa ?? undefined,
+      zh: row.hostBioZh ?? undefined,
+    },
     hostProfileImageUrl:
       "https://images.unsplash.com/photo-1502685104226-ee32379fefbe?auto=format&fit=crop&w=800&q=80",
     checkInTime: row.checkInTime || "15:00",
