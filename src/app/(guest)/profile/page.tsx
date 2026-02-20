@@ -52,11 +52,51 @@ function readRecent(): string[] {
 export default function ProfilePage() {
   const { open: openAuthModal } = useAuthModal();
   const { user, isAuthed } = useAuth();
-  const { t } = useI18n();
+  const { t, lang } = useI18n();
   const { toast } = useToast();
 
   const loggedIn = isAuthed;
   const role = user?.role;
+  const c =
+    lang === "ko"
+      ? {
+          saved: "저장되었습니다.",
+          guest: "게스트",
+          yourName: "이름을 입력하세요",
+          about: "게스트에게 나를 소개해 보세요",
+          reviewSoon: "리뷰 작성 기능이 열리면 여기에 표시됩니다.",
+          mvpNote:
+            "MVP 안내: 지금은 이 정보가 브라우저(LocalStorage)에 저장됩니다. DB/구글 로그인 연결 단계에서 사용자 계정별 서버 저장으로 전환됩니다.",
+        }
+      : lang === "ja"
+        ? {
+            saved: "保存しました。",
+            guest: "ゲスト",
+            yourName: "お名前を入力してください",
+            about: "ゲストに自己紹介を書いてみましょう",
+            reviewSoon: "レビュー機能が有効になると、ここに表示されます。",
+            mvpNote:
+              "MVP: 現在この情報はブラウザ(LocalStorage)に保存されます。後続のDB/Googleログイン連携でアカウント別のサーバー保存へ移行します。",
+          }
+        : lang === "zh"
+          ? {
+              saved: "已保存。",
+              guest: "客人",
+              yourName: "请输入姓名",
+              about: "向客人简单介绍一下自己",
+              reviewSoon: "开启评价功能后会显示在这里。",
+              mvpNote:
+                "MVP 提示：当前这些信息仅保存在浏览器(LocalStorage)中。后续接入 DB/Google 登录后会改为账号级服务端存储。",
+            }
+          : {
+              saved: "Saved.",
+              guest: "Guest",
+              yourName: "Your name",
+              about: "Tell guests a little about you",
+              reviewSoon: "Reviews will appear here after we enable review writing.",
+              mvpNote:
+                "MVP note: this data is stored in browser LocalStorage for now. It will move to account-level server storage after DB/Google auth integration.",
+            };
 
   const [photoUrl, setPhotoUrl] = useState(() => (typeof window !== "undefined" ? readProfile().photoUrl ?? "" : ""));
   const [displayName, setDisplayName] = useState(() => (typeof window !== "undefined" ? readProfile().displayName ?? "" : ""));
@@ -93,7 +133,7 @@ export default function ProfilePage() {
       displayName: displayName.trim() || undefined,
       bio: bio.trim() || undefined,
     });
-    toast("Saved.");
+    toast(c.saved);
   };
 
   return (
@@ -120,7 +160,7 @@ export default function ProfilePage() {
 
             <div className="min-w-0">
               <div className="text-sm text-neutral-500">{role?.toUpperCase()}</div>
-              <div className="text-lg font-semibold truncate">{displayName || "Guest"}</div>
+              <div className="text-lg font-semibold truncate">{displayName || c.guest}</div>
             </div>
           </div>
 
@@ -140,7 +180,7 @@ export default function ProfilePage() {
               <input
                 value={displayName}
                 onChange={(e) => setDisplayName(e.target.value)}
-                placeholder="Your name"
+                placeholder={c.yourName}
                 className="mt-1 w-full text-sm outline-none"
               />
             </div>
@@ -150,7 +190,7 @@ export default function ProfilePage() {
               <textarea
                 value={bio}
                 onChange={(e) => setBio(e.target.value)}
-                placeholder="Tell guests a little about you"
+                placeholder={c.about}
                 className="mt-1 w-full resize-none text-sm outline-none"
                 rows={5}
               />
@@ -164,10 +204,7 @@ export default function ProfilePage() {
               {t("save_changes")}
             </button>
 
-            <div className="text-xs text-neutral-500 leading-5">
-              MVP 안내: 지금은 이 정보가 브라우저(LocalStorage)에 저장됩니다. <br />
-              DB/구글 로그인 연결 단계에서 사용자 계정별로 서버 저장으로 전환합니다.
-            </div>
+            <div className="text-xs text-neutral-500 leading-5">{c.mvpNote}</div>
           </div>
         </div>
 
@@ -180,7 +217,7 @@ export default function ProfilePage() {
           <section className="rounded-2xl border border-neutral-200 bg-white p-6 shadow-sm">
             <h2 className="text-lg font-semibold">{t("your_reviews")}</h2>
             <p className="mt-2 text-sm text-neutral-600">
-              Reviews will appear here after we enable review writing.
+              {c.reviewSoon}
             </p>
           </section>
 

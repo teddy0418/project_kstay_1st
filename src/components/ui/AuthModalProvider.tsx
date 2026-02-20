@@ -6,6 +6,7 @@ import { useRouter } from "next/navigation";
 import { useAuth, type UserRole } from "@/components/ui/AuthProvider";
 import { useComingSoon } from "@/hooks/useComingSoon";
 import { useOptionalToast } from "@/components/ui/ToastProvider";
+import { useI18n } from "@/components/ui/LanguageProvider";
 
 type OpenOpts = {
   next?: string;
@@ -63,6 +64,7 @@ function AuthModal({
   const { signInWithGoogle, isAuthed } = useAuth();
   const comingSoon = useComingSoon();
   const toastApi = useOptionalToast();
+  const { t } = useI18n();
   const panelRef = useRef<HTMLDivElement | null>(null);
   const [isSubmitting, setIsSubmitting] = useState(false);
 
@@ -115,9 +117,9 @@ function AuthModal({
       onClose();
     } catch {
       if (toastApi) {
-        toastApi.toast("Google login failed. Please try again.");
+        toastApi.toast(t("login_failed"));
       } else {
-        alert("Google login failed. Please try again.");
+        alert(t("login_failed"));
       }
       setIsSubmitting(false);
     }
@@ -142,14 +144,14 @@ function AuthModal({
             >
               <X className="h-5 w-5" />
             </button>
-            <div className="text-sm font-semibold">Log in or sign up</div>
+            <div className="text-sm font-semibold">{t("login_modal_title")}</div>
             <div className="h-9 w-9" />
           </div>
 
           <div className="px-6 py-6">
-            <div className="text-2xl font-extrabold tracking-tight">Welcome to KSTAY</div>
+            <div className="text-2xl font-extrabold tracking-tight">{t("login_modal_welcome")}</div>
             <div className="mt-2 text-sm text-neutral-500">
-              Sign in to save your wishlist and manage bookings.
+              {t("login_modal_desc")}
             </div>
 
             <div className="mt-6 grid gap-3">
@@ -159,20 +161,20 @@ function AuthModal({
                 disabled={isSubmitting}
                 className="w-full rounded-2xl bg-neutral-900 px-5 py-4 text-white text-sm font-semibold hover:opacity-95 transition disabled:opacity-60"
               >
-                {isSubmitting ? "Signing in..." : "Continue with Google"}
+                {isSubmitting ? t("signing_in") : t("continue_google")}
               </button>
 
               <button
                 type="button"
-                onClick={() => comingSoon({ message: "MVP: Email login will be added next." })}
+                onClick={() => comingSoon({ message: t("email_login_soon") })}
                 className="w-full rounded-2xl border border-neutral-200 bg-white px-5 py-4 text-sm font-semibold hover:bg-neutral-50 transition"
               >
-                Continue with email
+                {t("continue_email")}
               </button>
             </div>
 
             <div className="mt-5 text-xs text-neutral-500 leading-5">
-              By continuing, you agree to KSTAY Terms and Privacy Policy.
+              {t("login_modal_terms")}
             </div>
           </div>
         </div>

@@ -5,6 +5,7 @@ import { useRouter } from "next/navigation";
 import { PaymentCurrency, PaymentPayMethod, requestPayment } from "@portone/browser-sdk/v2";
 import { apiClient, ApiClientError } from "@/lib/api/client";
 import { useAuth } from "@/components/ui/AuthProvider";
+import { useI18n } from "@/components/ui/LanguageProvider";
 
 type Props = {
   listingId: string;
@@ -31,6 +32,63 @@ type CreateBookingResponse = {
 export default function CheckoutPaymentCard(props: Props) {
   const router = useRouter();
   const { user } = useAuth();
+  const { lang } = useI18n();
+  const c =
+    lang === "ko"
+      ? {
+          payment: "결제",
+          desc: "MVP에서는 모의 결제 흐름이며, 추후 PortOne 웹훅 검증으로 대체됩니다.",
+          email: "게스트 이메일",
+          name: "게스트 이름 (선택)",
+          emailPh: "you@example.com",
+          namePh: "게스트 이름",
+          processing: "처리 중...",
+          payNow: "지금 결제",
+          paymentNotCompleted: "결제가 완료되지 않았습니다.",
+          requestFailed: "결제 요청에 실패했습니다.",
+          guestFallback: "게스트",
+        }
+      : lang === "ja"
+        ? {
+            payment: "支払い",
+            desc: "MVP ではモック決済で、後で PortOne webhook 検証に置き換え可能です。",
+            email: "ゲストメール",
+            name: "ゲスト名（任意）",
+            emailPh: "you@example.com",
+            namePh: "ゲスト名",
+            processing: "処理中...",
+            payNow: "今すぐ支払う",
+            paymentNotCompleted: "決済が完了しませんでした。",
+            requestFailed: "決済リクエストに失敗しました。",
+            guestFallback: "ゲスト",
+          }
+        : lang === "zh"
+          ? {
+              payment: "支付",
+              desc: "MVP 阶段使用模拟支付，后续可替换为 PortOne webhook 校验。",
+              email: "客人邮箱",
+              name: "客人姓名（可选）",
+              emailPh: "you@example.com",
+              namePh: "客人姓名",
+              processing: "处理中...",
+              payNow: "立即支付",
+              paymentNotCompleted: "支付未完成。",
+              requestFailed: "支付请求失败。",
+              guestFallback: "Guest",
+            }
+          : {
+              payment: "Payment",
+              desc: "In MVP, payment confirmation is mocked and can be replaced by PortOne webhook later.",
+              email: "Guest email",
+              name: "Guest name (optional)",
+              emailPh: "you@example.com",
+              namePh: "Guest name",
+              processing: "Processing...",
+              payNow: "Pay now",
+              paymentNotCompleted: "Payment was not completed.",
+              requestFailed: "Payment request failed.",
+              guestFallback: "Guest",
+            };
 
   const [guestName, setGuestName] = useState(user?.name ?? "");
   const [guestEmail, setGuestEmail] = useState(user?.email ?? "");
@@ -81,7 +139,7 @@ export default function CheckoutPaymentCard(props: Props) {
           currency: created.portone.currency === "KRW" ? PaymentCurrency.KRW : PaymentCurrency.USD,
           payMethod: PaymentPayMethod.CARD,
           customer: {
-            fullName: guestName.trim() || user?.name || "Guest",
+            fullName: guestName.trim() || user?.name || c.guestFallback,
             email: guestEmail,
           },
           redirectUrl: created.portone.redirectUrl,
@@ -89,7 +147,7 @@ export default function CheckoutPaymentCard(props: Props) {
         });
 
         if (result?.code) {
-          alert(result.message || "Payment was not completed.");
+          alert(result.message || c.paymentNotCompleted);
           setPaying(false);
           return;
         }
@@ -109,7 +167,7 @@ export default function CheckoutPaymentCard(props: Props) {
       if (err instanceof ApiClientError) {
         alert(err.message);
       } else {
-        alert("Payment request failed.");
+        alert(c.requestFailed);
       }
       setPaying(false);
     }
@@ -117,29 +175,29 @@ export default function CheckoutPaymentCard(props: Props) {
 
   return (
     <aside className="h-fit rounded-2xl border border-neutral-200 p-6 shadow-soft">
-      <div className="text-sm font-semibold">Payment</div>
+      <div className="text-sm font-semibold">{c.payment}</div>
       <p className="mt-2 text-sm text-neutral-600">
-        In MVP, payment confirmation is mocked and can be replaced by PortOne webhook later.
+        {c.desc}
       </p>
 
       <div className="mt-4 grid gap-3">
         <div className="rounded-xl border border-neutral-200 px-3 py-2">
-          <label className="text-xs font-semibold text-neutral-500">Guest email</label>
+          <label className="text-xs font-semibold text-neutral-500">{c.email}</label>
           <input
             value={guestEmail}
             onChange={(e) => setGuestEmail(e.target.value)}
             readOnly={emailReadonly}
             className="mt-1 w-full text-sm outline-none read-only:text-neutral-500"
-            placeholder="you@example.com"
+            placeholder={c.emailPh}
           />
         </div>
         <div className="rounded-xl border border-neutral-200 px-3 py-2">
-          <label className="text-xs font-semibold text-neutral-500">Guest name (optional)</label>
+          <label className="text-xs font-semibold text-neutral-500">{c.name}</label>
           <input
             value={guestName}
             onChange={(e) => setGuestName(e.target.value)}
             className="mt-1 w-full text-sm outline-none"
-            placeholder="Guest name"
+            placeholder={c.namePh}
           />
         </div>
       </div>
@@ -150,7 +208,7 @@ export default function CheckoutPaymentCard(props: Props) {
         disabled={!canPay || paying}
         className="mt-4 w-full rounded-xl bg-brand px-4 py-3 text-sm font-semibold text-brand-foreground hover:opacity-95 disabled:opacity-50"
       >
-        {paying ? "Processing..." : "Pay now"}
+        {paying ? c.processing : c.payNow}
       </button>
     </aside>
   );
