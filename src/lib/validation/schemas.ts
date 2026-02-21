@@ -14,6 +14,7 @@ export const createBookingSchema = z.object({
   guestsChildren: z.coerce.number().int().min(0).optional(),
   guestsInfants: z.coerce.number().int().min(0).optional(),
   guestsPets: z.coerce.number().int().min(0).optional(),
+  currency: z.enum(["USD", "KRW", "JPY", "CNY"]).optional(),
 });
 
 export const createHostListingSchema = z.object({

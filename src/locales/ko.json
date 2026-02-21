@@ -57,5 +57,8 @@
   "login_modal_terms": "계속하시면 KSTAY 이용약관 및 개인정보처리방침에 동의하는 것으로 간주됩니다.",
   "login_failed": "구글 로그인에 실패했습니다. 다시 시도해 주세요.",
   "signing_in": "로그인 중...",
-  "email_login_soon": "MVP: 이메일 로그인은 다음 단계에서 제공됩니다."
+  "email_login_soon": "MVP: 이메일 로그인은 다음 단계에서 제공됩니다.",
+  "continue_google": "구글로 계속하기",
+  "continue_kakao": "카카오로 계속하기",
+  "continue_line": "라인으로 계속하기"
 }

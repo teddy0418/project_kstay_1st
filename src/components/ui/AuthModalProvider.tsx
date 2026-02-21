@@ -61,7 +61,7 @@ function AuthModal({
   nextPath?: string;
 }) {
   const router = useRouter();
-  const { signInWithGoogle, isAuthed } = useAuth();
+  const { signInWithGoogle, signInWithKakao, signInWithLine, isAuthed } = useAuth();
   const comingSoon = useComingSoon();
   const toastApi = useOptionalToast();
   const { t } = useI18n();
@@ -98,16 +98,16 @@ function AuthModal({
 
   if (!isOpen) return null;
 
-  const onGoogle = async () => {
-    if (isSubmitting) return;
-    const callbackUrl =
-      nextPath && nextPath.startsWith("/")
-        ? nextPath
-        : `${window.location.pathname}${window.location.search || ""}`;
+  const callbackUrl =
+    nextPath && nextPath.startsWith("/")
+      ? nextPath
+      : `${window.location.pathname}${window.location.search || ""}`;
 
+  const runSignIn = async (fn: () => Promise<unknown>) => {
+    if (isSubmitting) return;
     setIsSubmitting(true);
     try {
-      await signInWithGoogle(callbackUrl);
+      await fn();
       onClose();
     } catch {
       if (toastApi) {
@@ -118,6 +118,10 @@ function AuthModal({
       setIsSubmitting(false);
     }
   };
+
+  const onGoogle = () => runSignIn(() => signInWithGoogle(callbackUrl));
+  const onKakao = () => runSignIn(() => signInWithKakao(callbackUrl));
+  const onLine = () => runSignIn(() => signInWithLine(callbackUrl));
 
   return (
     <div className="fixed inset-0 z-[200]">
@@ -156,6 +160,24 @@ function AuthModal({
                 className="w-full rounded-2xl bg-neutral-900 px-5 py-4 text-white text-sm font-semibold hover:opacity-95 transition disabled:opacity-60"
               >
                 {isSubmitting ? t("signing_in") : t("continue_google")}
+              </button>
+
+              <button
+                type="button"
+                onClick={onKakao}
+                disabled={isSubmitting}
+                className="w-full rounded-2xl bg-[#FEE500] text-[#191919] px-5 py-4 text-sm font-semibold hover:opacity-95 transition disabled:opacity-60"
+              >
+                {isSubmitting ? t("signing_in") : t("continue_kakao")}
+              </button>
+
+              <button
+                type="button"
+                onClick={onLine}
+                disabled={isSubmitting}
+                className="w-full rounded-2xl bg-[#06C755] text-white px-5 py-4 text-sm font-semibold hover:opacity-95 transition disabled:opacity-60"
+              >
+                {isSubmitting ? t("signing_in") : t("continue_line")}
               </button>
 
               <button

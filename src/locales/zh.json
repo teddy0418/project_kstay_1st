@@ -57,5 +57,8 @@
   "login_modal_terms": "继续即表示您同意 KSTAY 服务条款和隐私政策。",
   "login_failed": "Google 登录失败，请重试。",
   "signing_in": "登录中...",
-  "email_login_soon": "MVP：邮箱登录将在下一阶段提供。"
+  "email_login_soon": "MVP：邮箱登录将在下一阶段提供。",
+  "continue_google": "使用 Google 继续",
+  "continue_kakao": "使用 Kakao 继续",
+  "continue_line": "使用 LINE 继续"
 }

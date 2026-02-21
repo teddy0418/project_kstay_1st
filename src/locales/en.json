@@ -57,5 +57,8 @@
   "login_modal_terms": "By continuing, you agree to KSTAY Terms and Privacy Policy.",
   "login_failed": "Google login failed. Please try again.",
   "signing_in": "Signing in...",
-  "email_login_soon": "MVP: Email login will be added next."
+  "email_login_soon": "MVP: Email login will be added next.",
+  "continue_google": "Continue with Google",
+  "continue_kakao": "Continue with Kakao",
+  "continue_line": "Continue with LINE"
 }

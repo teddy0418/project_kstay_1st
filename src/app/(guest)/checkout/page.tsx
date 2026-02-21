@@ -1,9 +1,10 @@
 import Container from "@/components/layout/Container";
 import { redirect } from "next/navigation";
-import { diffNights, formatKRW } from "@/lib/format";
+import { diffNights } from "@/lib/format";
 import { calcGuestServiceFeeKRW } from "@/lib/policy";
 import { getPublicListingById } from "@/lib/repositories/listings";
 import CheckoutPaymentCard from "./CheckoutPaymentCard";
+import CheckoutPriceDisplay from "./CheckoutPriceDisplay";
 import { getServerLang } from "@/lib/i18n/server";
 
 const COPY = {
@@ -14,7 +15,7 @@ const COPY = {
     selectDates: "Select dates",
     guests: "Guests",
     base: "Base",
-    fee: "Guest service fee (10%)",
+    fee: "Guest service fee (12%)",
     total: "Total",
     included: "Tax & Service Fee Included",
   },
@@ -25,7 +26,7 @@ const COPY = {
     selectDates: "일정을 선택하세요",
     guests: "인원",
     base: "기본 요금",
-    fee: "게스트 서비스 수수료 (10%)",
+    fee: "게스트 서비스 수수료 (12%)",
     total: "합계",
     included: "세금 및 서비스 요금 포함",
   },
@@ -36,7 +37,7 @@ const COPY = {
     selectDates: "日程を選択",
     guests: "人数",
     base: "基本料金",
-    fee: "ゲストサービス料 (10%)",
+    fee: "ゲストサービス料 (12%)",
     total: "合計",
     included: "税・サービス料込み",
   },
@@ -47,7 +48,7 @@ const COPY = {
     selectDates: "请选择日期",
     guests: "人数",
     base: "基础费用",
-    fee: "客人服务费 (10%)",
+    fee: "客人服务费 (12%)",
     total: "总计",
     included: "已含税费与服务费",
   },
@@ -96,22 +97,7 @@ export default async function CheckoutPage({
             {c.dates}: {start && end ? `${start} → ${end}` : c.selectDates} · {c.guests}: {guests}
           </div>
 
-          <div className="mt-6 rounded-2xl border border-neutral-200 p-4 text-sm">
-            <div className="flex justify-between">
-              <span className="text-neutral-600">{c.base}</span>
-              <span>{formatKRW(baseTotal)}</span>
-            </div>
-            <div className="flex justify-between mt-1">
-              <span className="text-neutral-600">{c.fee}</span>
-              <span>{formatKRW(fee)}</span>
-            </div>
-            <div className="h-px bg-neutral-200 my-3" />
-            <div className="flex justify-between font-semibold">
-              <span>{c.total}</span>
-              <span>{formatKRW(total)}</span>
-            </div>
-            <div className="mt-1 text-xs text-neutral-500">{c.included}</div>
-          </div>
+          <CheckoutPriceDisplay baseTotal={baseTotal} fee={fee} total={total} copy={c} />
         </section>
 
         <CheckoutPaymentCard listingId={listingId} checkIn={start} checkOut={end} guests={guests} />

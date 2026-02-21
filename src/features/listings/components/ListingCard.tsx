@@ -8,8 +8,8 @@ import { useWishlist } from "@/components/ui/WishlistProvider";
 import { useAuth } from "@/components/ui/AuthProvider";
 import { useAuthModal } from "@/components/ui/AuthModalProvider";
 import { totalGuestPriceKRW } from "@/lib/policy";
-import { formatMainFromKRW } from "@/lib/currency";
 import { useCurrency } from "@/components/ui/CurrencyProvider";
+import { useExchangeRates } from "@/components/ui/ExchangeRatesProvider";
 
 function toNumber(value: unknown, fallback = 0) {
   const n = Number(value);
@@ -21,6 +21,7 @@ export default function ListingCard(props: Record<string, unknown>) {
   const { open } = useAuthModal();
   const { has, toggle } = useWishlist();
   const { currency } = useCurrency();
+  const { formatFromKRW } = useExchangeRates();
 
   const listing = (props?.listing ?? props) as Record<string, unknown>;
   const id = String(listing?.id ?? "");
@@ -35,7 +36,7 @@ export default function ListingCard(props: Record<string, unknown>) {
     0
   );
   const nightlyAllInKRW = totalGuestPriceKRW(Math.max(0, pricePerNightKRW));
-  const nightlyText = formatMainFromKRW(nightlyAllInKRW, currency);
+  const nightlyText = formatFromKRW(nightlyAllInKRW, currency);
 
   const image = useMemo(() => {
     const arr = listing?.images;

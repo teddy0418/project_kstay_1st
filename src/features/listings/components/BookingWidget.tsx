@@ -4,8 +4,9 @@ import { useCallback, useMemo, useRef, useState } from "react";
 import { useRouter } from "next/navigation";
 import type { DateRange } from "react-day-picker";
 import { totalGuestPriceKRW } from "@/lib/policy";
-import { formatDualPriceFromKRW } from "@/lib/currency";
+import { formatKRW } from "@/lib/format";
 import { useCurrency } from "@/components/ui/CurrencyProvider";
+import { useExchangeRates } from "@/components/ui/ExchangeRatesProvider";
 import { useI18n } from "@/components/ui/LanguageProvider";
 import DateDropdown from "@/components/ui/searchbar/DateDropdown";
 import GuestsDropdown from "@/components/ui/searchbar/GuestsDropdown";
@@ -58,6 +59,7 @@ export default function BookingWidget({
 }) {
   const router = useRouter();
   const { currency } = useCurrency();
+  const { formatFromKRW } = useExchangeRates();
   const { lang, t, locale } = useI18n();
   const today = useMemo(() => startOfDay(new Date()), []);
   const defaultRange = useMemo<DateRange>(
@@ -98,8 +100,8 @@ export default function BookingWidget({
 
   const nightlyAllInKRW = totalGuestPriceKRW(basePricePerNightKRW);
   const totalKRW = nightlyAllInKRW * nights;
-  const totalDual = formatDualPriceFromKRW(totalKRW, currency);
-  const nightlyDual = formatDualPriceFromKRW(nightlyAllInKRW, currency);
+  const totalDual = { main: formatFromKRW(totalKRW, currency), approxKRW: formatKRW(totalKRW) };
+  const nightlyDual = { main: formatFromKRW(nightlyAllInKRW, currency), approxKRW: formatKRW(nightlyAllInKRW) };
   const cancelText = freeCancelUntilKST(effectiveRange.from);
 
   const shortDateFormatter = useMemo(

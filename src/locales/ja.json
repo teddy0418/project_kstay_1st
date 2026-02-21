@@ -57,5 +57,8 @@
   "login_modal_terms": "続行すると、KSTAY利用規約およびプライバシーポリシーに同意したものとみなされます。",
   "login_failed": "Googleログインに失敗しました。もう一度お試しください。",
   "signing_in": "ログイン中...",
-  "email_login_soon": "MVP: メールログインは次の段階で対応予定です。"
+  "email_login_soon": "MVP: メールログインは次の段階で対応予定です。",
+  "continue_google": "Googleで続行",
+  "continue_kakao": "カカオで続行",
+  "continue_line": "LINEで続行"
 }

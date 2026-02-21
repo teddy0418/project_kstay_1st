@@ -7,7 +7,7 @@
 ## 1. 프로젝트 개요
 
 - **이름:** KSTAY  
-- **한 줄:** 한국 숙소 예약 플랫폼. 게스트 수수료 10%, 호스트 수수료 0%로 “Best Value” 강조.  
+- **한 줄:** 한국 숙소 예약 플랫폼. 게스트 수수료 12%, 호스트 수수료 0%로 “Best Value” 강조.  
 - **스택:** Next.js 16 (App Router), TypeScript, Tailwind CSS, Turbopack.
 
 ---
@@ -33,7 +33,7 @@
   - ID 미존재 시 “Listing not found” + Available IDs 목록(디버그용).  
 - **체크아웃 (`/checkout`)**  
   - `listingId`, `start`, `end`, `guests` 쿼리 기반.  
-  - 베이스 + 게스트 서비스 수수료 10% 표시.  
+  - 베이스 + 게스트 서비스 수수료 12% 표시.  
   - 결제(PortOne) 플레이스홀더.
 
 ### 2.3 기타 게스트
@@ -129,13 +129,13 @@ src/
 
 | 항목 | 값 | 비고 |
 |------|-----|------|
-| **게스트 수수료** | 10% | `policy.ts` `GUEST_SERVICE_FEE_RATE = 0.1` |
+| **게스트 수수료** | 12% | `policy.ts` `GUEST_SERVICE_FEE_NET_RATE = 0.12` |
 | **호스트 수수료** | 0% | `HOST_FEE_RATE = 0` → “Best Value”, “0% Host Fee” 문구 |
 | **무료 취소** | 체크인 7일 전까지 (KST 기준) | `FREE_CANCELLATION_DAYS = 7`, `freeCancellationDeadlineUtcMs` |
 | **호스트 거절** | 결제 후 24시간 이내 거절 가능, 이후 자동 void/환불 | `HOST_DECISION_HOURS = 24` |
 | **시간대** | Asia/Seoul (KST) | 정산·취소 데드라인 등 KST 기준 설계 |
 | **정산 주기** | 화요일 정산 (설계/다음 단계) | 코드에는 “Weekly auto-settlement” 문구만 있음, 화요일 규칙은 다음 단계에서 반영 예정 |
-| **가격 표시** | Tax & Service Fee Included, 베이스+10% 한 번에 표시 | 체크아웃에서 “no surprises” 강조 |
+| **가격 표시** | Tax & Service Fee Included, 베이스+12% 한 번에 표시 | 체크아웃에서 “no surprises” 강조 |
 
 ---
 

@@ -1,7 +1,9 @@
 // ---- Pricing Policy (MVP) ----
 // Guest-facing display price must be FINAL (VAT included).
+// UI에서 표시할 때 이 값 사용: GUEST_SERVICE_FEE_DISPLAY_PCT
 
 export const GUEST_SERVICE_FEE_NET_RATE = 0.12; // 12%
+export const GUEST_SERVICE_FEE_DISPLAY_PCT = 12; // UI 표시용 (예: "게스트 서비스 수수료 (12%)")
 export const VAT_RATE = 0.1; // 10%
 export const DISPLAY_PRICE_INCLUDES_VAT = true;
 

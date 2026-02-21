@@ -11,6 +11,8 @@ type AuthCtx = {
   isAuthed: boolean;
   isLoading: boolean;
   signInWithGoogle: (nextPath?: string) => Promise<unknown>;
+  signInWithKakao: (nextPath?: string) => Promise<unknown>;
+  signInWithLine: (nextPath?: string) => Promise<unknown>;
   signOut: (callbackUrl?: string) => Promise<void>;
 };
 
@@ -37,12 +39,30 @@ export default function AuthProvider({
     return nextAuthSignIn("google", { callbackUrl });
   };
 
+  const signInWithKakao = async (nextPath?: string) => {
+    const callbackUrl = nextPath && nextPath.startsWith("/") ? nextPath : "/";
+    return nextAuthSignIn("kakao", { callbackUrl });
+  };
+
+  const signInWithLine = async (nextPath?: string) => {
+    const callbackUrl = nextPath && nextPath.startsWith("/") ? nextPath : "/";
+    return nextAuthSignIn("line", { callbackUrl });
+  };
+
   const signOut = async (callbackUrl = "/") => {
-    await nextAuthSignOut({ callbackUrl });
+    await nextAuthSignOut({ callbackUrl, redirect: false });
   };
 
   const value = useMemo<AuthCtx>(() => {
-    return { user, isAuthed: !!user, isLoading: status === "loading", signInWithGoogle, signOut };
+    return {
+      user,
+      isAuthed: !!user,
+      isLoading: status === "loading",
+      signInWithGoogle,
+      signInWithKakao,
+      signInWithLine,
+      signOut,
+    };
   }, [user, status]);
 
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;

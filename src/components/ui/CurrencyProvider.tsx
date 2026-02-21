@@ -12,20 +12,30 @@ type Ctx = {
 
 const CurrencyContext = createContext<Ctx | null>(null);
 
-export function CurrencyProvider({ children }: { children: React.ReactNode }) {
-  console.log("[KSTAY] CurrencyProvider mount (client)");
-  const [currency, setCurrencyState] = useState<Currency>(DEFAULT_CURRENCY);
+export function CurrencyProvider({
+  children,
+  initialCurrency,
+}: {
+  children: React.ReactNode;
+  initialCurrency?: Currency;
+}) {
+  const [currency, setCurrencyState] = useState<Currency>(initialCurrency ?? DEFAULT_CURRENCY);
 
   useEffect(() => {
     const saved = window.localStorage.getItem("kst_currency") as Currency | null;
     if (saved && SUPPORTED_CURRENCIES.includes(saved)) {
-      queueMicrotask(() => setCurrencyState(saved));
+      setCurrencyState(saved);
+    } else if (initialCurrency && SUPPORTED_CURRENCIES.includes(initialCurrency)) {
+      setCurrencyState(initialCurrency);
     }
-  }, []);
+  }, [initialCurrency]);
 
   const setCurrency = (c: Currency) => {
     setCurrencyState(c);
     window.localStorage.setItem("kst_currency", c);
+    if (typeof document !== "undefined") {
+      document.cookie = `kst_currency=${encodeURIComponent(c)}; Max-Age=${365 * 24 * 60 * 60}; Path=/; SameSite=Lax`;
+    }
   };
 
   const value = useMemo(

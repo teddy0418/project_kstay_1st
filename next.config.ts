@@ -6,6 +6,10 @@ const withSerwist = withSerwistInit({
   swDest: "public/sw.js",
 });
 
+// 개발 모드에서는 서비스 워커 빌드 생략 (Windows에서 public/sw.js 파일 잠금 에러 방지)
+const withSerwistSafe =
+  process.env.NODE_ENV === "production" ? withSerwist : ((c: NextConfig) => c) as typeof withSerwist;
+
 const nextConfig: NextConfig = {
   images: {
     remotePatterns: [{ protocol: "https", hostname: "images.unsplash.com" }],
@@ -19,4 +23,4 @@ const nextConfig: NextConfig = {
   },
 };
 
-export default withSerwist(nextConfig);
+export default withSerwistSafe(nextConfig);

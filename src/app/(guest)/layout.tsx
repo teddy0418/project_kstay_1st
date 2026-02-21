@@ -1,13 +1,13 @@
 import Header from "@/components/layout/Header";
 import BottomNav from "@/components/layout/BottomNav";
-import FloatingSearch from "@/components/layout/FloatingSearch";
+import FloatingSearchWrapper from "@/components/layout/FloatingSearchWrapper";
 
 export default function GuestLayout({ children }: { children: React.ReactNode }) {
   return (
     <>
       <Header />
       <div className="relative z-40">
-        <FloatingSearch />
+        <FloatingSearchWrapper />
       </div>
       {children}
       <BottomNav />

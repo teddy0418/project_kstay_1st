@@ -5,8 +5,8 @@ import type { Listing } from "@/types";
 import L from "leaflet";
 import { MapContainer, TileLayer, Marker, useMap, useMapEvents } from "react-leaflet";
 import { totalGuestPriceKRW } from "@/lib/policy";
-import { formatMainCompactFromKRW } from "@/lib/currency";
 import { useCurrency } from "@/components/ui/CurrencyProvider";
+import { useExchangeRates } from "@/components/ui/ExchangeRatesProvider";
 
 export type ViewBounds = { south: number; west: number; north: number; east: number };
 
@@ -93,6 +93,7 @@ export default function LeafletMap({
   onUserMoved?: () => void;
 }) {
   const { currency } = useCurrency();
+  const { formatFromKRW } = useExchangeRates();
   const center = useMemo<[number, number]>(() => [36.5, 127.8], []);
 
   return (
@@ -108,7 +109,7 @@ export default function LeafletMap({
       {items.map((l) => {
         const active = selectedId === l.id;
         const allIn = totalGuestPriceKRW(l.pricePerNightKRW);
-        const label = formatMainCompactFromKRW(allIn, currency);
+        const label = formatFromKRW(allIn, currency);
 
         return (
           <Marker

@@ -9,13 +9,21 @@ export default function LogoutRoute() {
   const { signOut } = useAuth();
 
   useEffect(() => {
+    let cancelled = false;
     void (async () => {
       await signOut("/");
+      if (cancelled) return;
       router.replace("/");
       router.refresh();
     })();
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, []);
+    return () => {
+      cancelled = true;
+    };
+  }, [signOut, router]);
 
-  return null;
+  return (
+    <div className="flex min-h-[40vh] items-center justify-center text-sm text-neutral-500">
+      로그아웃 중...
+    </div>
+  );
 }

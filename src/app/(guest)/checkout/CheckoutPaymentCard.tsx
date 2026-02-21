@@ -5,6 +5,7 @@ import { useRouter } from "next/navigation";
 import { PaymentCurrency, PaymentPayMethod, requestPayment } from "@portone/browser-sdk/v2";
 import { apiClient, ApiClientError } from "@/lib/api/client";
 import { useAuth } from "@/components/ui/AuthProvider";
+import { useCurrency } from "@/components/ui/CurrencyProvider";
 import { useI18n } from "@/components/ui/LanguageProvider";
 
 type Props = {
@@ -29,6 +30,19 @@ type CreateBookingResponse = {
   };
 };
 
+function mapToPortoneCurrency(code: string): PaymentCurrency {
+  switch (code) {
+    case "KRW":
+      return PaymentCurrency.KRW;
+    case "JPY":
+      return PaymentCurrency.JPY;
+    case "CNY":
+      return PaymentCurrency.CNY;
+    default:
+      return PaymentCurrency.USD;
+  }
+}
+
 function resolvePayMethod() {
   const raw = (process.env.NEXT_PUBLIC_PORTONE_PAY_METHOD || "").trim().toUpperCase();
   if (raw === "CARD") return PaymentPayMethod.CARD;
@@ -39,6 +53,7 @@ function resolvePayMethod() {
 export default function CheckoutPaymentCard(props: Props) {
   const router = useRouter();
   const { user } = useAuth();
+  const { currency } = useCurrency();
   const { lang } = useI18n();
   const c =
     lang === "ko"
@@ -51,6 +66,7 @@ export default function CheckoutPaymentCard(props: Props) {
           namePh: "게스트 이름",
           processing: "처리 중...",
           payNow: "지금 결제",
+          disclaimer: "실제 결제 금액은 카드사 환율에 따라 소폭 차이가 있을 수 있습니다.",
           paymentNotCompleted: "결제가 완료되지 않았습니다.",
           requestFailed: "결제 요청에 실패했습니다.",
           guestFallback: "게스트",
@@ -65,6 +81,7 @@ export default function CheckoutPaymentCard(props: Props) {
             namePh: "ゲスト名",
             processing: "処理中...",
             payNow: "今すぐ支払う",
+            disclaimer: "実際の決済金額はカード会社の為替レートにより若干の差が出る場合があります。",
             paymentNotCompleted: "決済が完了しませんでした。",
             requestFailed: "決済リクエストに失敗しました。",
             guestFallback: "ゲスト",
@@ -79,6 +96,7 @@ export default function CheckoutPaymentCard(props: Props) {
               namePh: "客人姓名",
               processing: "处理中...",
               payNow: "立即支付",
+              disclaimer: "实际支付金额可能因发卡行汇率略有差异。",
               paymentNotCompleted: "支付未完成。",
               requestFailed: "支付请求失败。",
               guestFallback: "Guest",
@@ -92,6 +110,7 @@ export default function CheckoutPaymentCard(props: Props) {
               namePh: "Guest name",
               processing: "Processing...",
               payNow: "Pay now",
+              disclaimer: "Actual charge may vary slightly due to card issuer exchange rates.",
               paymentNotCompleted: "Payment was not completed.",
               requestFailed: "Payment request failed.",
               guestFallback: "Guest",
@@ -121,6 +140,7 @@ export default function CheckoutPaymentCard(props: Props) {
         guestsChildren: 0,
         guestsInfants: 0,
         guestsPets: 0,
+        currency,
       });
 
       const paymentProvider = (process.env.NEXT_PUBLIC_PAYMENT_PROVIDER || "MOCK").toUpperCase();
@@ -138,13 +158,14 @@ export default function CheckoutPaymentCard(props: Props) {
         }
 
         const payMethod = resolvePayMethod();
+        const payCurrency = mapToPortoneCurrency(created.portone.currency);
         const result = await requestPayment({
           storeId: created.portone.storeId,
           channelKey: created.portone.channelKey,
           paymentId: created.portone.paymentId,
           orderName: created.portone.orderName,
           totalAmount: created.portone.totalAmount,
-          currency: created.portone.currency === "KRW" ? PaymentCurrency.KRW : PaymentCurrency.USD,
+          currency: payCurrency,
           payMethod,
           customer: {
             fullName: guestName.trim() || user?.name || c.guestFallback,
@@ -211,6 +232,8 @@ export default function CheckoutPaymentCard(props: Props) {
           />
         </div>
       </div>
+
+      <p className="mt-3 text-xs text-neutral-500">* {c.disclaimer}</p>
 
       <button
         type="button"

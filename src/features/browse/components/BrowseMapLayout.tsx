@@ -9,9 +9,13 @@ import MapPanel from "@/features/map/components/MapPanel";
 import ErrorBoundary from "@/components/ui/ErrorBoundary";
 import type { ViewBounds } from "@/features/map/components/LeafletMap";
 import { useCurrency } from "@/components/ui/CurrencyProvider";
+import { useExchangeRates } from "@/components/ui/ExchangeRatesProvider";
 import { totalGuestPriceKRW } from "@/lib/policy";
-import { formatMainFromKRW } from "@/lib/currency";
-import { List, MapPin, ChevronDown, ChevronUp } from "lucide-react";
+import { List, MapPin } from "lucide-react";
+import { useI18n } from "@/components/ui/LanguageProvider";
+
+const INITIAL_COUNT = 9;
+const LOAD_MORE_STEP = 9;
 
 function inBounds(l: Listing, b: ViewBounds) {
   return l.lat >= b.south && l.lat <= b.north && l.lng >= b.west && l.lng <= b.east;
@@ -67,8 +71,10 @@ export default function BrowseMapLayout({ items }: { items: Listing[] }) {
   const [mobileView, setMobileView] = useState<MobileView>("list");
   const [useTabLayout, setUseTabLayout] = useState<boolean>(true);
   const [isNarrow, setIsNarrow] = useState(true);
-  const [mapCollapsed, setMapCollapsed] = useState(true);
   const { currency } = useCurrency();
+  const { formatFromKRW } = useExchangeRates();
+  const { t } = useI18n();
+  const [visibleCount, setVisibleCount] = useState(INITIAL_COUNT);
 
   useEffect(() => {
     const isMobileUA = () => {
@@ -97,6 +103,13 @@ export default function BrowseMapLayout({ items }: { items: Listing[] }) {
     if (!areaBounds) return items;
     return items.filter((l) => inBounds(l, areaBounds));
   }, [items, areaBounds]);
+
+  const visibleListings = useMemo(() => displayed.slice(0, visibleCount), [displayed, visibleCount]);
+  const hasMore = visibleCount < displayed.length;
+
+  useEffect(() => {
+    setVisibleCount((prev) => Math.min(prev, displayed.length));
+  }, [displayed.length]);
 
   const [selectedId, setSelectedId] = useState<string | null>(null);
 
@@ -194,7 +207,7 @@ export default function BrowseMapLayout({ items }: { items: Listing[] }) {
         </div>
 
         {mobileView === "list" ? (
-          /* List only – easy to scroll (2nd image style) */
+          /* List only – easy to scroll (2nd image style), 9개씩 더보기 */
           <div className="min-w-0 flex-1">
             {displayed.length === 0 ? (
               <div className="rounded-2xl border border-neutral-200 p-10 text-center">
@@ -204,40 +217,37 @@ export default function BrowseMapLayout({ items }: { items: Listing[] }) {
                 </p>
               </div>
             ) : (
-              <div className="grid gap-x-6 gap-y-10 sm:grid-cols-2">
-                {displayed.map((l) => (
-                  <ListingCard
-                    key={l.id}
-                    listing={l}
-                    active={hoveredId === l.id}
-                    onHoverChange={setHoveredId}
-                  />
-                ))}
-              </div>
+              <>
+                <div className="grid gap-x-6 gap-y-10 sm:grid-cols-2">
+                  {visibleListings.map((l) => (
+                    <ListingCard
+                      key={l.id}
+                      listing={l}
+                      active={hoveredId === l.id}
+                      onHoverChange={setHoveredId}
+                    />
+                  ))}
+                </div>
+                {hasMore && (
+                  <div className="mt-10 flex justify-center">
+                    <button
+                      type="button"
+                      onClick={() => setVisibleCount((prev) => Math.min(prev + LOAD_MORE_STEP, displayed.length))}
+                      className="inline-flex items-center justify-center rounded-xl bg-neutral-900 px-6 py-3 text-sm font-semibold text-white shadow-sm transition hover:opacity-95 active:scale-[0.98]"
+                    >
+                      {t("load_more")}
+                    </button>
+                  </div>
+                )}
+              </>
             )}
           </div>
         ) : (
-          /* Map view – 모바일에서는 접기/펼치기 가능 */
+          /* Map view – 지도는 항상 펼친 상태 */
           <div className="relative z-0 flex-1 min-h-0 flex flex-col rounded-2xl border border-neutral-200 bg-white overflow-hidden">
-            {isNarrow && (
-              <button
-                type="button"
-                onClick={() => setMapCollapsed((c) => !c)}
-                className="flex shrink-0 items-center justify-between gap-2 px-4 py-3 text-left text-sm font-semibold text-neutral-900 bg-neutral-50 border-b border-neutral-200 touch-manipulation"
-              >
-                <span>지도</span>
-                <span className="flex items-center gap-1 text-neutral-500">
-                  {mapCollapsed ? (
-                    <>펼치기 <ChevronDown className="h-4 w-4" /></>
-                  ) : (
-                    <>접기 <ChevronUp className="h-4 w-4" /></>
-                  )}
-                </span>
-              </button>
-            )}
             <div
-              className="relative flex-1 min-h-0 rounded-b-2xl overflow-hidden bg-neutral-100"
-              style={isNarrow ? { height: mapCollapsed ? 140 : "55vh", minHeight: mapCollapsed ? 140 : 200 } : { minHeight: "70vh" }}
+              className="relative flex-1 min-h-0 rounded-2xl overflow-hidden bg-neutral-100"
+              style={isNarrow ? { height: "55vh", minHeight: 200 } : { minHeight: "70vh" }}
             >
               <MapOverlay
                 showSearchArea={showSearchArea}
@@ -279,7 +289,7 @@ export default function BrowseMapLayout({ items }: { items: Listing[] }) {
                       <div className="truncate text-xs text-neutral-500">{selectedListing.location}</div>
                       <div className="mt-1 truncate text-sm font-semibold leading-5">{selectedListing.title}</div>
                       <div className="mt-2 text-sm font-semibold">
-                        {formatMainFromKRW(totalGuestPriceKRW(selectedListing.pricePerNightKRW), currency)}
+                        {formatFromKRW(totalGuestPriceKRW(selectedListing.pricePerNightKRW), currency)}
                         <span className="ml-1 font-normal text-neutral-500">/ night</span>
                       </div>
                     </div>
@@ -311,41 +321,38 @@ export default function BrowseMapLayout({ items }: { items: Listing[] }) {
             </p>
           </div>
         ) : (
-          <div className="grid gap-x-6 gap-y-10 sm:grid-cols-2 xl:grid-cols-2">
-            {displayed.map((l) => (
-              <ListingCard
-                key={l.id}
-                listing={l}
-                active={hoveredId === l.id}
-                onHoverChange={setHoveredId}
-              />
-            ))}
-          </div>
+          <>
+            <div className="grid gap-x-6 gap-y-10 sm:grid-cols-2 xl:grid-cols-2">
+              {visibleListings.map((l) => (
+                <ListingCard
+                  key={l.id}
+                  listing={l}
+                  active={hoveredId === l.id}
+                  onHoverChange={setHoveredId}
+                />
+              ))}
+            </div>
+            {hasMore && (
+              <div className="mt-10 flex justify-center">
+                <button
+                  type="button"
+                  onClick={() => setVisibleCount((prev) => Math.min(prev + LOAD_MORE_STEP, displayed.length))}
+                  className="inline-flex items-center justify-center rounded-xl bg-neutral-900 px-6 py-3 text-sm font-semibold text-white shadow-sm transition hover:opacity-95 active:scale-[0.98]"
+                >
+                  {t("load_more")}
+                </button>
+              </div>
+            )}
+          </>
         )}
       </div>
 
-      {/* Desktop map (right sticky) – 모바일/좁은 화면에서는 접기 */}
+      {/* Desktop map (right sticky) – 지도는 항상 펼친 상태 */}
       <div style={useTabLayout ? { display: "none" } : { display: "block" }}>
         <div className={`relative rounded-2xl border border-neutral-200 bg-white overflow-hidden ${isNarrow ? "" : "sticky top-[132px] h-[calc(100vh-132px-24px)]"}`}>
-          {isNarrow && (
-            <button
-              type="button"
-              onClick={() => setMapCollapsed((c) => !c)}
-              className="flex w-full shrink-0 items-center justify-between gap-2 px-4 py-3 text-left text-sm font-semibold text-neutral-900 bg-neutral-50 border-b border-neutral-200 touch-manipulation"
-            >
-              <span>지도</span>
-              <span className="flex items-center gap-1 text-neutral-500">
-                {mapCollapsed ? (
-                  <>펼치기 <ChevronDown className="h-4 w-4" /></>
-                ) : (
-                  <>접기 <ChevronUp className="h-4 w-4" /></>
-                )}
-              </span>
-            </button>
-          )}
           <div
-            className="relative overflow-hidden bg-neutral-100 rounded-b-2xl"
-            style={isNarrow ? { height: mapCollapsed ? 140 : "50vh", minHeight: mapCollapsed ? 140 : 240 } : { height: "100%" }}
+            className="relative overflow-hidden bg-neutral-100 rounded-2xl"
+            style={isNarrow ? { height: "50vh", minHeight: 240 } : { height: "100%" }}
           >
             <MapOverlay
               showSearchArea={showSearchArea}

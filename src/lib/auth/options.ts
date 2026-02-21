@@ -1,5 +1,7 @@
 import type { NextAuthOptions } from "next-auth";
 import GoogleProvider from "next-auth/providers/google";
+import KakaoProvider from "next-auth/providers/kakao";
+import LineProvider from "next-auth/providers/line";
 import { prisma } from "@/lib/db";
 
 const DEFAULT_ADMIN_EMAILS = ["official.kstay@gmail.com"];
@@ -20,6 +22,22 @@ export const authOptions: NextAuthOptions = {
       clientId: process.env.GOOGLE_CLIENT_ID || "",
       clientSecret: process.env.GOOGLE_CLIENT_SECRET || "",
     }),
+    ...(process.env.KAKAO_CLIENT_ID
+      ? [
+          KakaoProvider({
+            clientId: process.env.KAKAO_CLIENT_ID,
+            clientSecret: process.env.KAKAO_CLIENT_SECRET || "",
+          }),
+        ]
+      : []),
+    ...(process.env.LINE_CLIENT_ID
+      ? [
+          LineProvider({
+            clientId: process.env.LINE_CLIENT_ID,
+            clientSecret: process.env.LINE_CLIENT_SECRET || "",
+          }),
+        ]
+      : []),
   ],
   session: { strategy: "jwt" },
   pages: {
@@ -27,10 +45,14 @@ export const authOptions: NextAuthOptions = {
   },
   callbacks: {
     async signIn({ user, account }) {
-      if (account?.provider !== "google") return false;
-      if (!user.email) return false;
+      const provider = account?.provider;
+      if (provider !== "google" && provider !== "kakao" && provider !== "line") return false;
 
-      const normalizedEmail = user.email.trim().toLowerCase();
+      const rawEmail = user.email?.trim();
+      const fallbackPrefix = provider === "line" ? "line" : provider === "kakao" ? "kakao" : "oauth";
+      const normalizedEmail = rawEmail
+        ? rawEmail.toLowerCase()
+        : `${fallbackPrefix}_${account?.providerAccountId ?? user.id ?? "unknown"}@${provider}.user`;
       const shouldBeAdmin = isAdminEmail(normalizedEmail);
       const existing = await prisma.user.findUnique({
         where: { email: normalizedEmail },

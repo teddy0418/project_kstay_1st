@@ -6,6 +6,7 @@ import { getServerSessionUser } from "@/lib/auth/server";
 import { buildCancellationDeadlineKst, nightsBetween, parseISODate } from "@/lib/bookings/utils";
 import { createBookingSchema } from "@/lib/validation/schemas";
 import { createPendingBookingWithPayment, findListingPricingById } from "@/lib/repositories/bookings";
+import { getExchangeRates } from "@/lib/exchange";
 
 type CreateBookingResponse = {
   token: string;
@@ -16,7 +17,7 @@ type CreateBookingResponse = {
     paymentId: string;
     orderName: string;
     totalAmount: number;
-    currency: "USD" | "KRW";
+    currency: "USD" | "KRW" | "JPY" | "CNY";
     redirectUrl: string;
     forceRedirect: true;
   };
@@ -103,9 +104,23 @@ export async function POST(req: Request) {
         return apiError(500, "INTERNAL_ERROR", "PortOne env is not configured");
       }
 
-      // PortOne KR channels generally expect KRW amounts.
-      const bookingCurrency: "USD" | "KRW" = "KRW";
-      const totalAmount = totalKrw;
+      const requestedCurrency = (body.currency ?? "KRW") as "USD" | "KRW" | "JPY" | "CNY";
+      let bookingCurrency = requestedCurrency;
+      let totalAmount = totalKrw;
+
+      if (bookingCurrency !== "KRW") {
+        try {
+          const rates = await getExchangeRates();
+          const rate = rates[bookingCurrency];
+          if (rate != null && rate > 0) {
+            totalAmount = Math.round(totalKrw * rate);
+          } else {
+            bookingCurrency = "KRW";
+          }
+        } catch {
+          bookingCurrency = "KRW";
+        }
+      }
 
       payload.portone = {
         storeId,
