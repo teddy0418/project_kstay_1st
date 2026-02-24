@@ -9,7 +9,7 @@ import { useToast } from "@/components/ui/ToastProvider";
 import { apiClient } from "@/lib/api/client";
 import ListingCard from "@/features/listings/components/ListingCard";
 import type { Listing } from "@/types";
-import ReviewModal from "@/components/ui/ReviewModal";
+import ReviewModal, { type ReviewFormData } from "@/components/ui/ReviewModal";
 import Link from "next/link";
 
 type TripItem = {
@@ -131,6 +131,9 @@ export default function ProfileClient({ initialTrips }: ProfileClientProps) {
   const [reviewModal, setReviewModal] = useState<{ bookingId: string; listingTitle: string } | null>(null);
   const [myReviews, setMyReviews] = useState<Array<{ id: string; rating: number; body: string; createdAt: string; listing: { id: string; title?: string; titleKo?: string } | null }>>([]);
   const [myReviewsLoading, setMyReviewsLoading] = useState(true);
+  const INITIAL_SHOW = 3;
+  const [tripsExpanded, setTripsExpanded] = useState(false);
+  const [reviewsExpanded, setReviewsExpanded] = useState(false);
 
   const fetchTrips = () => {
     if (!loggedIn) return;
@@ -184,9 +187,18 @@ export default function ProfileClient({ initialTrips }: ProfileClientProps) {
     return () => clearTimeout(timeout);
   }, [loggedIn, initialTrips.length]);
 
-  const handleSubmitReview = async (bookingId: string, rating: number, body: string) => {
+  const handleSubmitReview = async (bookingId: string, data: ReviewFormData) => {
     try {
-      await apiClient.post("/api/reviews", { bookingId, rating, body });
+      await apiClient.post("/api/reviews", {
+        bookingId,
+        body: data.body,
+        cleanliness: data.cleanliness,
+        accuracy: data.accuracy,
+        checkIn: data.checkIn,
+        communication: data.communication,
+        location: data.location,
+        value: data.value,
+      });
     } catch (e) {
       const msg = e instanceof Error ? e.message : "Failed to save review";
       throw new Error(msg);
@@ -268,6 +280,24 @@ export default function ProfileClient({ initialTrips }: ProfileClientProps) {
             <div className="min-w-0">
               <div className="text-sm text-neutral-500">{role?.toUpperCase()}</div>
               <div className="text-lg font-semibold truncate">{displayName || c.guest}</div>
+              {(user?.provider || user?.email) && (
+                <div className="mt-1 text-xs text-neutral-500 truncate">
+                  {user.provider && (
+                    <span>
+                      {t("logged_in_with")}{" "}
+                      {user.provider === "google"
+                        ? t("provider_google")
+                        : user.provider === "kakao"
+                          ? t("provider_kakao")
+                          : user.provider === "line"
+                            ? t("provider_line")
+                            : user.provider}
+                      {user.email ? " · " : ""}
+                    </span>
+                  )}
+                  {user.email && <span>{user.email}</span>}
+                </div>
+              )}
             </div>
           </div>
 
@@ -313,8 +343,9 @@ export default function ProfileClient({ initialTrips }: ProfileClientProps) {
             ) : trips.length === 0 ? (
               <p className="mt-2 text-sm text-neutral-600">{t("empty_trips")}</p>
             ) : (
-              <div className="mt-5 grid gap-x-6 gap-y-10 sm:grid-cols-2 lg:grid-cols-2 xl:grid-cols-3">
-                {trips.map((trip) => (
+              <>
+                <div className="mt-5 grid gap-x-6 gap-y-10 sm:grid-cols-2 lg:grid-cols-2 xl:grid-cols-3">
+                  {(tripsExpanded ? trips : trips.slice(0, INITIAL_SHOW)).map((trip) => (
                   <div key={`${trip.booking.id}-${trip.listing.id}`}>
                     <div className="mb-2 flex items-center justify-between gap-2">
                       <p className="text-xs text-neutral-500">
@@ -340,16 +371,26 @@ export default function ProfileClient({ initialTrips }: ProfileClientProps) {
                     </div>
                     <ListingCard listing={trip.listing} />
                   </div>
-                ))}
-              </div>
+                  ))}
+                </div>
+                {trips.length > INITIAL_SHOW && !tripsExpanded && (
+                  <button
+                    type="button"
+                    onClick={() => setTripsExpanded(true)}
+                    className="mt-4 text-sm font-medium text-neutral-600 hover:text-neutral-900 underline"
+                  >
+                    {t("load_more")} ({trips.length - INITIAL_SHOW})
+                  </button>
+                )}
+              </>
             )}
             {reviewModal && (
               <ReviewModal
                 listingTitle={reviewModal.listingTitle}
                 bookingId={reviewModal.bookingId}
                 onClose={() => setReviewModal(null)}
-                onSubmit={async (rating, body) => {
-                  await handleSubmitReview(reviewModal.bookingId, rating, body);
+                onSubmit={async (data) => {
+                  await handleSubmitReview(reviewModal.bookingId, data);
                 }}
               />
             )}
@@ -362,8 +403,9 @@ export default function ProfileClient({ initialTrips }: ProfileClientProps) {
             ) : myReviews.length === 0 ? (
               <p className="mt-2 text-sm text-neutral-600">{c.reviewSoon}</p>
             ) : (
-              <ul className="mt-5 space-y-4">
-                {myReviews.map((r) => (
+              <>
+                <ul className="mt-5 space-y-4">
+                  {(reviewsExpanded ? myReviews : myReviews.slice(0, INITIAL_SHOW)).map((r) => (
                   <li key={r.id} className="rounded-xl border border-neutral-200 p-4">
                     <div className="flex items-center justify-between gap-2">
                       <Link
@@ -381,8 +423,18 @@ export default function ProfileClient({ initialTrips }: ProfileClientProps) {
                       {new Date(r.createdAt).toLocaleDateString()}
                     </p>
                   </li>
-                ))}
-              </ul>
+                  ))}
+                </ul>
+                {myReviews.length > INITIAL_SHOW && !reviewsExpanded && (
+                  <button
+                    type="button"
+                    onClick={() => setReviewsExpanded(true)}
+                    className="mt-4 text-sm font-medium text-neutral-600 hover:text-neutral-900 underline"
+                  >
+                    {t("load_more")} ({myReviews.length - INITIAL_SHOW})
+                  </button>
+                )}
+              </>
             )}
           </section>
 

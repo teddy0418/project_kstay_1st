@@ -41,3 +41,11 @@ export async function approveListingById(id: string) {
     select: { id: true, status: true, approvedAt: true },
   });
 }
+
+export async function rejectListingById(id: string) {
+  return prisma.listing.update({
+    where: { id },
+    data: { status: "REJECTED" },
+    select: { id: true, status: true },
+  });
+}

@@ -19,16 +19,22 @@ type DbListing = {
   hostBioJa: string | null;
   hostBioZh: string | null;
   checkInTime: string;
+  checkInGuideMessage?: string | null;
+  houseRulesMessage?: string | null;
   amenities: string[];
   images: Array<{ url: string; sortOrder: number }>;
-  host?: { name: string | null; image: string | null } | null;
+  host?: { name: string | null; image: string | null; displayName: string | null; profilePhotoUrl: string | null } | null;
 };
 
+const DEFAULT_HOST_AVATAR =
+  "https://images.unsplash.com/photo-1502685104226-ee32379fefbe?auto=format&fit=crop&w=800&q=80";
+
 function toListing(row: DbListing): Listing {
-  const hostName = row.host?.name?.trim() || "KSTAY Host";
+  // 글로벌 표준: 게스트 프로필(displayName, profilePhotoUrl)과 동일한 정보를 숙소 상세에 표시
+  const hostName =
+    (row.host?.displayName?.trim() || row.host?.name?.trim()) || "KSTAY Host";
   const hostProfileImageUrl =
-    row.host?.image?.trim() ||
-    "https://images.unsplash.com/photo-1502685104226-ee32379fefbe?auto=format&fit=crop&w=800&q=80";
+    (row.host?.profilePhotoUrl?.trim() || row.host?.image?.trim()) || DEFAULT_HOST_AVATAR;
   return {
     id: row.id,
     title: row.title,
@@ -49,15 +55,50 @@ function toListing(row: DbListing): Listing {
     },
     hostProfileImageUrl,
     checkInTime: row.checkInTime || "15:00",
+    checkInGuideMessage: row.checkInGuideMessage ?? undefined,
+    houseRulesMessage: row.houseRulesMessage ?? undefined,
     amenities: Array.isArray(row.amenities) ? row.amenities : [],
   };
 }
 
-export async function getPublicListings(): Promise<Listing[]> {
+export type ListingsFilter = {
+  where?: string;
+  start?: string; // YYYY-MM-DD
+  end?: string;   // YYYY-MM-DD
+};
+
+export async function getPublicListings(filters?: ListingsFilter): Promise<Listing[]> {
   try {
+    const q = filters?.where?.trim();
+    const startDate = filters?.start && filters?.end ? new Date(`${filters.start}T00:00:00.000Z`) : null;
+    const endDate = filters?.start && filters?.end ? new Date(`${filters.end}T00:00:00.000Z`) : null;
+
     const rows = await prisma.listing.findMany({
-      where: { status: "APPROVED" },
-      include: { images: true, host: { select: { name: true, image: true } } },
+      where: {
+        status: "APPROVED",
+        ...(q && {
+          AND: [
+            {
+              OR: [
+                { city: { contains: q, mode: "insensitive" } },
+                { area: { contains: q, mode: "insensitive" } },
+                { title: { contains: q, mode: "insensitive" } },
+                { address: { contains: q, mode: "insensitive" } },
+              ],
+            },
+          ],
+        }),
+        ...(startDate && endDate && {
+          bookings: {
+            none: {
+              status: "CONFIRMED",
+              checkIn: { lt: endDate },
+              checkOut: { gt: startDate },
+            },
+          },
+        }),
+      },
+      include: { images: true, host: { select: { name: true, image: true, displayName: true, profilePhotoUrl: true } } },
       orderBy: { createdAt: "desc" },
     });
     if (rows.length > 0) {
@@ -73,13 +114,27 @@ export async function getPublicListingById(id: string): Promise<Listing | null> 
   try {
     const row = await prisma.listing.findFirst({
       where: { id, status: "APPROVED" },
-      include: { images: true, host: { select: { name: true, image: true } } },
+      include: { images: true, host: { select: { name: true, image: true, displayName: true, profilePhotoUrl: true } } },
     });
     if (row) return toListing(row as DbListing);
   } catch {
     // fall through to mock data
   }
   return mockListings.find((x) => x.id === id) ?? null;
+}
+
+/** DB만 사용. 승인된 숙소만 반환 (mock 미사용). 관리자 테스트 리뷰 등용. */
+export async function getApprovedListingsFromDb(): Promise<Listing[]> {
+  try {
+    const rows = await prisma.listing.findMany({
+      where: { status: "APPROVED" },
+      include: { images: true, host: { select: { name: true, image: true, displayName: true, profilePhotoUrl: true } } },
+      orderBy: { createdAt: "desc" },
+    });
+    return rows.map((r) => toListing(r as DbListing));
+  } catch {
+    return [];
+  }
 }
 
 /** DB만 사용. ids 순서대로 반환 (없는 id는 제외). */
@@ -89,7 +144,7 @@ export async function getPublicListingsByIds(ids: string[]): Promise<Listing[]> 
   try {
     const rows = await prisma.listing.findMany({
       where: { id: { in: unique }, status: "APPROVED" },
-      include: { images: true, host: { select: { name: true, image: true } } },
+      include: { images: true, host: { select: { name: true, image: true, displayName: true, profilePhotoUrl: true } } },
     });
     const byId = new Map(rows.map((r) => [r.id, toListing(r as DbListing)]));
     return unique.map((id) => byId.get(id)).filter(Boolean) as Listing[];

@@ -19,6 +19,8 @@ export type WizardListing = {
   basePriceKrw: number;
   checkInTime: string | null;
   checkOutTime: string | null;
+  checkInGuideMessage?: string | null;
+  houseRulesMessage?: string | null;
   hostBio: string | null;
   hostBioKo: string | null;
   hostBioJa: string | null;

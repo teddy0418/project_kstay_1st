@@ -83,7 +83,9 @@ export const authOptions: NextAuthOptions = {
       user.id = dbUser.id;
       return true;
     },
-    async jwt({ token, user }) {
+    async jwt({ token, user, account }) {
+      if (account?.provider) token.provider = account.provider;
+
       const raw = user?.email || token.email;
       const email = typeof raw === "string" ? raw.trim().toLowerCase() : "";
       if (email) {
@@ -104,6 +106,9 @@ export const authOptions: NextAuthOptions = {
     },
     async session({ session, token }) {
       if (session.user) {
+        session.user.email = (token.email as string) ?? session.user.email ?? undefined;
+        session.user.provider = token.provider as string | undefined;
+
         const email = typeof token.email === "string" ? token.email.trim().toLowerCase() : "";
         if (email) {
           const dbUser = await prisma.user.findUnique({

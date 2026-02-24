@@ -14,7 +14,7 @@ export async function POST(req: NextRequest) {
 
     const parsed = await parseJsonBody(req, createReviewSchema);
     if (!parsed.ok) return parsed.response;
-    const { bookingId, rating, body } = parsed.data;
+    const { bookingId, body, cleanliness, accuracy, checkIn, communication, location, value } = parsed.data;
 
     const booking = await prisma.booking.findUnique({
       where: { id: bookingId },
@@ -35,8 +35,13 @@ export async function POST(req: NextRequest) {
       bookingId,
       userId: user.id,
       listingId: booking.listingId,
-      rating,
       body,
+      cleanliness,
+      accuracy,
+      checkIn,
+      communication,
+      location,
+      value,
     });
     return apiOk({ id: review.id, rating: review.rating, body: review.body, createdAt: review.createdAt }, 201);
   } catch (error) {

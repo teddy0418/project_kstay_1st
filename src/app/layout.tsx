@@ -1,5 +1,6 @@
 import "./globals.css";
 import type { Metadata, Viewport } from "next";
+import Script from "next/script";
 import { cookies, headers } from "next/headers";
 import Providers from "@/components/ui/Providers";
 import { geoCountryToLocale } from "@/lib/geo";
@@ -66,6 +67,10 @@ export default async function RootLayout({ children }: { children: React.ReactNo
   return (
     <html lang={initialLang} suppressHydrationWarning>
       <body className="min-h-screen bg-white text-neutral-900 antialiased">
+        <Script
+          src="https://cdn.portone.io/v2/browser-sdk.js"
+          strategy="afterInteractive"
+        />
         <Providers initialLang={initialLang} initialCurrency={initialCurrency}>
           {children}
         </Providers>

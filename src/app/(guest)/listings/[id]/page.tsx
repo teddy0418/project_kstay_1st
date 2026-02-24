@@ -69,7 +69,21 @@ function localizeHostBio(
   return table[listing.id]?.[lang] ?? fallbackBio;
 }
 
-type DbReview = { id: string; userId?: string; userName: string; userImage?: string | null; rating: number; body: string; createdAt: string };
+type DbReview = {
+  id: string;
+  userId?: string;
+  userName: string;
+  userImage?: string | null;
+  rating: number;
+  body: string;
+  createdAt: string;
+  cleanliness?: number | null;
+  accuracy?: number | null;
+  checkIn?: number | null;
+  communication?: number | null;
+  location?: number | null;
+  value?: number | null;
+};
 
 function avatarLetterFromId(id: string): string {
   let n = 0;
@@ -279,29 +293,62 @@ function ReviewsSection({
                 },
               ],
             };
-  const dist = [
-    { stars: 5, pct: 72 },
-    { stars: 4, pct: 18 },
-    { stars: 3, pct: 7 },
-    { stars: 2, pct: 2 },
-    { stars: 1, pct: 1 },
-  ];
+  const reviewsWithCategories = (dbReviews ?? []).filter(
+    (r): r is DbReview & { cleanliness: number; accuracy: number; checkIn: number; communication: number; location: number; value: number } =>
+      r.cleanliness != null &&
+      r.accuracy != null &&
+      r.checkIn != null &&
+      r.communication != null &&
+      r.location != null &&
+      r.value != null
+  );
 
+  const categoryKeys = ["cleanliness", "accuracy", "checkIn", "communication", "location", "value"] as const;
+  const categoryAverages = categoryKeys.map((key) => {
+    if (reviewsWithCategories.length === 0) return null;
+    const sum = reviewsWithCategories.reduce((a, r) => a + r[key], 0);
+    return Math.round((sum / reviewsWithCategories.length) * 10) / 10;
+  });
+
+  const dist = (() => {
+    if (!dbReviews?.length) {
+      return [
+        { stars: 5, pct: 72 },
+        { stars: 4, pct: 18 },
+        { stars: 3, pct: 7 },
+        { stars: 2, pct: 2 },
+        { stars: 1, pct: 1 },
+      ];
+    }
+    const counts = [0, 0, 0, 0, 0];
+    dbReviews.forEach((r) => {
+      const idx = Math.min(5, Math.max(1, r.rating)) - 1;
+      counts[idx]++;
+    });
+    const total = counts.reduce((a, b) => a + b, 0);
+    return counts.map((c, i) => ({ stars: i + 1, pct: total > 0 ? Math.round((c / total) * 100) : 0 }));
+  })();
+
+  const displayRating = dbReviews?.length
+    ? dbReviews.reduce((a, r) => a + r.rating, 0) / dbReviews.length
+    : rating;
   const cats = [
-    { label: t.cats.cleanliness, icon: Sparkles, value: 4.9 },
-    { label: t.cats.accuracy, icon: CheckCircle2, value: 4.9 },
-    { label: t.cats.checkIn, icon: Key, value: 4.8 },
-    { label: t.cats.communication, icon: MessageCircle, value: 4.9 },
-    { label: t.cats.location, icon: MapPin, value: 4.8 },
-    { label: t.cats.value, icon: Tag, value: 4.9 },
+    { label: t.cats.cleanliness, icon: Sparkles, value: categoryAverages[0] ?? 4.9 },
+    { label: t.cats.accuracy, icon: CheckCircle2, value: categoryAverages[1] ?? 4.9 },
+    { label: t.cats.checkIn, icon: Key, value: categoryAverages[2] ?? 4.8 },
+    { label: t.cats.communication, icon: MessageCircle, value: categoryAverages[3] ?? 4.9 },
+    { label: t.cats.location, icon: MapPin, value: categoryAverages[4] ?? 4.8 },
+    { label: t.cats.value, icon: Tag, value: categoryAverages[5] ?? 4.9 },
   ];
   const reviews =
     dbReviews && dbReviews.length > 0
       ? dbReviews.map((r) => {
           const image = r.userImage ?? null;
           const noPhoto = !image;
-          const name = noPhoto ? "Guest_" + (r.userId?.slice(-5) ?? r.id.slice(-5)) : (r.userName ?? "Guest");
-          const letter = noPhoto ? avatarLetterFromId(r.userId ?? r.id) : null;
+          const name = r.userName ?? "Guest";
+          const letter = noPhoto
+            ? (name.trim().slice(0, 1).toUpperCase() || avatarLetterFromId(r.userId ?? r.id))
+            : null;
           return {
             id: r.id,
             name,
@@ -323,14 +370,14 @@ function ReviewsSection({
     <section id="reviews" className="mt-12">
       <div className="flex items-center gap-2 text-lg font-semibold">
         <Star className="h-5 w-5" />
-        <span>{rating.toFixed(2)}</span>
+        <span>{displayRating.toFixed(2)}</span>
         <span className="text-neutral-400">·</span>
         <span>{count.toLocaleString()} {t.reviews}</span>
       </div>
 
-      <div className="mt-6 grid gap-6 lg:grid-cols-[320px_minmax(0,1fr)]">
-        {/* distribution */}
-        <div className="rounded-2xl border border-neutral-200 p-5">
+      <div className="mt-6 grid gap-6 lg:grid-cols-[200px_minmax(0,1fr)]">
+        {/* distribution: 좁게 해서 오른쪽 카테고리 그리드에 공간 확보 */}
+        <div className="rounded-2xl border border-neutral-200 p-4">
           <div className="text-sm font-semibold">{t.overall}</div>
           <div className="mt-4 grid gap-2">
             {dist.map((d) => (
@@ -344,14 +391,14 @@ function ReviewsSection({
           </div>
         </div>
 
-        {/* categories: 모바일·작은 화면에서 한 줄에 2개씩 */}
+        {/* categories: overall 열 축소로 한 줄에 여유 있게 표시 */}
         <div className="grid min-w-0 grid-cols-2 gap-4 xl:grid-cols-3">
           {cats.map((c) => {
             const Icon = c.icon;
             return (
               <div key={c.label} className="rounded-2xl border border-neutral-200 p-5">
                 <div className="flex items-center gap-2 text-sm font-semibold text-neutral-700 min-w-0">
-                  <Icon className="h-4 w-4" />
+                  <Icon className="h-4 w-4 shrink-0" />
                   <span className="min-w-0 truncate">{c.label}</span>
                 </div>
                 <div className="mt-2 text-xl font-semibold">{c.value.toFixed(1)}</div>
@@ -685,7 +732,21 @@ export default async function ListingDetailPage({
 
           {/* Reviews */}
 
-          <ReviewsSection rating={listing.rating} count={reviewCount} lang={lang} dbReviews={dbReviews.map((r) => ({ id: r.id, userId: r.user?.id, userName: r.user?.name ?? "Guest", userImage: r.user?.image ?? null, rating: r.rating, body: r.body, createdAt: r.createdAt.toISOString() }))} />
+          <ReviewsSection rating={listing.rating} count={reviewCount} lang={lang} dbReviews={dbReviews.map((r) => ({
+            id: r.id,
+            userId: r.user?.id,
+            userName: (r.user?.displayName?.trim() || r.user?.name) ?? "Guest",
+            userImage: r.user?.profilePhotoUrl?.trim() || null,
+            rating: r.rating,
+            body: r.body,
+            createdAt: r.createdAt.toISOString(),
+            cleanliness: r.cleanliness ?? undefined,
+            accuracy: r.accuracy ?? undefined,
+            checkIn: r.checkIn ?? undefined,
+            communication: r.communication ?? undefined,
+            location: r.location ?? undefined,
+            value: r.value ?? undefined,
+          }))} />
 
           {/* Cancellation / Refund policy */}
           <section className="mt-12">

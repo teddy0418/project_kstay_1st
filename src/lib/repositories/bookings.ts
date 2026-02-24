@@ -22,6 +22,10 @@ type CreateBookingInput = {
   guestsPets: number;
   totalUsd: number;
   totalKrw: number;
+  /** 숙박료 (수수료 제외). 게스트 결제 내역·호스트 수령 일관성용 */
+  accommodationKrw?: number | null;
+  /** 게스트 서비스 수수료 12%. accommodationKrw * 0.12 */
+  guestServiceFeeKrw?: number | null;
   cancellationDeadlineKst: Date;
   paymentProvider: PaymentProvider;
   paymentStoreId: string | null;
@@ -54,6 +58,8 @@ export async function createPendingBookingWithPayment(input: CreateBookingInput)
       currency: "USD",
       totalUsd: input.totalUsd,
       totalKrw: input.totalKrw,
+      accommodationKrw: input.accommodationKrw ?? null,
+      guestServiceFeeKrw: input.guestServiceFeeKrw ?? null,
       cancellationDeadlineKst: input.cancellationDeadlineKst,
       status: "PENDING_PAYMENT",
       payments: {

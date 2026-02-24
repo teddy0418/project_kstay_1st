@@ -35,6 +35,8 @@ type UpdateHostListingInput = {
   status?: "DRAFT" | "PENDING" | "APPROVED" | "REJECTED";
   checkInTime?: string | null;
   checkOutTime?: string | null;
+  checkInGuideMessage?: string | null;
+  houseRulesMessage?: string | null;
   hostBio?: string;
   hostBioKo?: string;
   hostBioJa?: string;
@@ -136,6 +138,8 @@ export async function findHostListingForEdit(id: string, hostId?: string) {
       basePriceKrw: true,
       checkInTime: true,
       checkOutTime: true,
+      checkInGuideMessage: true,
+      houseRulesMessage: true,
       hostBio: true,
       hostBioKo: true,
       hostBioJa: true,
@@ -229,6 +233,8 @@ export async function updateHostListing(input: UpdateHostListingInput) {
   if (input.status !== undefined) data.status = input.status;
   if (input.checkInTime !== undefined) data.checkInTime = input.checkInTime ?? undefined;
   if (input.checkOutTime !== undefined) data.checkOutTime = input.checkOutTime ?? undefined;
+  if (input.checkInGuideMessage !== undefined) data.checkInGuideMessage = input.checkInGuideMessage ?? undefined;
+  if (input.houseRulesMessage !== undefined) data.houseRulesMessage = input.houseRulesMessage ?? undefined;
   if (input.city !== undefined && input.area !== undefined) data.location = `${input.city} · ${input.area}`;
   if (input.hostBio !== undefined) data.hostBio = normalizedHostBio;
   if (input.hostBioKo !== undefined) data.hostBioKo = normalizedHostBioKo;

@@ -1,10 +1,12 @@
 "use client";
 
-import { useCallback, useMemo, useRef, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { useRouter } from "next/navigation";
 import type { DateRange } from "react-day-picker";
 import { totalGuestPriceKRW } from "@/lib/policy";
 import { formatKRW, nightsBetween, formatDateEn, addDays, parseISODate } from "@/lib/format";
+import { useAuth } from "@/components/ui/AuthProvider";
+import { useAuthModal } from "@/components/ui/AuthModalProvider";
 import { useCurrency } from "@/components/ui/CurrencyProvider";
 import { useExchangeRates } from "@/components/ui/ExchangeRatesProvider";
 import { useI18n } from "@/components/ui/LanguageProvider";
@@ -41,6 +43,8 @@ export default function BookingWidget({
   defaultGuests?: number;
 }) {
   const router = useRouter();
+  const { user } = useAuth();
+  const { open: openAuthModal } = useAuthModal();
   const { currency } = useCurrency();
   const { formatFromKRW } = useExchangeRates();
   const { lang, t, locale } = useI18n();
@@ -63,6 +67,18 @@ export default function BookingWidget({
   const [adults, setAdults] = useState(Math.max(1, defaultGuests ?? 2));
   const [childCount, setChildCount] = useState(0);
   const [openPanel, setOpenPanel] = useState<"date" | "guests" | null>(null);
+  const [disabledRanges, setDisabledRanges] = useState<Array<{ from: string; to: string }>>([]);
+
+  useEffect(() => {
+    if (!listingId) return;
+    fetch(`/api/listings/${encodeURIComponent(listingId)}/unavailable-dates`)
+      .then((r) => r.json())
+      .then((res) => {
+        if (res?.data?.ranges) setDisabledRanges(res.data.ranges);
+      })
+      .catch(() => {});
+  }, [listingId]);
+
   const dateRef = useRef<HTMLButtonElement>(null);
   const guestsRef = useRef<HTMLButtonElement>(null);
 
@@ -80,6 +96,11 @@ export default function BookingWidget({
   );
   const checkInISO = toISO(effectiveRange.from);
   const checkOutISO = toISO(effectiveRange.to);
+
+  const overlapsDisabled = useMemo(() => {
+    if (disabledRanges.length === 0) return false;
+    return disabledRanges.some((r) => checkInISO < r.to && checkOutISO > r.from);
+  }, [disabledRanges, checkInISO, checkOutISO]);
 
   const nightlyAllInKRW = totalGuestPriceKRW(basePricePerNightKRW);
   const totalKRW = nightlyAllInKRW * nights;
@@ -100,12 +121,26 @@ export default function BookingWidget({
   const guestsLabel = `${t("guests")} ${totalGuests || 2}`;
 
   const reserve = () => {
+    if (overlapsDisabled) {
+      alert(
+        lang === "ko"
+          ? "선택한 날짜는 이미 예약되어 있습니다. 다른 날짜를 선택해 주세요."
+          : "Selected dates are not available. Please choose different dates."
+      );
+      return;
+    }
     const params = new URLSearchParams();
     params.set("listingId", String(listingId));
     params.set("start", checkInISO);
     params.set("end", checkOutISO);
     params.set("guests", String(totalGuests));
-    router.push(`/checkout?${params.toString()}`);
+    const checkoutUrl = `/checkout?${params.toString()}`;
+
+    if (!user) {
+      openAuthModal({ next: checkoutUrl, role: "GUEST" });
+      return;
+    }
+    router.push(checkoutUrl);
   };
 
   const c =
@@ -146,7 +181,7 @@ export default function BookingWidget({
             };
 
   return (
-    <div className="rounded-2xl border border-neutral-200 bg-white p-5 shadow-md">
+    <div className="relative rounded-2xl border border-neutral-200 bg-white p-5 shadow-md">
       <div className="flex items-end justify-between">
         <div>
           <div className="text-xs text-neutral-500">{c.total}</div>
@@ -179,29 +214,29 @@ export default function BookingWidget({
           >
             {guestsLabel}
           </button>
+          {openPanel === "date" && (
+            <div className="border-t border-neutral-200 p-3">
+              <DateDropdown
+                range={range}
+                onChange={setRange}
+                onClose={() => setOpenPanel(null)}
+                numberOfMonths={1}
+                disabledRanges={disabledRanges}
+              />
+            </div>
+          )}
+          {openPanel === "guests" && (
+            <div className="border-t border-neutral-200 p-3">
+              <GuestsDropdown
+                adults={adults}
+                childCount={childCount}
+                onChangeAdults={(n) => setAdults(Math.max(0, Math.min(16, n)))}
+                onChangeChildren={(n) => setChildCount(Math.max(0, Math.min(16, n)))}
+                onClose={() => setOpenPanel(null)}
+              />
+            </div>
+          )}
         </div>
-
-        {openPanel === "date" && (
-          <div className="border-t border-neutral-200 p-3">
-            <DateDropdown
-              range={range}
-              onChange={setRange}
-              onClose={() => setOpenPanel(null)}
-              numberOfMonths={1}
-            />
-          </div>
-        )}
-        {openPanel === "guests" && (
-          <div className="border-t border-neutral-200 p-3">
-            <GuestsDropdown
-              adults={adults}
-              childCount={childCount}
-              onChangeAdults={(n) => setAdults(Math.max(0, Math.min(16, n)))}
-              onChangeChildren={(n) => setChildCount(Math.max(0, Math.min(16, n)))}
-              onClose={() => setOpenPanel(null)}
-            />
-          </div>
-        )}
       </div>
 
       <div className="mt-3 rounded-xl bg-neutral-50 px-3 py-2 text-xs text-neutral-700">
@@ -211,7 +246,8 @@ export default function BookingWidget({
       <button
         type="button"
         onClick={reserve}
-        className="mt-4 w-full rounded-full bg-neutral-900 py-3 text-sm font-semibold text-white hover:opacity-95 transition"
+        disabled={overlapsDisabled}
+        className="mt-4 w-full rounded-full bg-neutral-900 py-3 text-sm font-semibold text-white hover:opacity-95 transition disabled:opacity-50 disabled:cursor-not-allowed"
       >
         {c.reserve}
       </button>

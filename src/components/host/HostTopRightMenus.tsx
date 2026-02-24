@@ -73,6 +73,12 @@ export default function HostTopRightMenus() {
 
   return (
     <div ref={wrapRef} className="relative flex items-center gap-2">
+      <Link
+        href="/"
+        className="rounded-full border border-neutral-200 bg-white px-4 py-2 text-sm font-semibold text-neutral-700 hover:bg-neutral-50 transition shrink-0"
+      >
+        게스트 모드로 전환
+      </Link>
       <div className="relative">
         <button
           type="button"

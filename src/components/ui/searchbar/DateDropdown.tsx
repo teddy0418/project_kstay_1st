@@ -13,17 +13,32 @@ function startOfDay(d: Date) {
   return x;
 }
 
+function toISO(date: Date): string {
+  const y = date.getFullYear();
+  const m = String(date.getMonth() + 1).padStart(2, "0");
+  const d = String(date.getDate()).padStart(2, "0");
+  return `${y}-${m}-${d}`;
+}
+
+function isDateInRanges(date: Date, ranges: Array<{ from: string; to: string }>): boolean {
+  const d = toISO(date);
+  return ranges.some((r) => d >= r.from && d < r.to);
+}
+
 export default function DateDropdown({
   range,
   onChange,
   onClose,
   numberOfMonths: numberOfMonthsProp,
+  disabledRanges = [],
 }: {
   range: DateRange | undefined;
   onChange: (r: DateRange | undefined) => void;
   onClose: () => void;
   /** 좁은 영역(예: 상세 예약 위젯)에서는 1로 지정해 한 달만 표시 */
   numberOfMonths?: number;
+  /** 예약된 날짜 범위 (해당 날짜 선택 불가) */
+  disabledRanges?: Array<{ from: string; to: string }>;
 }) {
   const { t, locale } = useI18n();
   const [monthsResponsive, setMonthsResponsive] = useState(1);
@@ -87,7 +102,9 @@ export default function DateDropdown({
             numberOfMonths={months}
             showOutsideDays
             fromDate={today}
-            disabled={{ before: today }}
+            disabled={(date) =>
+              date < today || (disabledRanges.length > 0 && isDateInRanges(date, disabledRanges))
+            }
             className="rdp-compact"
           />
         </div>

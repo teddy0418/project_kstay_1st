@@ -1,19 +1,23 @@
-export default function HostAccountPage() {
-  return (
-    <div className="rounded-3xl border border-neutral-200 bg-white shadow-sm p-8">
-      <div className="text-2xl font-extrabold tracking-tight">계정 관리</div>
-      <p className="mt-2 text-sm text-neutral-600">
-        (MVP) 여기에서 파트너 정보 / 정산 계좌 / 연락처 등을 관리하게 됩니다.
-      </p>
+import { redirect } from "next/navigation";
+import { getCurrentHostFlow } from "@/lib/host/server";
+import HostAccountClient from "@/features/host/account/HostAccountClient";
 
-      <div className="mt-6 grid gap-3 text-sm text-neutral-700">
-        <div className="rounded-2xl border border-neutral-200 bg-[#F9FAFB] p-4">
-          프로필(사업자/대표자명) · 연락처 · 정산 계좌번호 · 알림 설정
-        </div>
-        <div className="rounded-2xl border border-neutral-200 bg-[#F9FAFB] p-4">
-          다음 단계에서 DB(Supabase/Prisma) 연결 후 실제 저장되도록 구현합니다.
-        </div>
+export default async function HostAccountPage() {
+  const current = await getCurrentHostFlow();
+  if (!current) redirect("/login?next=/host/account");
+  if (current.status === "NONE") redirect("/host/onboarding");
+  if (current.status === "DRAFT") redirect("/host/listings");
+  if (current.status === "PENDING") redirect("/host/pending");
+
+  return (
+    <div className="space-y-8">
+      <div>
+        <h1 className="text-2xl font-bold text-neutral-900">계정 관리</h1>
+        <p className="mt-1 text-sm text-neutral-500">
+          정산 계좌를 설정하면 정산 금액이 등록된 계좌로 출금됩니다. 이름·사진은 내 프로필에서 설정한 내용이 숙소 상세에 표시됩니다.
+        </p>
       </div>
+      <HostAccountClient />
     </div>
   );
 }

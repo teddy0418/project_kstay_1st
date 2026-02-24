@@ -1,6 +1,6 @@
 import Container from "@/components/layout/Container";
 import { redirect } from "next/navigation";
-import { diffNights } from "@/lib/format";
+import { diffNights, addDays } from "@/lib/format";
 import { calcGuestServiceFeeKRW } from "@/lib/policy";
 import { getPublicListingById } from "@/lib/repositories/listings";
 import CheckoutPaymentCard from "./CheckoutPaymentCard";
@@ -54,8 +54,10 @@ const COPY = {
   },
 } as const;
 
-function safeStr(v: unknown) {
-  return typeof v === "string" ? v : "";
+function safeStr(v: unknown): string {
+  if (typeof v === "string") return v;
+  if (Array.isArray(v) && v.length > 0 && typeof v[0] === "string") return v[0];
+  return "";
 }
 
 function safeInt(v: unknown, fallback = 1) {
@@ -73,9 +75,21 @@ export default async function CheckoutPage({
   const c = COPY[lang];
   const resolvedSearchParams = searchParams ? await searchParams : undefined;
   const listingId = safeStr(resolvedSearchParams?.listingId);
-  const start = safeStr(resolvedSearchParams?.start);
-  const end = safeStr(resolvedSearchParams?.end);
+  let start = safeStr(resolvedSearchParams?.start);
+  let end = safeStr(resolvedSearchParams?.end);
   const guests = safeInt(resolvedSearchParams?.guests, 1);
+
+  // 날짜 없이 진입 시 기본값 (오늘~내일) - 테스트 편의
+  if (!start || !end) {
+    const today = new Date();
+    today.setHours(0, 0, 0, 0);
+    const tomorrow = addDays(today, 1);
+    const y = (d: Date) => d.getFullYear();
+    const m = (d: Date) => String(d.getMonth() + 1).padStart(2, "0");
+    const day = (d: Date) => String(d.getDate()).padStart(2, "0");
+    start = start || `${y(today)}-${m(today)}-${day(today)}`;
+    end = end || `${y(tomorrow)}-${m(tomorrow)}-${day(tomorrow)}`;
+  }
 
   const listing = await getPublicListingById(listingId);
   if (!listing) redirect("/coming-soon");

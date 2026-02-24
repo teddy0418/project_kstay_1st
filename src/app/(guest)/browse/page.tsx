@@ -1,25 +1,13 @@
 import BrowseMapLayout from "@/features/browse/components/BrowseMapLayout";
 import Container from "@/components/layout/Container";
 import { getPublicListings } from "@/lib/repositories/listings";
-import type { Listing } from "@/types";
 
 type SP = { [key: string]: string | string[] | undefined };
 
-function norm(v: unknown) {
-  return String(v ?? "").trim().toLowerCase();
-}
-
-function filterByWhere(items: Listing[], where: string) {
-  const q = norm(where);
-  if (!q) return items;
-
-  return items.filter((l) => {
-    const city = norm(l.location.split("·")[0] ?? "");
-    const location = norm(l.location);
-    const title = norm(l.title);
-    const address = norm(l.address);
-    return city === q || location.includes(q) || title.includes(q) || address.includes(q);
-  });
+function one(param: string | string[] | undefined): string {
+  if (typeof param === "string") return param.trim();
+  if (Array.isArray(param) && param[0]) return String(param[0]).trim();
+  return "";
 }
 
 export default async function BrowsePage({
@@ -27,21 +15,26 @@ export default async function BrowsePage({
 }: {
   searchParams?: SP | Promise<SP>;
 }) {
-  const listings = await getPublicListings();
   const raw =
     searchParams && typeof (searchParams as Promise<SP>).then === "function"
       ? await (searchParams as Promise<SP>)
       : (searchParams ?? {});
   const sp = raw as SP;
 
-  const whereRaw = sp.where;
-  const where = typeof whereRaw === "string" ? whereRaw : Array.isArray(whereRaw) ? whereRaw[0] : "";
+  const where = one(sp.where);
+  const start = one(sp.start);
+  const end = one(sp.end);
 
-  const filtered = filterByWhere(listings, where);
+  const filters =
+    where || (start && end)
+      ? { where: where || undefined, start: start || undefined, end: end || undefined }
+      : undefined;
+
+  const listings = await getPublicListings(filters);
 
   return (
     <Container className="py-6">
-      <BrowseMapLayout items={filtered} />
+      <BrowseMapLayout items={listings} />
     </Container>
   );
 }

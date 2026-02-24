@@ -85,6 +85,8 @@ export async function PATCH(req: Request, ctx: { params: Promise<{ id: string }>
       status: body.status,
       checkInTime: body.checkInTime,
       checkOutTime: body.checkOutTime,
+      checkInGuideMessage: body.checkInGuideMessage,
+      houseRulesMessage: body.houseRulesMessage,
       hostBio: body.hostBio,
       hostBioKo: body.hostBioKo,
       hostBioJa: body.hostBioJa,

@@ -98,7 +98,13 @@ model Listing {
   hostBioZh String?
   checkInTime  String  @default("15:00")
   checkOutTime String?
+  checkInGuideMessage String?  @db.Text // 체크인 안내 (게스트에게 전달)
+  houseRulesMessage   String?  @db.Text // 이용 규칙·안내 메시지
   amenities    String[] @default([])
+  maxGuests    Int?     // 검색/필터용
+  bedrooms     Int?
+  beds         Int?
+  bathrooms    Float?
 
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
@@ -108,10 +114,37 @@ model Listing {
   bookings Booking[]
   wishlist WishlistItem[]
   reviews Review[]
+  blockedDates   ListingBlockedDate[]
+  datePrices     ListingDatePrice[]
 
   @@index([status, createdAt])
   @@index([hostId, createdAt])
   @@index([hostId, status, createdAt])
+}
+
+/// 호스트가 특정 날짜를 판매 중지(Block)한 경우
+model ListingBlockedDate {
+  id        String   @id @default(cuid())
+  listingId String
+  date      DateTime @db.Date
+
+  listing Listing @relation(fields: [listingId], references: [id], onDelete: Cascade)
+
+  @@unique([listingId, date])
+  @@index([listingId])
+}
+
+/// 날짜별 요금 오버라이드 (유동 가격). 없으면 basePriceKrw 사용
+model ListingDatePrice {
+  id        String   @id @default(cuid())
+  listingId String
+  date      DateTime @db.Date
+  priceKrw  Int
+
+  listing Listing @relation(fields: [listingId], references: [id], onDelete: Cascade)
+
+  @@unique([listingId, date])
+  @@index([listingId])
 }
 
 model ListingImage {
@@ -145,6 +178,8 @@ model Booking {
   currency      String @default("USD")
   totalUsd      Int
   totalKrw      Int
+  accommodationKrw Int?     // 숙박료 (게스트 결제 내역·호스트 수령액 산출용)
+  guestServiceFeeKrw Int?   // 게스트 서비스 수수료 12%
 
   status        BookingStatus @default(PENDING_PAYMENT)
   confirmedAt   DateTime?
@@ -165,6 +200,7 @@ model Booking {
   @@index([status, createdAt])
   @@index([listingId, status])
   @@index([guestUserId, status])
+  @@index([listingId, status, checkIn, checkOut])
 }
 
 model Review {
@@ -172,8 +208,15 @@ model Review {
   bookingId String   @unique
   userId     String
   listingId  String
-  rating     Int      // 1..5
+  rating     Int      // 1..5 overall (평균 또는 기존 단일 별점)
   body       String   @db.Text
+  // 6개 카테고리 별점 (1..5). 있으면 상세 페이지에서 평균 표시
+  cleanliness   Int?
+  accuracy      Int?
+  checkIn       Int?
+  communication Int?
+  location      Int?
+  value         Int?
   createdAt  DateTime @default(now())
 
   booking  Booking @relation(fields: [bookingId], references: [id], onDelete: Cascade)

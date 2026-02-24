@@ -49,7 +49,7 @@ export default function WizardAmenitiesPage() {
 
   const goNext = useCallback(async () => {
     if (!listing) return;
-    const target = `/host/listings/new/${listing.id}/photos`;
+    const target = `/host/listings/new/${listing.id}/guide`;
     if (dirty) {
       setSaving(true);
       try {
@@ -100,7 +100,7 @@ export default function WizardAmenitiesPage() {
           disabled={isLocked}
           className="rounded-2xl bg-neutral-900 px-6 py-3 text-sm font-medium text-white hover:bg-neutral-800 disabled:opacity-50"
         >
-          다음: 사진
+          다음: 안내 메시지
         </button>
       </div>
     </div>

@@ -1,39 +1,33 @@
 import Link from "next/link";
-import Container from "@/components/layout/Container";
-import { getServerLang } from "@/lib/i18n/server";
-
-const COPY = {
-  en: { title: "KSTAY Admin", guest: "Guest", summary: "Summary", approvals: "Approvals", settlements: "Settlements" },
-  ko: { title: "KSTAY 관리자", guest: "게스트", summary: "요약", approvals: "승인", settlements: "정산" },
-  ja: { title: "KSTAY 管理", guest: "ゲスト", summary: "概要", approvals: "承認", settlements: "精算" },
-  zh: { title: "KSTAY 管理", guest: "用户", summary: "概览", approvals: "审核", settlements: "结算" },
-} as const;
+import { redirect } from "next/navigation";
+import AdminCategoryNav from "@/components/admin/AdminCategoryNav";
+import { requireAdminUser } from "@/lib/auth/server";
 
 export default async function AdminLayout({ children }: { children: React.ReactNode }) {
-  const lang = await getServerLang();
-  const c = COPY[lang];
+  const admin = await requireAdminUser();
+  if (!admin) redirect("/");
+
   return (
-    <div className="min-h-screen bg-neutral-50">
-      <div className="border-b border-neutral-200 bg-white">
-        <Container className="py-4 flex items-center justify-between">
-          <div className="font-semibold">{c.title}</div>
-          <div className="flex gap-3 text-sm">
-            <Link href="/" className="text-neutral-600 hover:text-neutral-900">
-              {c.guest}
+    <div className="min-h-screen bg-[#F9FAFB]">
+      <div className="sticky top-0 z-40 border-b border-neutral-200 bg-white/95 backdrop-blur">
+        <div className="mx-auto max-w-[1200px] px-4">
+          <div className="flex h-14 items-center justify-between">
+            <Link href="/admin" className="font-extrabold tracking-tight">
+              KSTAY <span className="text-rose-600 font-semibold">ADMIN</span>
             </Link>
-            <Link href="/admin" className="text-neutral-600 hover:text-neutral-900">
-              {c.summary}
-            </Link>
-            <Link href="/admin/approvals" className="text-neutral-600 hover:text-neutral-900">
-              {c.approvals}
-            </Link>
-            <Link href="/admin/settlements" className="text-neutral-600 hover:text-neutral-900">
-              {c.settlements}
+            <Link
+              href="/"
+              className="rounded-full border border-neutral-200 bg-white px-4 py-2 text-sm font-semibold text-neutral-700 hover:bg-neutral-50 transition shrink-0"
+            >
+              게스트 모드로 전환
             </Link>
           </div>
-        </Container>
+        </div>
       </div>
-      <Container className="py-8">{children}</Container>
+
+      <AdminCategoryNav />
+
+      <main className="mx-auto max-w-[1200px] px-4 py-6">{children}</main>
     </div>
   );
 }

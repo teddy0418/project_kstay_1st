@@ -84,3 +84,72 @@
 ### 4) 금액 검증
 1. PortOne API에서 반환한 amount/currency가 Booking 예상 금액과 불일치 시
 2. 예약 확정하지 않음 (로그만 기록, 200 OK 반환)
+
+---
+
+## PortOne 키 정리 (결제창 vs API)
+
+| 키 | 결제창 필요? | 용도 |
+|----|-------------|------|
+| **storeId** | ✅ 필수 | 상점 식별 (연동 정보에서 확인) |
+| **channelKey** | ✅ 필수 | 채널별 키 (카카오페이/PayPal/Eximbay 등) |
+| **API Secret** | ❌ 불필요 | 서버 전용 (웹훅 검증, 결제 상태 조회) |
+| **Webhook Secret** | ❌ 불필요 | 웹훅 시그니처 검증용 | 
+
+**결제창이 뜨려면 storeId + channelKey만 있으면 됩니다.** API Secret은 결제창과 무관합니다.
+
+---
+
+## PortOne 테스트 결제 설정 (결제창 테스트)
+
+결제창이 뜨고 테스트 결제까지 하려면 PortOne 테스트 연동이 필요합니다.
+
+### 1단계: PortOne 가입 및 상점 생성 (약 5분)
+
+1. **https://admin.portone.io** 접속 → 회원가입
+2. 상점 생성 시 **테스트 환경이 자동 활성화**됨 (실제 결제 없음)
+3. 상점 생성 후 **연동 정보** 메뉴에서 **상점 ID(storeId)** 복사
+
+### 2단계: 테스트 채널 추가
+
+1. **결제 연동 → 테스트 연동 관리** 이동
+2. **채널 추가** 클릭
+3. PG사 선택 (예: 토스페이먼츠, 이지페이 등 – 테스트용 MID 자동 부여)
+4. 결제 모듈 **V2** 선택 → 저장
+5. 생성된 채널의 **채널 키(channelKey)** 복사
+
+### 3단계: .env.local 설정
+
+```env
+PAYMENT_PROVIDER=PORTONE
+NEXT_PUBLIC_PAYMENT_PROVIDER=PORTONE
+PORTONE_STORE_ID=발급받은_상점ID
+NEXT_PUBLIC_PORTONE_STORE_ID=발급받은_상점ID
+# 테스트용: 채널 하나만 있으면 아래 하나만 설정해도 됨
+PORTONE_CHANNEL_KEY=채널키
+# 또는 결제 수단별로:
+# PORTONE_CHANNEL_KEY_KAKAOPAY=채널키
+# PORTONE_CHANNEL_KEY_PAYPAL=채널키
+# PORTONE_CHANNEL_KEY_EXIMBAY=채널키
+```
+
+- `PORTONE_CHANNEL_KEY` 하나만 설정하면 모든 결제 수단에서 사용
+- 결제 수단별 채널이 있으면 `PORTONE_CHANNEL_KEY_KAKAOPAY` 등 개별 설정
+
+### 4단계: API Secret (선택 – 웹훅용)
+
+- **연동 정보 → V2 API Secret** 발급
+- `PORTONE_API_SECRET`, `PORTONE_WEBHOOK_SECRET` 설정 시 웹훅으로 예약 자동 확정
+- localhost에서는 웹훅 수신이 어려우므로 **ngrok** 등으로 터널링 필요
+
+### 5단계: localhost 테스트
+
+- `NEXT_PUBLIC_SITE_URL=http://localhost:3001` 이면 결제 후 `http://localhost:3001/payment-redirect`로 리다이렉트
+- PortOne 테스트 카드로 결제 완료 → 결제창 테스트 가능
+
+### 결제창이 안 뜰 때 확인
+
+1. **admin.portone.io → 결제 연동 → 연동 정보**: storeId, channelKey 값이 정확한지 확인
+2. **채널 상태**: 테스트/실연동 채널이 "활성" 상태인지 확인
+3. **브라우저 콘솔(F12)**: `[CheckoutPaymentCard] PortOne requestPayment error:` 등 에러 메시지 확인
+4. **environment**: 테스트 채널이면 `NEXT_PUBLIC_PORTONE_ENVIRONMENT=sandbox`, 실연동이면 `live`

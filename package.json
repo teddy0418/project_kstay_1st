@@ -19,6 +19,7 @@
     "prisma:migrate:status": "prisma migrate status",
     "prisma:studio": "prisma studio",
     "db:seed": "node --env-file=.env.local prisma/seed.mjs",
+    "clear-pending-bookings": "node --env-file=.env.local scripts/clear-pending-bookings.mjs",
     "diagnose:hostlistings": "node scripts/run-host-listings-diagnostics.mjs",
     "verify:hostlistings": "node --env-file=.env.local scripts/verify-host-listings.mjs"
   },

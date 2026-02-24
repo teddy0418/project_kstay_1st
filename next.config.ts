@@ -19,7 +19,10 @@ const nextConfig: NextConfig = {
       (process.env.NODE_ENV === "development" ? "http://localhost:3001" : undefined),
   },
   images: {
-    remotePatterns: [{ protocol: "https", hostname: "images.unsplash.com" }],
+    remotePatterns: [
+      { protocol: "https", hostname: "images.unsplash.com" },
+      { protocol: "https", hostname: "lh3.googleusercontent.com" },
+    ],
   },
   // Reduce chance of "Unexpected end of JSON input" from loadManifest (empty/corrupt cache)
   webpack: (config, { dev }) => {

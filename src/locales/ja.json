@@ -26,6 +26,10 @@
   "selected": "選択",
   "clear": "クリア",
   "done": "完了",
+  "check_in": "チェックイン",
+  "check_out": "チェックアウト",
+  "clear_dates": "日付をクリア",
+  "close": "閉じる",
   "board_headline": "韓国グルメ・コツ",
   "board_subtitle": "グルメ、現地情報、旅行ハックをチェック。",
   "back": "戻る",
@@ -65,5 +69,13 @@
   "continue_line": "LINEで続行",
   "tab_list": "リスト",
   "tab_map": "地図",
-  "browse_map_hint": "地図上のマーカーをタップして宿を選択してください。"
+  "browse_map_hint": "地図上のマーカーをタップして宿を選択してください。",
+  "review_cat_cleanliness": "清潔さ",
+  "review_cat_accuracy": "掲載内容の正確さ",
+  "review_cat_check_in": "チェックイン",
+  "review_cat_communication": "コミュニケーション",
+  "review_cat_location": "ロケーション",
+  "review_cat_value": "コストパフォーマンス",
+  "review_select_rating": "各項目に1〜5の評価を選択してください。",
+  "review_body_placeholder": "この宿泊の体験を共有してください。"
 }

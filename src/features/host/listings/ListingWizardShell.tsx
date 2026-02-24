@@ -10,6 +10,7 @@ const STEPS: { slug: string; label: string }[] = [
   { slug: "location", label: "위치" },
   { slug: "pricing", label: "가격" },
   { slug: "amenities", label: "어메니티" },
+  { slug: "guide", label: "안내 메시지" },
   { slug: "photos", label: "사진" },
   { slug: "review", label: "검토" },
 ];

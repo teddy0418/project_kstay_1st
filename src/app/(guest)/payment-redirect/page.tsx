@@ -83,6 +83,9 @@ export default function PaymentRedirectPage() {
       return;
     }
 
+    if (typeof localStorage !== "undefined") {
+      localStorage.removeItem("kstay_portone_pay_params");
+    }
     const target = `/checkout/success/${encodeURIComponent(paymentId)}${qs ? `?${qs}` : ""}`;
     router.replace(target);
   }, [code, isFailure, paymentId, router, searchParams]);

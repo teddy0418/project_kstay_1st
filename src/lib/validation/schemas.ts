@@ -49,6 +49,8 @@ export const updateHostListingSchema = z
     status: z.enum(["DRAFT", "PENDING", "APPROVED", "REJECTED"]).optional(),
     checkInTime: z.string().trim().regex(/^\d{2}:\d{2}$/).optional().nullable(),
     checkOutTime: z.string().trim().regex(/^\d{2}:\d{2}$/).optional().nullable(),
+    checkInGuideMessage: z.string().trim().max(3000).optional().nullable(),
+    houseRulesMessage: z.string().trim().max(3000).optional().nullable(),
     hostBio: optionalTrimmedString,
     hostBioKo: optionalTrimmedString,
     hostBioJa: optionalTrimmedString,
@@ -77,8 +79,27 @@ export const updateProfileSchema = z.object({
   profilePhotoUrl: z.string().trim().max(500000).optional().nullable(), // base64 data URL 허용
 });
 
+const categoryRating = z.coerce.number().int().min(1).max(5);
+
 export const createReviewSchema = z.object({
   bookingId: z.string().trim().min(1, "bookingId is required"),
-  rating: z.coerce.number().int().min(1).max(5),
   body: z.string().trim().min(1, "Review text is required").max(2000),
+  cleanliness: categoryRating,
+  accuracy: categoryRating,
+  checkIn: categoryRating,
+  communication: categoryRating,
+  location: categoryRating,
+  value: categoryRating,
+});
+
+/** 관리자 테스트 리뷰: listingId로 해당 숙소에 리뷰 1개 생성 (테스트용 예약 자동 생성) */
+export const adminCreateReviewSchema = z.object({
+  listingId: z.string().trim().min(1, "listingId is required"),
+  body: z.string().trim().min(1, "Review text is required").max(2000),
+  cleanliness: categoryRating,
+  accuracy: categoryRating,
+  checkIn: categoryRating,
+  communication: categoryRating,
+  location: categoryRating,
+  value: categoryRating,
 });

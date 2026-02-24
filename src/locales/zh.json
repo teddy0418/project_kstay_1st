@@ -26,6 +26,10 @@
   "selected": "已选择",
   "clear": "清除",
   "done": "完成",
+  "check_in": "入住",
+  "check_out": "退房",
+  "clear_dates": "清除日期",
+  "close": "关闭",
   "board_headline": "韩国美食与攻略",
   "board_subtitle": "发现餐厅、当地小贴士与旅行技巧。",
   "back": "返回",
@@ -65,5 +69,13 @@
   "continue_line": "使用 LINE 继续",
   "tab_list": "列表",
   "tab_map": "地图",
-  "browse_map_hint": "在地图上点击标记选择住宿。"
+  "browse_map_hint": "在地图上点击标记选择住宿。",
+  "review_cat_cleanliness": "清洁度",
+  "review_cat_accuracy": "信息准确度",
+  "review_cat_check_in": "入住体验",
+  "review_cat_communication": "沟通",
+  "review_cat_location": "位置",
+  "review_cat_value": "性价比",
+  "review_select_rating": "请为各项选择 1–5 星。",
+  "review_body_placeholder": "分享您在此住宿的体验。"
 }

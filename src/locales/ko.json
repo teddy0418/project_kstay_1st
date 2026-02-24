@@ -26,6 +26,10 @@
   "selected": "선택됨",
   "clear": "초기화",
   "done": "완료",
+  "check_in": "체크인",
+  "check_out": "체크아웃",
+  "clear_dates": "날짜 지우기",
+  "close": "닫기",
   "board_headline": "한국 맛집 · 꿀팁",
   "board_subtitle": "맛집, 현지 팁, 여행 꿀팁을 확인하세요.",
   "back": "뒤로",
@@ -65,5 +69,13 @@
   "continue_line": "라인으로 계속하기",
   "tab_list": "목록",
   "tab_map": "지도",
-  "browse_map_hint": "지도에서 마커를 눌러 숙소를 선택하세요."
+  "browse_map_hint": "지도에서 마커를 눌러 숙소를 선택하세요.",
+  "review_cat_cleanliness": "청결도",
+  "review_cat_accuracy": "정확성",
+  "review_cat_check_in": "체크인",
+  "review_cat_communication": "소통",
+  "review_cat_location": "위치",
+  "review_cat_value": "가성비",
+  "review_select_rating": "모든 항목에 별점(1~5)을 선택해 주세요.",
+  "review_body_placeholder": "숙소에 대한 경험을 남겨 주세요."
 }

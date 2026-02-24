@@ -74,6 +74,10 @@ const DICT = {
     empty_recently_viewed: "No recently viewed stays yet.",
     empty_trips: "No bookings yet. Your trips will appear here.",
     sign_in_to_manage: "Log in to manage your profile.",
+    logged_in_with: "Logged in with",
+    provider_google: "Google",
+    provider_kakao: "Kakao",
+    provider_line: "LINE",
   },
   ko: {
     stays: "숙소",
@@ -134,6 +138,10 @@ const DICT = {
     empty_recently_viewed: "최근 본 숙소가 아직 없습니다.",
     empty_trips: "예약 내역이 없습니다. 예약하면 여기에 표시됩니다.",
     sign_in_to_manage: "프로필을 관리하려면 로그인하세요.",
+    logged_in_with: "로그인 수단",
+    provider_google: "Google",
+    provider_kakao: "Kakao",
+    provider_line: "LINE",
   },
   ja: {
     stays: "宿泊",
@@ -194,6 +202,10 @@ const DICT = {
     empty_recently_viewed: "最近見た宿はまだありません。",
     empty_trips: "予約はまだありません。予約するとここに表示されます。",
     sign_in_to_manage: "プロフィール管理のためログインしてください。",
+    logged_in_with: "ログイン方法",
+    provider_google: "Google",
+    provider_kakao: "Kakao",
+    provider_line: "LINE",
   },
   zh: {
     stays: "住宿",
@@ -254,6 +266,10 @@ const DICT = {
     empty_recently_viewed: "暂无最近浏览的住宿。",
     empty_trips: "暂无订单。预订后会显示在这里。",
     sign_in_to_manage: "请登录以管理个人资料。",
+    logged_in_with: "登录方式",
+    provider_google: "Google",
+    provider_kakao: "Kakao",
+    provider_line: "LINE",
   },
 } as const;
 

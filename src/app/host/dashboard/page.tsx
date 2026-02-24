@@ -39,14 +39,9 @@ export default async function HostDashboardPage() {
 
   return (
     <div className="grid gap-6">
-      <div className="flex items-end justify-between">
-        <div>
-          <div className="text-3xl font-extrabold tracking-tight">DASHBOARD</div>
-          <div className="mt-1 text-sm text-neutral-500">KSTAY 파트너스 운영을 한눈에 확인하세요</div>
-        </div>
-        <Link href="/" className="rounded-2xl border border-neutral-200 bg-white px-5 py-3 text-sm font-semibold hover:bg-neutral-50 transition">
-          게스트 모드로 전환
-        </Link>
+      <div>
+        <div className="text-3xl font-extrabold tracking-tight">DASHBOARD</div>
+        <div className="mt-1 text-sm text-neutral-500">KSTAY 파트너스 운영을 한눈에 확인하세요</div>
       </div>
 
       <div className="grid grid-cols-2 md:grid-cols-5 gap-3">
@@ -82,6 +77,9 @@ export default async function HostDashboardPage() {
         <div className="lg:col-span-3 rounded-3xl border border-neutral-200 bg-white shadow-sm p-6">
           <div className="text-lg font-bold">빠른 작업</div>
           <div className="mt-4 grid gap-3">
+            <Link href="/host/account" className="rounded-2xl border border-neutral-200 bg-white px-4 py-3 text-sm font-semibold hover:bg-neutral-50 transition text-center block">
+              정산 계좌 설정
+            </Link>
             <Link href="/coming-soon" className="rounded-2xl border border-red-300 bg-white px-4 py-3 text-sm font-semibold text-red-600 hover:bg-red-50 transition text-center">
               전체 판매 중지
             </Link>

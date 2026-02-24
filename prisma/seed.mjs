@@ -85,6 +85,45 @@ async function main() {
     });
   }
 
+  // 결제 테스트용 예시 숙소 (결제창까지 확인용)
+  const paymentTestListing = await prisma.listing.upsert({
+    where: { id: "payment-test-listing" },
+    update: {
+      title: "결제 테스트용 예시 숙소",
+      titleKo: "결제 테스트용 예시 숙소",
+      city: "Seoul",
+      area: "Gangnam",
+      address: "Gangnam-gu, Seoul, Korea",
+      location: "Seoul · Gangnam",
+      basePriceKrw: 50000,
+      status: "APPROVED",
+      approvedAt: new Date(),
+    },
+    create: {
+      id: "payment-test-listing",
+      hostId: host.id,
+      title: "결제 테스트용 예시 숙소",
+      titleKo: "결제 테스트용 예시 숙소",
+      city: "Seoul",
+      area: "Gangnam",
+      address: "Gangnam-gu, Seoul, Korea",
+      location: "Seoul · Gangnam",
+      basePriceKrw: 50000,
+      status: "APPROVED",
+      approvedAt: new Date(),
+    },
+  });
+
+  const paymentTestImages = await prisma.listingImage.count({ where: { listingId: paymentTestListing.id } });
+  if (paymentTestImages === 0) {
+    await prisma.listingImage.createMany({
+      data: [
+        { listingId: paymentTestListing.id, url: "https://images.unsplash.com/photo-1522708323590-d24dbb6b0267?auto=format&fit=crop&w=1600&q=80", sortOrder: 0 },
+        { listingId: paymentTestListing.id, url: "https://images.unsplash.com/photo-1560448204-e02f11c3d0e2?auto=format&fit=crop&w=1600&q=80", sortOrder: 1 },
+      ],
+    });
+  }
+
   // Admin 계정(official.kstay@gmail.com) 체크인 완료 예시 예약 (프로필 Your trips / 리뷰 쓰기 확인용)
   const adminForTrip = await prisma.user.findFirst({
     where: { email: "official.kstay@gmail.com" },
@@ -123,7 +162,13 @@ async function main() {
     console.log("Admin 예시 예약 생성 (체크아웃 완료)", { bookingId: adminBooking.id, guestEmail: guestUser.email });
   }
 
-  console.log("Seed complete", { admin: admin.id, host: host.id, listing: listing.id });
+  console.log("Seed complete", {
+    admin: admin.id,
+    host: host.id,
+    listing: listing.id,
+    paymentTestListing: paymentTestListing.id,
+    paymentTestUrl: `/listings/${paymentTestListing.id}?start=2026-03-01&end=2026-03-03&guests=1`,
+  });
 }
 
 main()

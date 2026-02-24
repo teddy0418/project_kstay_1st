@@ -11,6 +11,7 @@ import {
   findPastStaysByGuestUserId,
 } from "@/lib/repositories/bookings";
 import { getExchangeRates } from "@/lib/exchange";
+import { calcGuestPriceBreakdownKRW } from "@/lib/policy";
 import type { Listing } from "@/types";
 
 type CreateBookingResponse = {
@@ -158,7 +159,8 @@ export async function POST(req: Request) {
     const guestsInfants = Math.max(0, body.guestsInfants ?? 0);
     const guestsPets = Math.max(0, body.guestsPets ?? 0);
 
-    const totalKrw = listing.basePriceKrw * nights;
+    const baseKrw = listing.basePriceKrw * nights;
+    const { base: accommodationKrw, serviceFeeGross: guestServiceFeeKrw, total: totalKrw } = calcGuestPriceBreakdownKRW(baseKrw);
     const totalUsd = Math.max(1, Math.round(totalKrw / 13));
     const cancellationDeadlineKst = buildCancellationDeadlineKst(body.checkIn);
     const publicToken = randomUUID().replace(/-/g, "");
@@ -179,6 +181,8 @@ export async function POST(req: Request) {
       guestsPets,
       totalUsd,
       totalKrw,
+      accommodationKrw,
+      guestServiceFeeKrw,
       cancellationDeadlineKst,
       paymentProvider: providerMode === "PORTONE" ? "PORTONE" : "MOCK",
       paymentStoreId: process.env.PORTONE_STORE_ID ?? null,
@@ -200,7 +204,7 @@ export async function POST(req: Request) {
           : paymentMethod === "EXIMBAY"
             ? process.env.PORTONE_CHANNEL_KEY_EXIMBAY
             : process.env.PORTONE_CHANNEL_KEY_KAKAOPAY ?? ""
-      ).trim();
+      ).trim() || String(process.env.PORTONE_CHANNEL_KEY ?? "").trim();
 
       const siteUrl = String(
         process.env.NEXT_PUBLIC_SITE_URL || process.env.AUTH_URL || "http://localhost:3001"

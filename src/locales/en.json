@@ -26,6 +26,10 @@
   "selected": "Selected",
   "clear": "Clear",
   "done": "Done",
+  "check_in": "Check-in",
+  "check_out": "Check-out",
+  "clear_dates": "Clear dates",
+  "close": "Close",
   "board_headline": "Food & Tips in Korea",
   "board_subtitle": "Discover restaurants, local tips, and travel hacks.",
   "back": "Back",
@@ -65,5 +69,13 @@
   "continue_line": "Continue with LINE",
   "tab_list": "List",
   "tab_map": "Map",
-  "browse_map_hint": "Tap a marker on the map to select a stay."
+  "browse_map_hint": "Tap a marker on the map to select a stay.",
+  "review_cat_cleanliness": "Cleanliness",
+  "review_cat_accuracy": "Accuracy",
+  "review_cat_check_in": "Check-in",
+  "review_cat_communication": "Communication",
+  "review_cat_location": "Location",
+  "review_cat_value": "Value",
+  "review_select_rating": "Please rate all categories (1–5).",
+  "review_body_placeholder": "Share your experience at this stay."
 }

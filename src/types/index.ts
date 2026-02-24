@@ -25,6 +25,10 @@ export type Listing = {
   };
   hostProfileImageUrl: string;
   checkInTime: string;
+  /** 체크인 안내 (호스트가 작성, 게스트에게 노출) */
+  checkInGuideMessage?: string | null;
+  /** 이용 규칙·기타 안내 */
+  houseRulesMessage?: string | null;
   /** Amenity keys (e.g. wifi, fitness). Shown on guest detail. */
   amenities?: string[];
 };
