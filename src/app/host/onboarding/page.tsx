@@ -5,6 +5,7 @@ import { getCurrentHostFlow } from "@/lib/host/server";
 export default async function HostOnboardingPage() {
   const current = await getCurrentHostFlow();
   if (!current) redirect("/login?next=/host");
+  if (current.status === "DRAFT") redirect("/host/listings");
   if (current.status === "PENDING") redirect("/host/pending");
   if (current.status === "APPROVED") redirect("/host/dashboard");
 

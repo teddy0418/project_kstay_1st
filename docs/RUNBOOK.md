@@ -23,11 +23,12 @@
   - `NEXT_PUBLIC_PAYMENT_PROVIDER` (`MOCK` or `PORTONE`)
   - `RESEND_API_KEY`
   - `EMAIL_FROM`
-  - `PORTONE_STORE_ID`
-  - `PORTONE_CHANNEL_KEY`
-  - `PORTONE_API_SECRET`
-  - `PORTONE_WEBHOOK_SECRET`
+  - `PORTONE_STORE_ID` (PortOne 스토어 ID)
+  - `PORTONE_CHANNEL_KEY` (프론트 SDK용)
+  - `PORTONE_API_SECRET` (서버 API 호출·금액/상태 재검증)
+  - `PORTONE_WEBHOOK_SECRET` (웹훅 시그니처 검증)
   - `NEXT_PUBLIC_SITE_URL`
+  - `NEXT_PUBLIC_PORTONE_PAY_METHOD` (선택: `CARD` | `EASY_PAY`)
 - For local setup, configure `.env.local`:
   - `AUTH_URL=http://localhost:3001`
   - `AUTH_SECRET=<openssl rand -base64 32>`
@@ -129,6 +130,7 @@
 - Check server logs for `[portone-webhook]` errors.
 
 ## PortOne V2 Setup (Webhook-based confirmation)
+- 상세 설계: `docs/PORTONE_PAYMENT_FLOW.md`
 1. In PortOne Console (V2), configure channel and copy:
    - Store ID -> `PORTONE_STORE_ID`
    - Channel Key -> `PORTONE_CHANNEL_KEY`

@@ -1,7 +1,7 @@
 import { prisma } from "@/lib/db";
 import { getOrCreateServerUser } from "@/lib/auth/server";
 
-export type HostFlowStatus = "NONE" | "PENDING" | "APPROVED";
+export type HostFlowStatus = "NONE" | "DRAFT" | "PENDING" | "APPROVED";
 
 export async function getHostFlowStatus(userId: string): Promise<HostFlowStatus> {
   const rows = await prisma.listing.findMany({
@@ -14,6 +14,7 @@ export async function getHostFlowStatus(userId: string): Promise<HostFlowStatus>
   if (rows.length === 0) return "NONE";
   if (rows.some((r) => r.status === "APPROVED")) return "APPROVED";
   if (rows.some((r) => r.status === "PENDING")) return "PENDING";
+  if (rows.some((r) => r.status === "DRAFT")) return "DRAFT";
   return "NONE";
 }
 

@@ -85,6 +85,44 @@ async function main() {
     });
   }
 
+  // Admin 계정(official.kstay@gmail.com) 체크인 완료 예시 예약 (프로필 Your trips / 리뷰 쓰기 확인용)
+  const adminForTrip = await prisma.user.findFirst({
+    where: { email: "official.kstay@gmail.com" },
+  });
+  const guestUser = adminForTrip ?? admin;
+
+  const pastCheckOut = new Date();
+  pastCheckOut.setDate(pastCheckOut.getDate() - 3);
+  pastCheckOut.setHours(0, 0, 0, 0);
+  const pastCheckIn = new Date(pastCheckOut);
+  pastCheckIn.setDate(pastCheckIn.getDate() - 2);
+  const cancelDeadline = new Date(pastCheckIn);
+  cancelDeadline.setDate(cancelDeadline.getDate() - 7);
+
+  const existingAdminBooking = await prisma.booking.findFirst({
+    where: { guestUserId: guestUser.id, status: "CONFIRMED", listingId: listing.id },
+  });
+  if (!existingAdminBooking) {
+    const adminBooking = await prisma.booking.create({
+      data: {
+        publicToken: `seed-admin-past-${Date.now()}`,
+        listingId: listing.id,
+        guestUserId: guestUser.id,
+        guestEmail: guestUser.email ?? "official.kstay@gmail.com",
+        guestName: guestUser.name ?? "Admin",
+        checkIn: pastCheckIn,
+        checkOut: pastCheckOut,
+        nights: 2,
+        totalUsd: 20,
+        totalKrw: 240000,
+        status: "CONFIRMED",
+        confirmedAt: new Date(),
+        cancellationDeadlineKst: cancelDeadline,
+      },
+    });
+    console.log("Admin 예시 예약 생성 (체크아웃 완료)", { bookingId: adminBooking.id, guestEmail: guestUser.email });
+  }
+
   console.log("Seed complete", { admin: admin.id, host: host.id, listing: listing.id });
 }
 

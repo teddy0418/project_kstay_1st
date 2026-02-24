@@ -6,6 +6,7 @@ export default async function HostPendingPage() {
   const current = await getCurrentHostFlow();
   if (!current) redirect("/login?next=/host");
   if (current.status === "NONE") redirect("/host/onboarding");
+  if (current.status === "DRAFT") redirect("/host/listings");
   if (current.status === "APPROVED") redirect("/host/dashboard");
 
   return (

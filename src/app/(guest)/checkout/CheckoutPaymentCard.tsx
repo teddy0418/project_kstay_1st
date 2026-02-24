@@ -118,6 +118,7 @@ export default function CheckoutPaymentCard(props: Props) {
 
   const [guestName, setGuestName] = useState(user?.name ?? "");
   const [guestEmail, setGuestEmail] = useState(user?.email ?? "");
+  const [paymentMethod, setPaymentMethod] = useState<"KAKAOPAY" | "PAYPAL" | "EXIMBAY">("KAKAOPAY");
   const [paying, setPaying] = useState(false);
   const emailReadonly = Boolean(user?.email);
 
@@ -141,6 +142,7 @@ export default function CheckoutPaymentCard(props: Props) {
         guestsInfants: 0,
         guestsPets: 0,
         currency,
+        paymentMethod,
       });
 
       const paymentProvider = (process.env.NEXT_PUBLIC_PAYMENT_PROVIDER || "MOCK").toUpperCase();
@@ -212,6 +214,29 @@ export default function CheckoutPaymentCard(props: Props) {
       </p>
 
       <div className="mt-4 grid gap-3">
+        {(process.env.NEXT_PUBLIC_PAYMENT_PROVIDER || "MOCK").toUpperCase() === "PORTONE" && (
+          <div className="rounded-xl border border-neutral-200 px-3 py-2">
+            <label className="text-xs font-semibold text-neutral-500">
+              {lang === "ko" ? "결제 수단" : lang === "ja" ? "支払い方法" : lang === "zh" ? "支付方式" : "Payment method"}
+            </label>
+            <div className="mt-2 flex flex-wrap gap-2">
+              {(["KAKAOPAY", "PAYPAL", "EXIMBAY"] as const).map((m) => (
+                <button
+                  key={m}
+                  type="button"
+                  onClick={() => setPaymentMethod(m)}
+                  className={`rounded-lg px-3 py-2 text-sm font-medium transition ${
+                    paymentMethod === m
+                      ? "bg-neutral-900 text-white"
+                      : "bg-neutral-100 text-neutral-700 hover:bg-neutral-200"
+                  }`}
+                >
+                  {m === "KAKAOPAY" ? "카카오페이" : m === "PAYPAL" ? "PayPal" : "Eximbay"}
+                </button>
+              ))}
+            </div>
+          </div>
+        )}
         <div className="rounded-xl border border-neutral-200 px-3 py-2">
           <label className="text-xs font-semibold text-neutral-500">{c.email}</label>
           <input

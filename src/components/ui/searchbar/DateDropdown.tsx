@@ -5,22 +5,12 @@ import type { DateRange } from "react-day-picker";
 import { X } from "lucide-react";
 import { useCallback, useEffect, useMemo, useState } from "react";
 import { useI18n } from "@/components/ui/LanguageProvider";
+import { nightsBetween, addDays } from "@/lib/format";
 
 function startOfDay(d: Date) {
   const x = new Date(d);
   x.setHours(0, 0, 0, 0);
   return x;
-}
-function addDays(d: Date, days: number) {
-  const x = new Date(d);
-  x.setDate(x.getDate() + days);
-  return x;
-}
-function nightsBetween(from: Date, to: Date) {
-  const a = startOfDay(from).getTime();
-  const b = startOfDay(to).getTime();
-  const n = Math.round((b - a) / (1000 * 60 * 60 * 24));
-  return Math.max(1, n);
 }
 
 export default function DateDropdown({
@@ -63,7 +53,7 @@ export default function DateDropdown({
 
   const summary = useMemo(() => {
     if (range?.from && range?.to) {
-      const n = nightsBetween(range.from, range.to);
+      const n = Math.max(1, nightsBetween(range.from, range.to));
       const nightWord = n === 1 ? t("night") : t("nights");
       return `${formatFull(range.from)} → ${formatFull(range.to)} · ${n} ${nightWord}`;
     }
@@ -71,8 +61,8 @@ export default function DateDropdown({
   }, [range, formatFull, t]);
 
   return (
-    <div className="w-full rounded-2xl border border-neutral-200 bg-white shadow-md">
-      <div className="flex items-center justify-between px-4 py-3 border-b border-neutral-100">
+    <div className="w-max max-w-full rounded-2xl border border-neutral-200 bg-white shadow-md">
+      <div className="flex items-center justify-between px-3 py-2 border-b border-neutral-100">
         <div className="text-sm font-semibold">{t("when_traveling")}</div>
         <button
           type="button"
@@ -84,12 +74,12 @@ export default function DateDropdown({
         </button>
       </div>
 
-      <div className="p-4">
-        <div className="mb-3 text-sm text-neutral-700">
+      <div className="p-3">
+        <div className="mb-2 text-sm text-neutral-700">
           <span className="font-semibold">{t("selected")}:</span> {summary}
         </div>
 
-        <div className="min-w-0 overflow-x-auto rounded-2xl border border-neutral-200 p-3">
+        <div className="w-max max-w-full mx-auto overflow-x-auto rounded-2xl border border-neutral-200 p-2">
           <DayPicker
             mode="range"
             selected={range}
@@ -102,7 +92,7 @@ export default function DateDropdown({
           />
         </div>
 
-        <div className="mt-4 flex flex-wrap items-center justify-end gap-2">
+        <div className="mt-3 flex flex-wrap items-center justify-end gap-2">
           <button
             type="button"
             onClick={() => onChange(undefined)}

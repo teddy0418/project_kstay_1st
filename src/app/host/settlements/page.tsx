@@ -6,6 +6,7 @@ export default async function HostSettlementsPage() {
   if (!current) redirect("/login?next=/host/settlements");
 
   if (current.status === "NONE") redirect("/host/onboarding");
+  if (current.status === "DRAFT") redirect("/host/listings");
   if (current.status === "PENDING") redirect("/host/pending");
 
   return (

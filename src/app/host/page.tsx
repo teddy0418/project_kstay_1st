@@ -6,6 +6,7 @@ export default async function HostIndexPage() {
   if (!current) redirect("/login?next=/host");
 
   if (current.status === "NONE") redirect("/host/onboarding");
+  if (current.status === "DRAFT") redirect("/host/listings");
   if (current.status === "PENDING") redirect("/host/pending");
 
   redirect("/host/dashboard");

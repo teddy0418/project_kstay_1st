@@ -1,42 +1,27 @@
 import Container from "@/components/layout/Container";
 import { getPublicListingById, getPublicListings } from "@/lib/repositories/listings";
+import { findReviewsByListingId } from "@/lib/repositories/reviews";
 import ListingGallery from "@/features/listings/components/ListingGallery";
 import DetailActions from "@/features/listings/components/DetailActions";
 import MapModal from "@/features/listings/components/MapModal";
 import BookingWidget from "@/features/listings/components/BookingWidget";
 import { getServerLang } from "@/lib/i18n/server";
+import { formatDateEn, addDays, parseISODate } from "@/lib/format";
 import Link from "next/link";
 import Image from "next/image";
-import { ChevronRight, MapPin, Star, Wifi, Dumbbell, Bath, Coffee, Sparkles, CheckCircle2, Key, MessageCircle, Tag } from "lucide-react";
+import { ChevronRight, MapPin, Star, Sparkles, CheckCircle2, Key, MessageCircle, Tag, ShieldCheck } from "lucide-react";
+import AmenitiesList from "@/features/listings/components/AmenitiesList";
 
 function normalizeId(v: unknown) {
   if (v == null) return "";
   return String(v);
 }
 
-function formatDateEN(d: Date) {
-  return new Intl.DateTimeFormat("en-US", {
-    month: "short",
-    day: "numeric",
-    year: "numeric",
-  }).format(d);
-}
-
-function parseISO(s: string) {
-  return new Date(`${s}T00:00:00`);
-}
-
-function addDays(d: Date, days: number) {
-  const x = new Date(d);
-  x.setDate(x.getDate() + days);
-  return x;
-}
-
 function freeCancelUntilKST(checkInISO?: string) {
   if (!checkInISO) return null;
-  const checkIn = parseISO(checkInISO);
+  const checkIn = parseISODate(checkInISO);
   const deadline = addDays(checkIn, -7);
-  return `${formatDateEN(deadline)} 23:59 (KST)`;
+  return `${formatDateEn(deadline)} 23:59 (KST)`;
 }
 
 function localizeHostBio(
@@ -84,7 +69,24 @@ function localizeHostBio(
   return table[listing.id]?.[lang] ?? fallbackBio;
 }
 
-function ReviewsSection({ rating, count, lang }: { rating: number; count: number; lang: "en" | "ko" | "ja" | "zh" }) {
+type DbReview = { id: string; userId?: string; userName: string; userImage?: string | null; rating: number; body: string; createdAt: string };
+
+function avatarLetterFromId(id: string): string {
+  let n = 0;
+  for (let i = 0; i < id.length; i++) n = (n * 31 + id.charCodeAt(i)) >>> 0;
+  return "ABCDEFGHIJKLMNOPQRSTUVWXYZ"[n % 26];
+}
+function ReviewsSection({
+  rating,
+  count,
+  lang,
+  dbReviews,
+}: {
+  rating: number;
+  count: number;
+  lang: "en" | "ko" | "ja" | "zh";
+  dbReviews?: DbReview[];
+}) {
   const t =
     lang === "ko"
       ? {
@@ -293,7 +295,29 @@ function ReviewsSection({ rating, count, lang }: { rating: number; count: number
     { label: t.cats.location, icon: MapPin, value: 4.8 },
     { label: t.cats.value, icon: Tag, value: 4.9 },
   ];
-  const reviews = t.reviewsData;
+  const reviews =
+    dbReviews && dbReviews.length > 0
+      ? dbReviews.map((r) => {
+          const image = r.userImage ?? null;
+          const noPhoto = !image;
+          const name = noPhoto ? "Guest_" + (r.userId?.slice(-5) ?? r.id.slice(-5)) : (r.userName ?? "Guest");
+          const letter = noPhoto ? avatarLetterFromId(r.userId ?? r.id) : null;
+          return {
+            id: r.id,
+            name,
+            image,
+            letter,
+            meta: "",
+            date: new Date(r.createdAt).toLocaleDateString(lang === "ko" ? "ko-KR" : lang === "ja" ? "ja-JP" : "en-US", {
+              year: "numeric",
+              month: "short",
+              day: "numeric",
+            }),
+            stars: r.rating,
+            body: r.body,
+          };
+        })
+      : t.reviewsData.map((r) => ({ ...r, image: null as string | null, letter: r.name.slice(0, 1) }));
 
   return (
     <section id="reviews" className="mt-12">
@@ -342,8 +366,12 @@ function ReviewsSection({ rating, count, lang }: { rating: number; count: number
         {reviews.map((r) => (
           <div key={r.id} className="rounded-2xl border border-neutral-200 p-5">
             <div className="flex items-start gap-3">
-              <div className="h-10 w-10 rounded-full bg-neutral-900 text-white grid place-items-center text-sm font-semibold">
-                {r.name.slice(0, 1)}
+              <div className="h-10 w-10 shrink-0 rounded-full bg-neutral-900 text-white grid place-items-center text-sm font-semibold overflow-hidden">
+                {r.image ? (
+                  <Image src={r.image} alt="" width={40} height={40} className="h-full w-full object-cover" unoptimized />
+                ) : (
+                  (r as { letter?: string }).letter ?? r.name.slice(0, 1)
+                )}
               </div>
               <div className="min-w-0">
                 <div className="text-sm font-semibold">{r.name}</div>
@@ -383,7 +411,7 @@ export default async function ListingDetailPage({
           location: "위치",
           mapPreview: "지도 미리보기",
           hostedBy: "호스트",
-          verifiedPartner: "수수료 0% 검증 파트너",
+          verifiedPartner: "정부 인증 숙소 파트너",
           about: "숙소 소개",
           noSurprise: "안내: KSTAY는 최종 결제금액을 먼저 표시해 결제 단계의 추가 요금을 줄입니다.",
           cancellationPolicy: "취소 정책",
@@ -393,7 +421,7 @@ export default async function ListingDetailPage({
           instantPay:
             "즉시 결제 모델: 예약은 바로 생성되지만 호스트가 24시간 내 거절할 수 있습니다. 거절 시 결제는 자동 취소/환불됩니다.",
           kstBase: "모든 정책 시간 기준은 한국 표준시(KST)입니다.",
-              hostFee: "호스트 수수료 0%",
+              govCertified: "정부인증숙소",
         }
       : lang === "ja"
         ? {
@@ -407,7 +435,7 @@ export default async function ListingDetailPage({
             location: "ロケーション",
             mapPreview: "地図プレビュー",
             hostedBy: "ホスト",
-            verifiedPartner: "手数料0%認証パートナー",
+            verifiedPartner: "政府認証宿泊施設パートナー",
             about: "この宿泊先について",
             noSurprise: "注記: KSTAYは総額を先に表示し、チェックアウト時の追加料金を抑えます。",
             cancellationPolicy: "キャンセルポリシー",
@@ -417,7 +445,7 @@ export default async function ListingDetailPage({
             instantPay:
               "即時決済モデル: 予約はすぐ作成されますが、ホストは24時間以内に拒否できます。拒否された場合、決済は自動取消/返金されます。",
             kstBase: "すべてのポリシー時刻は韓国標準時(KST)基準です。",
-              hostFee: "ホスト手数料 0%",
+              govCertified: "政府認証宿泊施設",
           }
         : lang === "zh"
           ? {
@@ -431,7 +459,7 @@ export default async function ListingDetailPage({
               location: "位置",
               mapPreview: "地图预览",
               hostedBy: "房东",
-              verifiedPartner: "0% 房东费认证伙伴",
+              verifiedPartner: "政府认证住宿伙伴",
               about: "房源介绍",
               noSurprise: "说明: KSTAY 会提前展示总价，减少结算阶段的额外费用。",
               cancellationPolicy: "取消政策",
@@ -441,7 +469,7 @@ export default async function ListingDetailPage({
               instantPay:
                 "即时支付模式：预订会立即创建，但房东可在24小时内拒绝。若被拒绝，将自动撤销/退款。",
               kstBase: "所有政策时间均以韩国标准时间(KST)为准。",
-              hostFee: "0% 房东费",
+              govCertified: "政府认证住宿",
             }
           : {
               notFound: "Listing not found",
@@ -454,7 +482,7 @@ export default async function ListingDetailPage({
               location: "Location",
               mapPreview: "Map preview",
               hostedBy: "Hosted by",
-              verifiedPartner: "Verified 0% host fee partner",
+              verifiedPartner: "Government-certified accommodation partner",
               about: "About this stay",
               noSurprise: "Note: KSTAY shows all-in price early. No surprise fees at checkout.",
               cancellationPolicy: "Cancellation policy",
@@ -464,7 +492,7 @@ export default async function ListingDetailPage({
               instantPay:
                 "Instant pay model: your booking is confirmed immediately, but the host may decline within 24 hours. If declined, payment will be voided/refunded automatically.",
               kstBase: "All policy times are based on Korea Standard Time (KST).",
-              hostFee: "0% Host Fee",
+              govCertified: "Government-Certified",
             };
   const { id: rawParam } = await params;
   const raw = rawParam ?? "";
@@ -502,7 +530,9 @@ export default async function ListingDetailPage({
   const end = typeof resolvedSearchParams?.end === "string" ? resolvedSearchParams.end : undefined;
   const guests = typeof resolvedSearchParams?.guests === "string" ? Number(resolvedSearchParams.guests) : undefined;
 
-  const reviewCount = Number((listing as { reviewCount?: number }).reviewCount ?? 129);
+  const dbReviews = await findReviewsByListingId(listing.id);
+  const reviewCount =
+    dbReviews.length > 0 ? dbReviews.length : Number((listing as { reviewCount?: number }).reviewCount ?? 0) || 0;
   const cancelUntil = freeCancelUntilKST(start);
 
   const mapSrc =
@@ -588,19 +618,14 @@ export default async function ListingDetailPage({
         {/* Amenities card */}
         <div className="rounded-2xl border border-neutral-200 bg-white p-5 shadow-sm">
           <div className="text-sm font-semibold">{tx.amenities}</div>
-          <div className="mt-3 grid grid-cols-2 gap-3 text-sm text-neutral-700">
-            <div className="flex items-center gap-2"><Coffee className="h-4 w-4" /> {lang === "ko" ? "카페/바" : lang === "ja" ? "カフェ/バー" : lang === "zh" ? "咖啡/酒吧" : "Cafe/Bar"}</div>
-            <div className="flex items-center gap-2"><Dumbbell className="h-4 w-4" /> {lang === "ko" ? "피트니스" : lang === "ja" ? "フィットネス" : lang === "zh" ? "健身房" : "Fitness"}</div>
-            <div className="flex items-center gap-2"><Wifi className="h-4 w-4" /> Wi‑Fi</div>
-            <div className="flex items-center gap-2"><Bath className="h-4 w-4" /> {lang === "ko" ? "욕실" : lang === "ja" ? "バス" : lang === "zh" ? "浴室" : "Bath"}</div>
-            <div className="flex items-center gap-2"><Sparkles className="h-4 w-4" /> {lang === "ko" ? "클린 키트" : lang === "ja" ? "クリーンキット" : lang === "zh" ? "清洁套装" : "Clean kit"}</div>
-            <div className="flex items-center gap-2"><CheckCircle2 className="h-4 w-4" /> {lang === "ko" ? "필수품" : lang === "ja" ? "必需品" : lang === "zh" ? "基础用品" : "Essentials"}</div>
+          <div className="mt-3">
+            <AmenitiesList amenities={listing.amenities ?? []} lang={lang} />
           </div>
         </div>
 
         {/* Location card */}
         <div className="rounded-2xl border border-neutral-200 bg-white p-5 shadow-sm">
-          <div className="flex items-center justify-between gap-3">
+          <div className="flex items-start justify-between gap-3">
             <div className="text-sm font-semibold">{tx.location}</div>
             <MapModal address={listing.address} lat={listing.lat} lng={listing.lng} />
           </div>
@@ -641,8 +666,9 @@ export default async function ListingDetailPage({
               <div className="text-sm font-semibold">{tx.hostedBy} {listing.hostName}</div>
               <div className="mt-1 text-xs text-neutral-500">{tx.verifiedPartner}</div>
             </div>
-            <div className="ml-auto rounded-full bg-neutral-900 px-3 py-1 text-xs font-semibold text-white">
-              {tx.hostFee}
+            <div className="ml-auto flex items-center gap-1.5 rounded-full bg-neutral-900 px-3 py-1 text-xs font-semibold text-white">
+              <ShieldCheck className="h-4 w-4 shrink-0 text-blue-400" aria-hidden />
+              {tx.govCertified}
             </div>
           </div>
 
@@ -657,20 +683,9 @@ export default async function ListingDetailPage({
             </div>
           </div>
 
-          {/* Location – map only in modal (no big inline map) */}
-          <section className="mt-12">
-            <h2 className="text-lg font-semibold">{tx.location}</h2>
-            <div className="mt-3 flex flex-wrap items-center justify-between gap-3">
-              <div className="text-sm text-neutral-700">{listing.address}</div>
-              <MapModal address={listing.address} lat={listing.lat} lng={listing.lng} />
-            </div>
-            <p className="mt-2 text-xs text-neutral-500">
-              {lang === "ko" ? "지도는 '지도 보기' 버튼을 눌러 확인하세요." : lang === "ja" ? "地図は「地図を見る」ボタンでご確認ください。" : lang === "zh" ? "请点击「查看地图」按钮查看地图。" : "Click ‘View map’ to see the location."}
-            </p>
-          </section>
-
           {/* Reviews */}
-          <ReviewsSection rating={listing.rating} count={reviewCount} lang={lang} />
+
+          <ReviewsSection rating={listing.rating} count={reviewCount} lang={lang} dbReviews={dbReviews.map((r) => ({ id: r.id, userId: r.user?.id, userName: r.user?.name ?? "Guest", userImage: r.user?.image ?? null, rating: r.rating, body: r.body, createdAt: r.createdAt.toISOString() }))} />
 
           {/* Cancellation / Refund policy */}
           <section className="mt-12">

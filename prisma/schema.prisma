@@ -13,7 +13,8 @@ enum Role {
 }
 
 enum ListingStatus {
-  PENDING
+  DRAFT    // 호스트 초안 저장(autosave)
+  PENDING  // 검토 요청됨
   APPROVED
   REJECTED
 }
@@ -37,14 +38,16 @@ enum PaymentStatus {
 }
 
 model User {
-  id        String   @id @default(cuid())
-  role      Role     @default(GUEST)
-  email     String?  @unique
-  name      String   @default("Guest")
-  image     String?
-  locale    String   @default("en-US")
-  currency  String   @default("USD")
-  phone     String?
+  id              String   @id @default(cuid())
+  role            Role     @default(GUEST)
+  email           String?  @unique
+  name            String   @default("Guest")
+  image           String?
+  displayName     String?  // 프로필 설정에서 설정한 표시 이름 (리뷰 등에 사용)
+  profilePhotoUrl String?  @db.Text // 프로필 설정에서 설정한 사진 URL (리뷰 아바타 등)
+  locale          String   @default("en-US")
+  currency        String   @default("USD")
+  phone           String?
 
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
@@ -53,6 +56,7 @@ model User {
   listings    Listing[]      @relation("HostListings")
   bookings    Booking[]      @relation("GuestBookings")
   wishlist    WishlistItem[]
+  reviews     Review[]
 }
 
 model HostProfile {
@@ -74,7 +78,10 @@ model Listing {
   status    ListingStatus @default(PENDING)
   approvedAt DateTime?
 
-  title     String
+  title     String   // default (en)
+  titleKo   String?
+  titleJa   String?
+  titleZh   String?
   city      String
   area      String
   address   String
@@ -89,7 +96,9 @@ model Listing {
   hostBioKo String?
   hostBioJa String?
   hostBioZh String?
-  checkInTime String @default("15:00")
+  checkInTime  String  @default("15:00")
+  checkOutTime String?
+  amenities    String[] @default([])
 
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
@@ -98,6 +107,7 @@ model Listing {
   images ListingImage[]
   bookings Booking[]
   wishlist WishlistItem[]
+  reviews Review[]
 
   @@index([status, createdAt])
   @@index([hostId, createdAt])
@@ -147,6 +157,7 @@ model Booking {
   listing       Listing @relation(fields: [listingId], references: [id], onDelete: Restrict)
   guestUser     User?   @relation("GuestBookings", fields: [guestUserId], references: [id], onDelete: SetNull)
   payments      Payment[]
+  review        Review?
 
   @@index([listingId])
   @@index([guestUserId])
@@ -156,12 +167,30 @@ model Booking {
   @@index([guestUserId, status])
 }
 
+model Review {
+  id         String   @id @default(cuid())
+  bookingId String   @unique
+  userId     String
+  listingId  String
+  rating     Int      // 1..5
+  body       String   @db.Text
+  createdAt  DateTime @default(now())
+
+  booking  Booking @relation(fields: [bookingId], references: [id], onDelete: Cascade)
+  user     User    @relation(fields: [userId], references: [id], onDelete: Cascade)
+  listing  Listing @relation(fields: [listingId], references: [id], onDelete: Cascade)
+
+  @@index([listingId])
+  @@index([userId])
+}
+
 model Payment {
   id         String          @id @default(cuid())
   bookingId  String
   provider   PaymentProvider @default(MOCK)
   status     PaymentStatus   @default(INITIATED)
   amountUsd  Int
+  amountKrw  Int?            // KRW 결제 시 기대 금액 (웹훅 금액 검증용)
   providerPaymentId String?
   storeId    String?
   pgTid      String?

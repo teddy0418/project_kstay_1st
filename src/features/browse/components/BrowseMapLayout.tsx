@@ -191,7 +191,7 @@ export default function BrowseMapLayout({ items }: { items: Listing[] }) {
             className={`flex-1 flex items-center justify-center gap-2 py-2.5 rounded-lg text-sm font-medium transition cursor-pointer touch-manipulation ${mobileView === "list" ? "bg-white text-neutral-900 shadow-sm" : "text-neutral-600"}`}
           >
             <List className="h-4 w-4 shrink-0" />
-            목록
+            {t("tab_list")}
           </button>
           <button
             type="button"
@@ -202,7 +202,7 @@ export default function BrowseMapLayout({ items }: { items: Listing[] }) {
             className={`flex-1 flex items-center justify-center gap-2 py-2.5 rounded-lg text-sm font-medium transition cursor-pointer touch-manipulation ${mobileView === "map" ? "bg-white text-neutral-900 shadow-sm" : "text-neutral-600"}`}
           >
             <MapPin className="h-4 w-4 shrink-0" />
-            지도
+            {t("tab_map")}
           </button>
         </div>
 
@@ -299,7 +299,7 @@ export default function BrowseMapLayout({ items }: { items: Listing[] }) {
             ) : (
               <div className="absolute inset-x-3 bottom-3 z-[600] pointer-events-none">
                 <p className="rounded-xl bg-white/90 backdrop-blur px-3 py-2 text-xs text-neutral-600 shadow-sm">
-                  지도에서 마커를 눌러 숙소를 선택하세요
+                  {t("browse_map_hint")}
                 </p>
               </div>
             )}

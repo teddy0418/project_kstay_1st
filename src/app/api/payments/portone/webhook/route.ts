@@ -114,6 +114,8 @@ async function syncPaymentAndBookingFromPortOne(paymentId: string) {
   const paymentStatus = typeof parsed?.status === "string" ? parsed.status.toUpperCase() : "";
   const pgTid = typeof parsed?.transactionId === "string" ? parsed.transactionId : null;
   const storeId = typeof parsed?.storeId === "string" ? parsed.storeId : null;
+  const portoneAmount = typeof parsed?.amount === "number" ? parsed.amount : null;
+  const portoneCurrency = typeof parsed?.currency === "string" ? parsed.currency.toUpperCase() : "";
 
   const booking = await findBookingForPaymentSync(paymentId);
   if (!booking) return;
@@ -123,6 +125,16 @@ async function syncPaymentAndBookingFromPortOne(paymentId: string) {
     booking.payments[0];
 
   if (paymentStatus === "PAID") {
+    if (!verifyAmountMatches(booking, targetPayment, portoneAmount, portoneCurrency)) {
+      console.warn("[portone-webhook] amount mismatch, skipping confirmation", {
+        paymentId,
+        portoneAmount,
+        portoneCurrency,
+        bookingTotalKrw: booking.totalKrw,
+        bookingTotalUsd: booking.totalUsd,
+      });
+      return;
+    }
     const confirmed = await applyPaidPaymentSync({
       bookingId: booking.id,
       currentConfirmedAt: booking.confirmedAt,
@@ -161,9 +173,38 @@ async function syncPaymentAndBookingFromPortOne(paymentId: string) {
   }
 }
 
-function safeParseJson(value: string): { status?: unknown; transactionId?: unknown; storeId?: unknown } | null {
+function verifyAmountMatches(
+  booking: { totalKrw: number; totalUsd: number },
+  payment: { amountKrw: number | null } | undefined,
+  portoneAmount: number | null,
+  portoneCurrency: string
+): boolean {
+  if (portoneAmount == null) return true;
+  if (portoneCurrency === "KRW") {
+    const expected = payment?.amountKrw ?? booking.totalKrw;
+    return portoneAmount === expected;
+  }
+  if (portoneCurrency === "USD") {
+    return portoneAmount === booking.totalUsd;
+  }
+  return true;
+}
+
+function safeParseJson(value: string): {
+  status?: unknown;
+  transactionId?: unknown;
+  storeId?: unknown;
+  amount?: unknown;
+  currency?: unknown;
+} | null {
   try {
-    return JSON.parse(value) as { status?: unknown; transactionId?: unknown; storeId?: unknown };
+    return JSON.parse(value) as {
+      status?: unknown;
+      transactionId?: unknown;
+      storeId?: unknown;
+      amount?: unknown;
+      currency?: unknown;
+    };
   } catch {
     return null;
   }

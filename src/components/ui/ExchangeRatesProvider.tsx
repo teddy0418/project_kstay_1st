@@ -2,6 +2,7 @@
 
 import { createContext, useContext, useEffect, useMemo, useState } from "react";
 import type { Currency } from "@/lib/currency";
+import { apiClient } from "@/lib/api/client";
 
 type Rates = Record<string, number>;
 type Ctx = { rates: Rates | null; formatFromKRW: (amountKRW: number, currency: Currency) => string };
@@ -35,8 +36,7 @@ export function ExchangeRatesProvider({ children }: { children: React.ReactNode 
             return;
           }
         }
-        const res = await fetch("/api/exchange");
-        const data = (await res.json()) as Rates;
+        const data = await apiClient.get<Rates>("/api/exchange");
         if (data && typeof data === "object") {
           setRates({ ...FALLBACK, ...data });
           localStorage.setItem(CACHE_KEY, JSON.stringify({ data, ts: Date.now() }));

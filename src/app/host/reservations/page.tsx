@@ -6,6 +6,7 @@ export default async function HostReservationsPage() {
   if (!current) redirect("/login?next=/host/reservations");
 
   if (current.status === "NONE") redirect("/host/onboarding");
+  if (current.status === "DRAFT") redirect("/host/listings");
   if (current.status === "PENDING") redirect("/host/pending");
 
   return (

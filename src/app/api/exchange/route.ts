@@ -1,5 +1,7 @@
-import { NextResponse } from "next/server";
 import { getExchangeRates } from "@/lib/exchange";
+import { apiOk } from "@/lib/api/response";
+
+const FALLBACK = { KRW: 1, USD: 0.00074, JPY: 0.11, CNY: 0.0054 };
 
 /**
  * Frankfurter API 기반 실시간 환율
@@ -8,11 +10,8 @@ import { getExchangeRates } from "@/lib/exchange";
 export async function GET() {
   try {
     const rates = await getExchangeRates();
-    return NextResponse.json(rates);
+    return apiOk(rates);
   } catch {
-    return NextResponse.json(
-      { KRW: 1, USD: 0.00074, JPY: 0.11, CNY: 0.0054 },
-      { status: 200 }
-    );
+    return apiOk(FALLBACK);
   }
 }

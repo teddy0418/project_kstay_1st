@@ -1,6 +1,6 @@
-import { NextResponse } from "next/server";
 import { headers } from "next/headers";
 import { geoCountryToLocale } from "@/lib/geo";
+import { apiOk } from "@/lib/api/response";
 
 /**
  * IP 기반 국가 감지 API
@@ -28,5 +28,5 @@ export async function GET() {
   }
 
   const locale = geoCountryToLocale(country);
-  return NextResponse.json({ country: country ?? "UNKNOWN", ...locale });
+  return apiOk({ country: country ?? "UNKNOWN", ...locale });
 }

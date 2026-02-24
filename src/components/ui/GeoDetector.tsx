@@ -4,6 +4,7 @@ import { useEffect, useRef } from "react";
 import { useCurrency } from "@/components/ui/CurrencyProvider";
 import { useI18n } from "@/components/ui/LanguageProvider";
 import type { Lang } from "@/components/ui/LanguageProvider";
+import { apiClient } from "@/lib/api/client";
 
 function getCookie(name: string): string {
   if (typeof document === "undefined") return "";
@@ -27,11 +28,11 @@ export default function GeoDetector() {
     if (hasLang && hasCurrency) return;
 
     ran.current = true;
-    fetch("/api/geo")
-      .then((r) => r.json())
-      .then((data: { lang?: Lang; currency?: string }) => {
-        if (!hasLang && data.lang && data.lang !== lang) setLang(data.lang);
-        if (!hasCurrency && data.currency && data.currency !== currency) setCurrency(data.currency as "USD" | "KRW" | "JPY" | "CNY");
+    apiClient
+      .get<{ lang?: Lang; currency?: string }>("/api/geo")
+      .then((data) => {
+        if (!hasLang && data?.lang && data.lang !== lang) setLang(data.lang);
+        if (!hasCurrency && data?.currency && data.currency !== currency) setCurrency(data.currency as "USD" | "KRW" | "JPY" | "CNY");
       })
       .catch(() => {});
   }, [lang, currency, setLang, setCurrency]);

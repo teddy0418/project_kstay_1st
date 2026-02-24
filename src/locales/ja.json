@@ -41,6 +41,8 @@
   "recently_viewed": "最近見た宿",
   "empty_recently_viewed": "最近見た宿はまだありません。",
   "empty_trips": "予約はまだありません。予約するとここに表示されます。",
+  "write_review": "レビューを書く",
+  "review_done": "レビュー済み",
   "sign_in_to_manage": "プロフィール管理のためログインしてください。",
   "login_required_wishlist": "お気に入りに保存するにはログインしてください。",
   "link_copied": "リンクをコピーしました",
@@ -60,5 +62,8 @@
   "email_login_soon": "MVP: メールログインは次の段階で対応予定です。",
   "continue_google": "Googleで続行",
   "continue_kakao": "カカオで続行",
-  "continue_line": "LINEで続行"
+  "continue_line": "LINEで続行",
+  "tab_list": "リスト",
+  "tab_map": "地図",
+  "browse_map_hint": "地図上のマーカーをタップして宿を選択してください。"
 }

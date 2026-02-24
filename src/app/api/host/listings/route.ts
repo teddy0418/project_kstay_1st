@@ -23,20 +23,26 @@ export async function POST(req: Request) {
       userName: user.name,
       isAdmin: user.role === "ADMIN",
       title: body.title,
+      titleKo: body.titleKo ?? null,
+      titleJa: body.titleJa ?? null,
+      titleZh: body.titleZh ?? null,
       city: body.city,
       area: body.area,
       address: body.address,
       basePriceKrw: body.basePriceKrw,
       checkInTime: body.checkInTime,
+      checkOutTime: body.checkOutTime ?? null,
       hostBio,
       hostBioKo,
       hostBioJa,
       hostBioZh,
+      status: body.status ?? "PENDING",
     });
 
     return apiOk(listing, 201);
   } catch (error) {
     console.error("[api/host/listings] failed to create listing", error);
-    return apiError(500, "INTERNAL_ERROR", "Failed to create listing");
+    const message = error instanceof Error ? error.message : "Failed to create listing";
+    return apiError(500, "INTERNAL_ERROR", message);
   }
 }

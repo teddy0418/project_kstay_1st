@@ -4,6 +4,7 @@ import { useEffect } from "react";
 import Link from "next/link";
 import { useRouter, useSearchParams } from "next/navigation";
 import { useI18n } from "@/components/ui/LanguageProvider";
+import { apiClient } from "@/lib/api/client";
 
 type BookingLookup = {
   listing: { id: string };
@@ -61,24 +62,9 @@ export default function PaymentRedirectPage() {
     if (isFailure) {
       void (async () => {
         try {
-          const res = await fetch(`/api/bookings/public/${encodeURIComponent(paymentId)}`, {
-            cache: "no-store",
-          });
-          if (!res.ok) {
-            router.replace("/?payment=cancelled");
-            return;
-          }
-          const text = await res.text();
-          let json: { data?: BookingLookup } = {};
-          if (text) {
-            try {
-              json = JSON.parse(text) as { data?: BookingLookup };
-            } catch {
-              router.replace("/?payment=cancelled");
-              return;
-            }
-          }
-          const booking = json.data;
+          const booking = await apiClient.get<BookingLookup>(
+            `/api/bookings/public/${encodeURIComponent(paymentId)}`
+          );
           if (!booking?.listing?.id) {
             router.replace("/?payment=cancelled");
             return;

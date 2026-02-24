@@ -41,6 +41,8 @@
   "recently_viewed": "Recently viewed",
   "empty_recently_viewed": "No recently viewed stays yet.",
   "empty_trips": "No bookings yet. Your trips will appear here.",
+  "write_review": "Write review",
+  "review_done": "Review submitted",
   "sign_in_to_manage": "Log in to manage your profile.",
   "login_required_wishlist": "Log in to save stays to your wishlist.",
   "link_copied": "Link copied",
@@ -60,5 +62,8 @@
   "email_login_soon": "MVP: Email login will be added next.",
   "continue_google": "Continue with Google",
   "continue_kakao": "Continue with Kakao",
-  "continue_line": "Continue with LINE"
+  "continue_line": "Continue with LINE",
+  "tab_list": "List",
+  "tab_map": "Map",
+  "browse_map_hint": "Tap a marker on the map to select a stay."
 }

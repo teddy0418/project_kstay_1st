@@ -56,6 +56,7 @@ export const authOptions: NextAuthOptions = {
       const shouldBeAdmin = isAdminEmail(normalizedEmail);
       const existing = await prisma.user.findUnique({
         where: { email: normalizedEmail },
+        select: { id: true, name: true, image: true, role: true },
       });
 
       const dbUser = existing
@@ -67,6 +68,7 @@ export const authOptions: NextAuthOptions = {
               image: user.image || existing.image,
               role: shouldBeAdmin ? "ADMIN" : existing.role,
             },
+            select: { id: true },
           })
         : await prisma.user.create({
             data: {
@@ -75,13 +77,15 @@ export const authOptions: NextAuthOptions = {
               image: user.image,
               role: shouldBeAdmin ? "ADMIN" : "GUEST",
             },
+            select: { id: true },
           });
 
       user.id = dbUser.id;
       return true;
     },
     async jwt({ token, user }) {
-      const email = user?.email || token.email;
+      const raw = user?.email || token.email;
+      const email = typeof raw === "string" ? raw.trim().toLowerCase() : "";
       if (email) {
         const dbUser = await prisma.user.findUnique({
           where: { email },
@@ -100,6 +104,18 @@ export const authOptions: NextAuthOptions = {
     },
     async session({ session, token }) {
       if (session.user) {
+        const email = typeof token.email === "string" ? token.email.trim().toLowerCase() : "";
+        if (email) {
+          const dbUser = await prisma.user.findUnique({
+            where: { email },
+            select: { id: true, role: true },
+          });
+          if (dbUser) {
+            session.user.id = dbUser.id;
+            session.user.role = (dbUser.role as "GUEST" | "HOST" | "ADMIN") || "GUEST";
+            return session;
+          }
+        }
         session.user.id = token.sub || "";
         session.user.role = (token.role as "GUEST" | "HOST" | "ADMIN") || "GUEST";
       }

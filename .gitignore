@@ -35,6 +35,9 @@ yarn-error.log*
 .env.local
 .env.*.local
 
+# prisma generated diff (run migrate diff to regenerate)
+prisma/diff-to-schema.sql
+
 # next
 .next
 .turbo

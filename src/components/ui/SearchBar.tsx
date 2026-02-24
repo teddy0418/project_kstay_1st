@@ -8,6 +8,7 @@ import WhereDropdown from "@/components/ui/searchbar/WhereDropdown";
 import DateDropdown from "@/components/ui/searchbar/DateDropdown";
 import GuestsDropdown from "@/components/ui/searchbar/GuestsDropdown";
 import { cn } from "@/lib/utils";
+import { nightsBetween, addDays } from "@/lib/format";
 import { useI18n } from "@/components/ui/LanguageProvider";
 
 type Panel = "where" | "date" | "guests" | null;
@@ -17,22 +18,11 @@ function startOfDay(d: Date) {
   x.setHours(0, 0, 0, 0);
   return x;
 }
-function addDays(d: Date, days: number) {
-  const x = new Date(d);
-  x.setDate(x.getDate() + days);
-  return x;
-}
 function toISODateLocal(d: Date) {
   const y = d.getFullYear();
   const m = String(d.getMonth() + 1).padStart(2, "0");
   const day = String(d.getDate()).padStart(2, "0");
   return `${y}-${m}-${day}`;
-}
-function nightsBetween(from: Date, to: Date) {
-  const a = startOfDay(from).getTime();
-  const b = startOfDay(to).getTime();
-  const n = Math.round((b - a) / (1000 * 60 * 60 * 24));
-  return Math.max(1, n);
 }
 
 export default function SearchBar() {
@@ -89,7 +79,7 @@ export default function SearchBar() {
     const r = range ?? defaultRange;
     const from = r.from ?? defaultRange.from!;
     const to = r.to ?? defaultRange.to!;
-    const n = nightsBetween(from, to);
+    const n = Math.max(1, nightsBetween(from, to));
     const nightWord = n === 1 ? t("night") : t("nights");
     return `${formatShort(from)} – ${formatShort(to)} (${n} ${nightWord})`;
   }, [range, defaultRange, formatShort, t]);
@@ -248,6 +238,7 @@ export default function SearchBar() {
         <div
           className={cn(
             "absolute z-[60] transition-all duration-200 ease-out",
+            open === "date" && "flex justify-center",
             entered ? "opacity-100 translate-y-0" : "opacity-0 translate-y-2"
           )}
           style={{ top: pos.top, left: pos.left, width: pos.width }}

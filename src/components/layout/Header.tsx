@@ -23,7 +23,7 @@ import { cn } from "@/lib/utils";
 import { useCurrency } from "@/components/ui/CurrencyProvider";
 import { useToast } from "@/components/ui/ToastProvider";
 import { useI18n } from "@/components/ui/LanguageProvider";
-import { useAuthModal } from "@/components/ui/auth/AuthModalProvider";
+import { useAuthModal } from "@/components/ui/AuthModalProvider";
 import { useAuth } from "@/components/ui/AuthProvider";
 
 export default function Header() {

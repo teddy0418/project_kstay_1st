@@ -1,5 +1,7 @@
 import { freeCancellationDeadlineUtcMs, formatKSTDateTimeFromUtcMs } from "@/lib/policy";
+import { nightsBetween, formatDateEn } from "@/lib/format";
 
+/** Validates YYYY-MM-DD and returns Date at UTC midnight, or null. */
 export function parseISODate(raw: unknown): Date | null {
   const s = String(raw ?? "");
   if (!/^\d{4}-\d{2}-\d{2}$/.test(s)) return null;
@@ -8,19 +10,11 @@ export function parseISODate(raw: unknown): Date | null {
   return d;
 }
 
-export function nightsBetween(checkIn: Date, checkOut: Date) {
-  const ms = checkOut.getTime() - checkIn.getTime();
-  return Math.max(0, Math.round(ms / 86400000));
-}
+export { nightsBetween, formatDateEn };
 
 export function buildCancellationDeadlineKst(checkInISO: string) {
   const utcMs = freeCancellationDeadlineUtcMs(checkInISO);
   return new Date(utcMs);
-}
-
-export function formatDateEn(value: Date | string) {
-  const d = typeof value === "string" ? new Date(value) : value;
-  return new Intl.DateTimeFormat("en-US", { month: "short", day: "numeric", year: "numeric" }).format(d);
 }
 
 export function formatCancellationDeadlineKst(value: Date) {

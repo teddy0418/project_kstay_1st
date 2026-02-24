@@ -11,6 +11,7 @@ export default async function HostDashboardPage() {
   if (!current) redirect("/login?next=/host/dashboard");
 
   if (current.status === "NONE") redirect("/host/onboarding");
+  if (current.status === "DRAFT") redirect("/host/listings");
   if (current.status === "PENDING") redirect("/host/pending");
 
   const today = new Date();

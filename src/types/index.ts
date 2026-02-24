@@ -25,6 +25,8 @@ export type Listing = {
   };
   hostProfileImageUrl: string;
   checkInTime: string;
+  /** Amenity keys (e.g. wifi, fitness). Shown on guest detail. */
+  amenities?: string[];
 };
 
 export type BoardPost = {

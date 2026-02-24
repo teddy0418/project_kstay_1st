@@ -4,7 +4,7 @@ import { useCallback, useMemo, useRef, useState } from "react";
 import { useRouter } from "next/navigation";
 import type { DateRange } from "react-day-picker";
 import { totalGuestPriceKRW } from "@/lib/policy";
-import { formatKRW } from "@/lib/format";
+import { formatKRW, nightsBetween, formatDateEn, addDays, parseISODate } from "@/lib/format";
 import { useCurrency } from "@/components/ui/CurrencyProvider";
 import { useExchangeRates } from "@/components/ui/ExchangeRatesProvider";
 import { useI18n } from "@/components/ui/LanguageProvider";
@@ -16,32 +16,15 @@ function startOfDay(d: Date) {
   x.setHours(0, 0, 0, 0);
   return x;
 }
-function addDays(d: Date, days: number) {
-  const x = new Date(d);
-  x.setDate(x.getDate() + days);
-  return x;
-}
 function toISO(d: Date) {
   const y = d.getFullYear();
   const m = String(d.getMonth() + 1).padStart(2, "0");
   const day = String(d.getDate()).padStart(2, "0");
   return `${y}-${m}-${day}`;
 }
-function parseISO(s: string) {
-  return new Date(`${s}T00:00:00`);
-}
-function nightsBetween(from: Date, to: Date) {
-  const a = startOfDay(from).getTime();
-  const b = startOfDay(to).getTime();
-  const n = Math.round((b - a) / (1000 * 60 * 60 * 24));
-  return Math.max(1, n);
-}
-function formatDateEN(d: Date) {
-  return new Intl.DateTimeFormat("en-US", { month: "short", day: "numeric", year: "numeric" }).format(d);
-}
 function freeCancelUntilKST(checkInDate: Date) {
   const deadline = addDays(checkInDate, -7);
-  return `${formatDateEN(deadline)} 23:59 (KST)`;
+  return `${formatDateEn(deadline)} 23:59 (KST)`;
 }
 
 export default function BookingWidget({
@@ -69,8 +52,8 @@ export default function BookingWidget({
 
   const initialRange = useMemo((): DateRange => {
     if (defaultStart && defaultEnd) {
-      const from = parseISO(defaultStart);
-      const to = parseISO(defaultEnd);
+      const from = parseISODate(defaultStart);
+      const to = parseISODate(defaultEnd);
       if (from.getTime() < to.getTime()) return { from, to };
     }
     return defaultRange;

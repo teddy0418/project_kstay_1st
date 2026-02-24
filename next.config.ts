@@ -11,6 +11,13 @@ const withSerwistSafe =
   process.env.NODE_ENV === "production" ? withSerwist : ((c: NextConfig) => c) as typeof withSerwist;
 
 const nextConfig: NextConfig = {
+  // NextAuth CLIENT_FETCH_ERROR 방지: NEXTAUTH_URL이 없으면 dev에서 localhost:3001 사용
+  env: {
+    NEXTAUTH_URL:
+      process.env.NEXTAUTH_URL ||
+      process.env.NEXT_PUBLIC_SITE_URL ||
+      (process.env.NODE_ENV === "development" ? "http://localhost:3001" : undefined),
+  },
   images: {
     remotePatterns: [{ protocol: "https", hostname: "images.unsplash.com" }],
   },

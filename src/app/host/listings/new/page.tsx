@@ -1,146 +1,88 @@
 "use client";
 
-import { useMemo, useState } from "react";
 import { useRouter } from "next/navigation";
-import { apiClient, ApiClientError } from "@/lib/api/client";
+import { useEffect, useRef, useState } from "react";
+import { useSession } from "next-auth/react";
+import { signIn } from "next-auth/react";
+import { apiClient } from "@/lib/api/client";
 
-export default function HostNewListingPage() {
+export default function HostListingsNewEntryPage() {
   const router = useRouter();
+  const { data: session, status } = useSession();
+  const [error, setError] = useState<string | null>(null);
+  const started = useRef(false);
 
-  const [name, setName] = useState("");
-  const [city, setCity] = useState("Seoul");
-  const [area, setArea] = useState("Jongno");
-  const [address, setAddress] = useState("");
-  const [price, setPrice] = useState(120000);
-  const [checkIn, setCheckIn] = useState("15:00");
-  const [checkOut, setCheckOut] = useState("11:00");
-  const [submitting, setSubmitting] = useState(false);
-
-  const canSubmit = useMemo(
-    () => name.trim().length >= 2 && city.trim().length >= 2 && area.trim().length >= 1 && address.trim().length >= 5,
-    [name, city, area, address]
-  );
-
-  const onSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
-    if (!canSubmit || submitting) return;
-    setSubmitting(true);
-
-    try {
-      await apiClient.post<{ id: string; status: "PENDING" | "APPROVED" | "REJECTED" }>(
-        "/api/host/listings",
-        {
-          title: name,
-          city,
-          area,
-          address,
-          basePriceKrw: price,
-          checkInTime: checkIn,
-          checkOutTime: checkOut,
-        }
-      );
-
-      router.push("/host/pending");
-      router.refresh();
-    } catch (err) {
-      if (err instanceof ApiClientError) {
-        alert(err.message);
-      } else {
-        alert("Network error while submitting listing.");
-      }
-      setSubmitting(false);
+  useEffect(() => {
+    if (status !== "authenticated" || !session?.user) return;
+    const role = (session.user as { role?: string }).role;
+    if (role !== "HOST" && role !== "ADMIN") {
+      router.replace("/host/onboarding");
+      return;
     }
-  };
+    if (started.current) return;
+    started.current = true;
+
+    (async () => {
+      setError(null);
+      try {
+        const statusRes = await apiClient.get<{ status: string; draftListingId?: string | null }>("/api/host/listings/status");
+        const existingDraftId = statusRes?.draftListingId ?? null;
+        if (existingDraftId) {
+          router.replace(`/host/listings/new/${existingDraftId}/basics`);
+          return;
+        }
+        const data = await apiClient.post<{ id: string }>("/api/host/listings", {
+          title: "신규 숙소",
+          titleKo: "신규 숙소",
+          city: "Seoul",
+          area: "Jongno",
+          address: "주소를 입력해 주세요",
+          basePriceKrw: 100000,
+          checkInTime: "15:00",
+          checkOutTime: "11:00",
+          status: "DRAFT",
+        });
+        const id = data?.id;
+        if (!id) throw new Error("No id");
+        router.replace(`/host/listings/new/${id}/basics`);
+      } catch (e) {
+        setError(e instanceof Error ? e.message : "초안 생성 실패");
+        if (typeof (e as { status?: number }).status === "number" && (e as { status: number }).status === 401) {
+          await signIn();
+        }
+      }
+    })();
+  }, [router, session, status]);
+
+  if (status === "loading") {
+    return (
+      <div className="mx-auto max-w-2xl p-8 text-center text-neutral-600">
+        초안 생성 중…
+      </div>
+    );
+  }
+
+  if (status !== "authenticated" || !session?.user) {
+    return (
+      <div className="mx-auto max-w-2xl p-8 text-center">
+        <p className="text-neutral-600">로그인한 뒤 새 숙소를 등록할 수 있습니다.</p>
+      </div>
+    );
+  }
+
+  if (error) {
+    return (
+      <div className="mx-auto max-w-2xl p-8">
+        <div className="rounded-2xl border border-red-200 bg-red-50 p-6 text-red-800">
+          {error}
+        </div>
+      </div>
+    );
+  }
 
   return (
-    <div className="rounded-3xl border border-neutral-200 bg-white shadow-sm p-8">
-      <div className="text-2xl font-extrabold tracking-tight">숙소 등록</div>
-      <p className="mt-2 text-sm text-neutral-600">
-        최소 정보만 입력하면 됩니다. (MVP) 등록 후 운영팀 승인 완료 시 대시보드가 열립니다.
-      </p>
-
-      <form onSubmit={onSubmit} className="mt-6 grid gap-4 max-w-[720px]">
-        <div>
-          <label className="text-sm font-semibold">숙소 이름</label>
-          <input
-            value={name}
-            onChange={(e) => setName(e.target.value)}
-            className="mt-2 w-full rounded-2xl border border-neutral-200 bg-white px-4 py-3 text-sm outline-none focus:ring-2 focus:ring-neutral-900/10"
-            placeholder="예) 해운대 오션뷰 스테이"
-          />
-        </div>
-
-        <div>
-          <label className="text-sm font-semibold">주소</label>
-          <input
-            value={address}
-            onChange={(e) => setAddress(e.target.value)}
-            className="mt-2 w-full rounded-2xl border border-neutral-200 bg-white px-4 py-3 text-sm outline-none focus:ring-2 focus:ring-neutral-900/10"
-            placeholder="예) 부산 해운대구 ..."
-          />
-          <div className="mt-1 text-xs text-neutral-500">* MVP에서는 지도 연동은 다음 단계에서 붙입니다.</div>
-        </div>
-
-        <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-          <div>
-            <label className="text-sm font-semibold">도시</label>
-            <input
-              value={city}
-              onChange={(e) => setCity(e.target.value)}
-              className="mt-2 w-full rounded-2xl border border-neutral-200 bg-white px-4 py-3 text-sm outline-none focus:ring-2 focus:ring-neutral-900/10"
-              placeholder="예) Seoul"
-            />
-          </div>
-          <div>
-            <label className="text-sm font-semibold">지역</label>
-            <input
-              value={area}
-              onChange={(e) => setArea(e.target.value)}
-              className="mt-2 w-full rounded-2xl border border-neutral-200 bg-white px-4 py-3 text-sm outline-none focus:ring-2 focus:ring-neutral-900/10"
-              placeholder="예) Jongno"
-            />
-          </div>
-        </div>
-
-        <div>
-          <label className="text-sm font-semibold">1박 기본 요금 (원)</label>
-          <input
-            type="number"
-            value={price}
-            onChange={(e) => setPrice(Number(e.target.value || 0))}
-            className="mt-2 w-full rounded-2xl border border-neutral-200 bg-white px-4 py-3 text-sm outline-none focus:ring-2 focus:ring-neutral-900/10"
-          />
-        </div>
-
-        <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-          <div>
-            <label className="text-sm font-semibold">체크인</label>
-            <input
-              value={checkIn}
-              onChange={(e) => setCheckIn(e.target.value)}
-              className="mt-2 w-full rounded-2xl border border-neutral-200 bg-white px-4 py-3 text-sm outline-none focus:ring-2 focus:ring-neutral-900/10"
-              placeholder="15:00"
-            />
-          </div>
-          <div>
-            <label className="text-sm font-semibold">체크아웃</label>
-            <input
-              value={checkOut}
-              onChange={(e) => setCheckOut(e.target.value)}
-              className="mt-2 w-full rounded-2xl border border-neutral-200 bg-white px-4 py-3 text-sm outline-none focus:ring-2 focus:ring-neutral-900/10"
-              placeholder="11:00"
-            />
-          </div>
-        </div>
-
-        <button
-          type="submit"
-          disabled={!canSubmit || submitting}
-          className="mt-2 inline-flex items-center justify-center rounded-2xl bg-neutral-900 px-6 py-4 text-white text-sm font-semibold hover:opacity-95 transition disabled:opacity-40"
-        >
-          {submitting ? "등록 중..." : "등록 완료 (승인 요청)"}
-        </button>
-      </form>
+    <div className="mx-auto max-w-2xl p-8 text-center text-neutral-600">
+      초안 생성 중…
     </div>
   );
 }

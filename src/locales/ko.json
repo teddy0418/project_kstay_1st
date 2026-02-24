@@ -41,6 +41,8 @@
   "recently_viewed": "최근 본 숙소",
   "empty_recently_viewed": "최근 본 숙소가 아직 없습니다.",
   "empty_trips": "예약 내역이 없습니다. 예약하면 여기에 표시됩니다.",
+  "write_review": "리뷰 쓰기",
+  "review_done": "리뷰 완료",
   "sign_in_to_manage": "프로필을 관리하려면 로그인하세요.",
   "login_required_wishlist": "위시리스트에 저장하려면 로그인하세요.",
   "link_copied": "링크 복사됨",
@@ -60,5 +62,8 @@
   "email_login_soon": "MVP: 이메일 로그인은 다음 단계에서 제공됩니다.",
   "continue_google": "구글로 계속하기",
   "continue_kakao": "카카오로 계속하기",
-  "continue_line": "라인으로 계속하기"
+  "continue_line": "라인으로 계속하기",
+  "tab_list": "목록",
+  "tab_map": "지도",
+  "browse_map_hint": "지도에서 마커를 눌러 숙소를 선택하세요."
 }

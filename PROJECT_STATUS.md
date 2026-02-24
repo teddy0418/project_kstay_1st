@@ -4,6 +4,32 @@
 
 ---
 
+## 최근 작업 요약 (배포 후 참고)
+
+**기준일:** 2026-02-22 배포 반영분
+
+### 오늘 반영된 내용
+- **게스트 수수료 표시:** 10% → 12%로 통일 (checkout, 문서)
+- **검색바 노출 범위:** 메인 + board 목록에서만 표시, board 상세에서는 숨김 (`FloatingSearchWrapper`)
+- **하이브리드 locale/통화:** 수동 선택 우선, IP 기반 자동 감지(쿠키 없을 때), `x-vercel-ip-country` + GeoIP fallback (`/api/geo`), 통화 쿠키 저장
+- **Frankfurter 환율:** `/api/exchange`, `ExchangeRatesProvider`, 전역 가격 표시에 실시간 환율 적용
+- **결제:** 결제 버튼 위 안내 문구(카드사 환율 차이), API에 `currency` 전달·Portone 통화 코드 준비
+- **카카오 로그인:** NextAuth KakaoProvider, 로그인 모달에 카카오 버튼
+- **라인 로그인:** NextAuth LineProvider, 로그인 모달에 LINE 버튼
+- **로그아웃:** `signOut({ redirect: false })` + `router.replace`/`refresh`로 로그아웃 후 UI 정상 반영
+- **인기 숙소(browse):** 9개 초과 시 "더보기"로 9개씩 추가 (목록·지도 탭 모두)
+- **인기 숙소 지도:** 접기 버튼 제거, 지도 항상 펼친 상태
+- **개발 환경:** `next.config.ts`에서 개발 시 서비스 워커 빌드 생략 (Windows `sw.js` 에러 방지)
+- **빌드:** `api/bookings/route.ts`에 `getExchangeRates` import 추가
+
+### 배포 시 참고
+- **환경 변수 (배포 서버):** `KAKAO_CLIENT_ID`, `LINE_CLIENT_ID`, `LINE_CLIENT_SECRET` 필요 시 추가. `KAKAO_CLIENT_SECRET`은 비워두면 됨.
+- **OAuth Redirect URI:** 카카오/라인 개발자 콘솔에 배포 URL 기준 콜백 등록 (예: `https://도메인/api/auth/callback/kakao`, `.../line`).
+- **자동 배포:** `main`에 push하면 Vercel이 자동 배포. Redeploy는 같은 커밋 다시 빌드할 때만 사용.
+- **로컬 실행:** `cd c:\project_kstay_1st` → `npm run build` (빌드 확인), `npm run dev` (개발 서버, 포트 3001).
+
+---
+
 ## 1. 프로젝트 개요
 
 - **이름:** KSTAY  
