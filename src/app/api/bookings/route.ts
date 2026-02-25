@@ -3,7 +3,11 @@ import { prisma } from "@/lib/db";
 import { apiError, apiOk } from "@/lib/api/response";
 import { parseJsonBody } from "@/lib/api/validation";
 import { getServerSessionUser } from "@/lib/auth/server";
-import { buildCancellationDeadlineKst, nightsBetween, parseISODate } from "@/lib/bookings/utils";
+import {
+  buildCancellationSnapshot,
+  nightsBetween,
+  parseISODate,
+} from "@/lib/bookings/utils";
 import { createBookingSchema } from "@/lib/validation/schemas";
 import {
   createPendingBookingWithPayment,
@@ -11,7 +15,7 @@ import {
   findPastStaysByGuestUserId,
 } from "@/lib/repositories/bookings";
 import { getExchangeRates } from "@/lib/exchange";
-import { calcGuestPriceBreakdownKRW } from "@/lib/policy";
+import { calcGuestPriceBreakdownKRW, NON_REFUNDABLE_DISCOUNT_RATE } from "@/lib/policy";
 import type { Listing } from "@/types";
 
 type CreateBookingResponse = {
@@ -159,10 +163,28 @@ export async function POST(req: Request) {
     const guestsInfants = Math.max(0, body.guestsInfants ?? 0);
     const guestsPets = Math.max(0, body.guestsPets ?? 0);
 
-    const baseKrw = listing.basePriceKrw * nights;
-    const { base: accommodationKrw, serviceFeeGross: guestServiceFeeKrw, total: totalKrw } = calcGuestPriceBreakdownKRW(baseKrw);
+    const isNonRefundableSpecial =
+      Boolean(listing.nonRefundableSpecialEnabled) && Boolean(body.isNonRefundableSpecial);
+    const baseBeforeDiscount = listing.basePriceKrw * nights;
+    const baseKrw = isNonRefundableSpecial
+      ? Math.round(baseBeforeDiscount * (1 - NON_REFUNDABLE_DISCOUNT_RATE))
+      : baseBeforeDiscount;
+
+    const { base: accommodationKrw, serviceFeeGross: guestServiceFeeKrw, total: totalKrw } =
+      calcGuestPriceBreakdownKRW(baseKrw);
     const totalUsd = Math.max(1, Math.round(totalKrw / 13));
-    const cancellationDeadlineKst = buildCancellationDeadlineKst(body.checkIn);
+
+    const nowMs = Date.now();
+    const snapshot = buildCancellationSnapshot({
+      checkInISO: body.checkIn,
+      isNonRefundableSpecial,
+      bookingCreatedAtUtcMs: nowMs,
+      freeCancellationDays: listing.freeCancellationDays ?? undefined,
+      policyTextLocale: body.policyTextLocale ?? "en",
+    });
+
+    const policyAgreedAt = body.policyAgreedAt ? new Date(body.policyAgreedAt) : new Date(nowMs);
+
     const publicToken = randomUUID().replace(/-/g, "");
 
     const requestedCurrency = (body.currency ?? "KRW") as "USD" | "KRW" | "JPY" | "CNY";
@@ -183,11 +205,18 @@ export async function POST(req: Request) {
       totalKrw,
       accommodationKrw,
       guestServiceFeeKrw,
-      cancellationDeadlineKst,
+      cancellationDeadlineKst: snapshot.cancellationDeadlineKst,
       paymentProvider: providerMode === "PORTONE" ? "PORTONE" : "MOCK",
       paymentStoreId: process.env.PORTONE_STORE_ID ?? null,
       paymentAmountKrw:
         providerMode === "PORTONE" && requestedCurrency === "KRW" ? totalKrw : null,
+      isNonRefundableSpecial,
+      cancellationPolicyVersion: snapshot.cancellationPolicyVersion,
+      policyTextLocale: body.policyTextLocale ?? "en",
+      policyType: snapshot.policyType,
+      freeCancelEndsAt: snapshot.freeCancelEndsAt,
+      refundSchedule: snapshot.refundSchedule,
+      policyAgreedAt,
     });
 
     const payload: CreateBookingResponse = {

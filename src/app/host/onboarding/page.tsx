@@ -20,12 +20,12 @@ export default async function HostOnboardingPage() {
         </p>
 
         <div className="mt-6 flex flex-col sm:flex-row gap-3">
-          <Link
+          <a
             href="/host/listings/new"
             className="inline-flex items-center justify-center rounded-2xl bg-neutral-900 px-6 py-4 text-white text-sm font-semibold hover:opacity-95 transition"
           >
             숙소 등록하기
-          </Link>
+          </a>
 
           <Link
             href="/"

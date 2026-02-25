@@ -1,4 +1,5 @@
 import { z } from "zod";
+import { AMENITY_KEYS } from "@/lib/amenities";
 
 const optionalTrimmedString = z
   .union([z.string(), z.null(), z.undefined()])
@@ -16,6 +17,11 @@ export const createBookingSchema = z.object({
   guestsPets: z.coerce.number().int().min(0).optional(),
   currency: z.enum(["USD", "KRW", "JPY", "CNY"]).optional(),
   paymentMethod: z.enum(["KAKAOPAY", "PAYPAL", "EXIMBAY"]).optional(),
+  /** 환불 불가 특가 선택 (listing이 해당 옵션 제공 시에만 유효) */
+  isNonRefundableSpecial: z.boolean().optional(),
+  /** 정책 동의 시각 ISO 문자열 (분쟁 대비 스냅샷) */
+  policyAgreedAt: z.string().trim().optional(),
+  policyTextLocale: z.string().trim().max(10).optional(),
 });
 
 export const createHostListingSchema = z.object({
@@ -46,6 +52,7 @@ export const updateHostListingSchema = z
     area: z.string().trim().min(1).max(100).optional(),
     address: z.string().trim().min(5).max(300).optional(),
     basePriceKrw: z.coerce.number().int().positive().optional(),
+    extraGuestFeeKrw: z.coerce.number().int().min(0).optional().nullable(),
     status: z.enum(["DRAFT", "PENDING", "APPROVED", "REJECTED"]).optional(),
     checkInTime: z.string().trim().regex(/^\d{2}:\d{2}$/).optional().nullable(),
     checkOutTime: z.string().trim().regex(/^\d{2}:\d{2}$/).optional().nullable(),
@@ -58,8 +65,30 @@ export const updateHostListingSchema = z
     lat: z.coerce.number().finite().optional().nullable(),
     lng: z.coerce.number().finite().optional().nullable(),
     amenities: z.array(z.string().trim().min(1)).optional(),
+    propertyType: z.string().trim().max(50).optional().nullable(),
+    maxGuests: z.coerce.number().int().min(1).max(20).optional().nullable(),
+    country: z.string().trim().max(50).optional().nullable(),
+    stateProvince: z.string().trim().max(100).optional().nullable(),
+    cityDistrict: z.string().trim().max(100).optional().nullable(),
+    roadAddress: z.string().trim().max(300).optional().nullable(),
+    detailedAddress: z.string().trim().max(500).optional().nullable(),
+    zipCode: z.string().trim().max(20).optional().nullable(),
+    weekendSurchargePct: z.coerce.number().int().min(0).max(100).optional().nullable(),
+    peakSurchargePct: z.coerce.number().int().min(0).max(100).optional().nullable(),
+    nonRefundableSpecialEnabled: z.boolean().optional(),
+    freeCancellationDays: z.coerce.number().int().min(0).max(14).optional().nullable(),
+    businessRegistrationDocUrl: z.string().trim().url().max(2000).optional().nullable().or(z.literal("")),
+    lodgingReportDocUrl: z.string().trim().url().max(2000).optional().nullable().or(z.literal("")),
   })
-  .strict();
+  .strict()
+  .refine(
+    (data) => {
+      if (!Array.isArray(data.amenities)) return true;
+      const allowed = new Set<string>(AMENITY_KEYS as unknown as string[]);
+      return data.amenities.every((key: string) => allowed.has(key));
+    },
+    { message: "amenities에는 정의된 어메니티 키만 입력할 수 있습니다.", path: ["amenities"] }
+  );
 
 export const wishlistMutationSchema = z.object({
   listingId: z.string().trim().min(1, "listingId is required"),

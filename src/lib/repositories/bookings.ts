@@ -5,6 +5,8 @@ type ListingPricing = {
   id: string;
   title: string;
   basePriceKrw: number;
+  freeCancellationDays: number | null;
+  nonRefundableSpecialEnabled: boolean;
 };
 
 type CreateBookingInput = {
@@ -31,12 +33,26 @@ type CreateBookingInput = {
   paymentStoreId: string | null;
   /** KRW 결제 시 웹훅 금액 검증용 */
   paymentAmountKrw?: number | null;
+  /** 환불 불가 특가 예약 여부 */
+  isNonRefundableSpecial?: boolean;
+  cancellationPolicyVersion?: string | null;
+  policyTextLocale?: string | null;
+  policyType?: string | null;
+  freeCancelEndsAt?: Date | null;
+  refundSchedule?: string | null;
+  policyAgreedAt?: Date | null;
 };
 
 export async function findListingPricingById(listingId: string): Promise<ListingPricing | null> {
   return prisma.listing.findUnique({
     where: { id: listingId },
-    select: { id: true, title: true, basePriceKrw: true },
+    select: {
+      id: true,
+      title: true,
+      basePriceKrw: true,
+      freeCancellationDays: true,
+      nonRefundableSpecialEnabled: true,
+    },
   });
 }
 
@@ -62,6 +78,13 @@ export async function createPendingBookingWithPayment(input: CreateBookingInput)
       guestServiceFeeKrw: input.guestServiceFeeKrw ?? null,
       cancellationDeadlineKst: input.cancellationDeadlineKst,
       status: "PENDING_PAYMENT",
+      isNonRefundableSpecial: input.isNonRefundableSpecial ?? false,
+      cancellationPolicyVersion: input.cancellationPolicyVersion ?? null,
+      policyTextLocale: input.policyTextLocale ?? null,
+      policyType: input.policyType ?? null,
+      freeCancelEndsAt: input.freeCancelEndsAt ?? null,
+      refundSchedule: input.refundSchedule ?? null,
+      policyAgreedAt: input.policyAgreedAt ?? null,
       payments: {
         create: {
           provider: input.paymentProvider,

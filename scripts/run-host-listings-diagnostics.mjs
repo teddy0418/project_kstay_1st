@@ -52,7 +52,7 @@ function openBrowser(targetUrl) {
   }
   try {
     spawn(cmd, args, { stdio: "ignore", detached: true });
-  } catch (err) {
+  } catch {
     console.error("브라우저를 열 수 없습니다. 아래 URL을 직접 열어주세요:");
     console.error(targetUrl);
   }

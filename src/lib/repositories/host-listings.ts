@@ -44,6 +44,21 @@ type UpdateHostListingInput = {
   lat?: number | null;
   lng?: number | null;
   amenities?: string[];
+  propertyType?: string | null;
+  maxGuests?: number | null;
+  country?: string | null;
+  stateProvince?: string | null;
+  cityDistrict?: string | null;
+  roadAddress?: string | null;
+  detailedAddress?: string | null;
+  zipCode?: string | null;
+  weekendSurchargePct?: number | null;
+  peakSurchargePct?: number | null;
+  nonRefundableSpecialEnabled?: boolean;
+  freeCancellationDays?: number | null;
+  extraGuestFeeKrw?: number | null;
+  businessRegistrationDocUrl?: string | null;
+  lodgingReportDocUrl?: string | null;
 };
 
 export async function createPendingHostListing(input: CreateHostListingInput) {
@@ -97,8 +112,41 @@ export async function createPendingHostListing(input: CreateHostListingInput) {
 export async function findHostListingOwnership(id: string) {
   return prisma.listing.findUnique({
     where: { id },
-    select: { id: true, hostId: true },
+    select: { id: true, hostId: true, status: true },
   });
+}
+
+/** 승인(APPROVED)된 숙소에서 호스트가 수정 가능한 필드만 */
+export const APPROVED_LISTING_EDITABLE_FIELDS = [
+  "checkInGuideMessage",
+  "houseRulesMessage",
+  "detailedAddress",
+] as const;
+
+/** 편집 진입 시 첫 미완료 단계 계산용 최소 필드만 조회. hostId 있으면 본인 것만 */
+export async function findListingMinimalForWizardStep(id: string, hostId?: string | null) {
+  const where = hostId != null ? { id, hostId } : { id };
+  const row = await prisma.listing.findFirst({
+    where,
+    select: {
+      title: true,
+      titleKo: true,
+      address: true,
+      roadAddress: true,
+      lat: true,
+      lng: true,
+      basePriceKrw: true,
+      propertyType: true,
+      maxGuests: true,
+      amenities: true,
+      images: { select: { id: true } },
+    },
+  });
+  if (!row) return null;
+  return {
+    ...row,
+    images: row.images as { id: string; url?: string; sortOrder?: number }[],
+  };
 }
 
 /** 호스트의 DRAFT 상태 리스팅 중 가장 최근 1건 id (위저드 재사용용) */
@@ -144,12 +192,35 @@ export async function findHostListingForEdit(id: string, hostId?: string) {
       hostBioKo: true,
       hostBioJa: true,
       hostBioZh: true,
+      propertyType: true,
+      maxGuests: true,
+      country: true,
+      stateProvince: true,
+      cityDistrict: true,
+      roadAddress: true,
+      detailedAddress: true,
+      zipCode: true,
+      weekendSurchargePct: true,
+      peakSurchargePct: true,
+      nonRefundableSpecialEnabled: true,
+      freeCancellationDays: true,
+      extraGuestFeeKrw: true,
+      businessRegistrationDocUrl: true,
+      lodgingReportDocUrl: true,
+      amenities: true,
+      lat: true,
+      lng: true,
+      location: true,
       images: {
         orderBy: { sortOrder: "asc" },
         select: { id: true, url: true, sortOrder: true },
       },
     },
   });
+}
+
+export async function countListingImages(listingId: string): Promise<number> {
+  return prisma.listingImage.count({ where: { listingId } });
 }
 
 export async function addListingImage(listingId: string, url: string, sortOrder?: number) {
@@ -243,18 +314,67 @@ export async function updateHostListing(input: UpdateHostListingInput) {
   if (input.lat !== undefined) data.lat = input.lat;
   if (input.lng !== undefined) data.lng = input.lng;
   if (input.amenities !== undefined) data.amenities = input.amenities;
+  if (input.propertyType !== undefined) data.propertyType = input.propertyType ?? null;
+  if (input.maxGuests !== undefined) data.maxGuests = input.maxGuests ?? null;
+  if (input.country !== undefined) data.country = input.country ?? null;
+  if (input.stateProvince !== undefined) data.stateProvince = input.stateProvince ?? null;
+  if (input.cityDistrict !== undefined) data.cityDistrict = input.cityDistrict ?? null;
+  if (input.roadAddress !== undefined) data.roadAddress = input.roadAddress ?? null;
+  if (input.detailedAddress !== undefined) data.detailedAddress = input.detailedAddress ?? null;
+  if (input.zipCode !== undefined) data.zipCode = input.zipCode ?? null;
+  if (input.weekendSurchargePct !== undefined) data.weekendSurchargePct = input.weekendSurchargePct ?? null;
+  if (input.peakSurchargePct !== undefined) data.peakSurchargePct = input.peakSurchargePct ?? null;
+  if (input.nonRefundableSpecialEnabled !== undefined) data.nonRefundableSpecialEnabled = input.nonRefundableSpecialEnabled;
+  if (input.freeCancellationDays !== undefined) data.freeCancellationDays = input.freeCancellationDays ?? null;
+  if (input.extraGuestFeeKrw !== undefined) data.extraGuestFeeKrw = input.extraGuestFeeKrw ?? null;
+  if (input.businessRegistrationDocUrl !== undefined) data.businessRegistrationDocUrl = input.businessRegistrationDocUrl ?? null;
+  if (input.lodgingReportDocUrl !== undefined) data.lodgingReportDocUrl = input.lodgingReportDocUrl ?? null;
 
   return prisma.listing.update({
     where: { id: input.id },
     data,
     select: {
       id: true,
+      status: true,
       title: true,
+      titleKo: true,
+      titleJa: true,
+      titleZh: true,
       city: true,
       area: true,
       address: true,
       basePriceKrw: true,
-      status: true,
+      checkInTime: true,
+      checkOutTime: true,
+      checkInGuideMessage: true,
+      houseRulesMessage: true,
+      hostBio: true,
+      hostBioKo: true,
+      hostBioJa: true,
+      hostBioZh: true,
+      propertyType: true,
+      maxGuests: true,
+      country: true,
+      stateProvince: true,
+      cityDistrict: true,
+      roadAddress: true,
+      detailedAddress: true,
+      zipCode: true,
+      weekendSurchargePct: true,
+      peakSurchargePct: true,
+      nonRefundableSpecialEnabled: true,
+      freeCancellationDays: true,
+      extraGuestFeeKrw: true,
+      businessRegistrationDocUrl: true,
+      lodgingReportDocUrl: true,
+      amenities: true,
+      lat: true,
+      lng: true,
+      location: true,
+      images: {
+        orderBy: { sortOrder: "asc" },
+        select: { id: true, url: true, sortOrder: true },
+      },
     },
   });
 }

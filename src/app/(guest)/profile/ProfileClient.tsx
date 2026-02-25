@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useMemo, useState } from "react";
+import Image from "next/image";
 import Container from "@/components/layout/Container";
 import { useAuthModal } from "@/components/ui/AuthModalProvider";
 import { useAuth } from "@/components/ui/AuthProvider";
@@ -157,19 +158,23 @@ export default function ProfileClient({ initialTrips }: ProfileClientProps) {
 
   useEffect(() => {
     if (!loggedIn) {
-      setTrips([]);
-      setMyReviews([]);
-      setTripsLoading(false);
-      setMyReviewsLoading(false);
+      queueMicrotask(() => {
+        setTrips([]);
+        setMyReviews([]);
+        setTripsLoading(false);
+        setMyReviewsLoading(false);
+      });
       return;
     }
     if (initialTrips.length > 0) {
-      setTrips(initialTrips);
-      setTripsLoading(false);
+      queueMicrotask(() => {
+        setTrips(initialTrips);
+        setTripsLoading(false);
+      });
     } else {
-      setTripsLoading(true);
+      queueMicrotask(() => setTripsLoading(true));
     }
-    setMyReviewsLoading(true);
+    queueMicrotask(() => setMyReviewsLoading(true));
     const timeout = setTimeout(() => {
       if (initialTrips.length === 0) {
         apiClient
@@ -185,7 +190,7 @@ export default function ProfileClient({ initialTrips }: ProfileClientProps) {
         .finally(() => setMyReviewsLoading(false));
     }, 100);
     return () => clearTimeout(timeout);
-  }, [loggedIn, initialTrips.length]);
+  }, [loggedIn, initialTrips]);
 
   const handleSubmitReview = async (bookingId: string, data: ReviewFormData) => {
     try {
@@ -213,20 +218,23 @@ export default function ProfileClient({ initialTrips }: ProfileClientProps) {
     fetchMyReviews();
   };
 
+  const recentIdsKey = useMemo(() => recentIds.join(","), [recentIds]);
   useEffect(() => {
     if (!loggedIn || recentIds.length === 0) {
-      setRecentListings([]);
-      setRecentListingsLoading(false);
+      queueMicrotask(() => {
+        setRecentListings([]);
+        setRecentListingsLoading(false);
+      });
       return;
     }
-    setRecentListingsLoading(true);
+    queueMicrotask(() => setRecentListingsLoading(true));
     const ids = recentIds.slice(0, 9).join(",");
     apiClient
       .get<Listing[]>(`/api/listings?ids=${encodeURIComponent(ids)}`)
       .then((list) => setRecentListings(Array.isArray(list) ? list : []))
       .catch(() => setRecentListings([]))
       .finally(() => setRecentListingsLoading(false));
-  }, [loggedIn, recentIds.join(",")]);
+  }, [loggedIn, recentIdsKey, recentIds]);
 
   if (!loggedIn) {
     return (
@@ -271,7 +279,7 @@ export default function ProfileClient({ initialTrips }: ProfileClientProps) {
           <div className="flex items-center gap-4">
             <div className="relative block h-16 w-16 shrink-0 rounded-full border border-neutral-200 bg-neutral-100 overflow-hidden grid place-items-center">
               {profilePhotoUrl ? (
-                <img src={profilePhotoUrl} alt="" className="h-full w-full object-cover" />
+                <Image src={profilePhotoUrl} alt="" width={64} height={64} className="h-full w-full object-cover" unoptimized />
               ) : (
                 <span className="text-lg font-semibold text-neutral-700">{initial}</span>
               )}

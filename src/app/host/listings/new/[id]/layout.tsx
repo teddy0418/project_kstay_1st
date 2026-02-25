@@ -1,19 +1,40 @@
 "use client";
 
+import { useEffect, useState } from "react";
 import { useParams } from "next/navigation";
 import { ListingWizardProvider, useListingWizard } from "@/features/host/listings/ListingWizardContext";
 import ListingWizardShell from "@/features/host/listings/ListingWizardShell";
 
+const LOADING_TIMEOUT_MS = 15000;
+
 function WizardLayoutInner({ children }: { children: React.ReactNode }) {
-  const { listing, loading, error, isLocked } = useListingWizard();
+  const { listing, loading, error, isLocked, reload } = useListingWizard();
   const params = useParams();
   const id = params?.id as string | undefined;
+  const [loadingTimedOut, setLoadingTimedOut] = useState(false);
+
+  useEffect(() => {
+    if (!loading) {
+      queueMicrotask(() => setLoadingTimedOut(false));
+      return;
+    }
+    const t = setTimeout(() => setLoadingTimedOut(true), LOADING_TIMEOUT_MS);
+    return () => clearTimeout(t);
+  }, [loading]);
 
   if (!id) return null;
   if (loading) {
     return (
       <div className="mx-auto max-w-2xl p-8 text-center text-neutral-600">
-        불러오는 중…
+        <p>불러오는 중…</p>
+        {loadingTimedOut && (
+          <p className="mt-4 text-sm">
+            시간이 걸리고 있습니다.{" "}
+            <button type="button" onClick={() => void reload()} className="text-neutral-900 underline">
+              다시 시도
+            </button>
+          </p>
+        )}
       </div>
     );
   }

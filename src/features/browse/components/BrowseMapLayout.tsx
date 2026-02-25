@@ -108,7 +108,9 @@ export default function BrowseMapLayout({ items }: { items: Listing[] }) {
   const hasMore = visibleCount < displayed.length;
 
   useEffect(() => {
-    setVisibleCount((prev) => Math.min(prev, displayed.length));
+    queueMicrotask(() =>
+      setVisibleCount((prev) => Math.min(prev, displayed.length))
+    );
   }, [displayed.length]);
 
   const [selectedId, setSelectedId] = useState<string | null>(null);
@@ -123,7 +125,7 @@ export default function BrowseMapLayout({ items }: { items: Listing[] }) {
   useEffect(() => {
     if (!selectedId) return;
     if (!displayed.some((x) => x.id === selectedId)) {
-      setSelectedId(null);
+      queueMicrotask(() => setSelectedId(null));
     }
   }, [displayed, selectedId]);
 

@@ -1,24 +1,12 @@
 "use client";
 
 import { useState } from "react";
-import { CheckCircle2, Wifi, Dumbbell, Bath, Coffee, Sparkles, UtensilsCrossed, AirVent, Car, Shirt, Tv, Building2 } from "lucide-react";
+import { CheckCircle2 } from "lucide-react";
 import type { LucideIcon } from "lucide-react";
 import { getAmenityLabel } from "@/lib/amenities";
+import { AMENITY_ICONS } from "@/lib/amenity-icons";
 
-const AMENITY_ICONS: Record<string, LucideIcon> = {
-  wifi: Wifi,
-  fitness: Dumbbell,
-  bath: Bath,
-  cafe_bar: Coffee,
-  clean_kit: Sparkles,
-  essentials: CheckCircle2,
-  kitchen: UtensilsCrossed,
-  ac: AirVent,
-  parking: Car,
-  washer: Shirt,
-  tv: Tv,
-  elevator: Building2,
-};
+const iconMap: Record<string, LucideIcon> = { ...AMENITY_ICONS };
 
 const MAX_VISIBLE = 8;
 
@@ -44,7 +32,7 @@ export default function AmenitiesList({
     <>
       <div className="grid grid-cols-2 gap-3 text-sm text-neutral-700">
         {visible.map((key) => {
-          const Icon = AMENITY_ICONS[key] ?? CheckCircle2;
+          const Icon = iconMap[key] ?? CheckCircle2;
           return (
             <div key={key} className="flex items-center gap-2">
               <Icon className="h-4 w-4 shrink-0" />

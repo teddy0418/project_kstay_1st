@@ -9,6 +9,14 @@ type Props = {
   totalText: string;
   cancellationDeadlineKst: string;
   manageUrl: string;
+  /** 숙소정보에서 입력한 체크인/아웃 시간 (예: 15:00, 11:00) */
+  checkInTime?: string;
+  checkOutTime?: string;
+  /** 숙소정보 → 예약 확정 후 전달 안내 */
+  checkInGuide?: string;
+  houseRules?: string;
+  /** 위치 단계에서 입력한 정확한 주소 (예약 확정 후 게스트에게 전달) */
+  fullAddress?: string;
 };
 
 export default function BookingConfirmedEmail(props: Props) {
@@ -24,15 +32,35 @@ export default function BookingConfirmedEmail(props: Props) {
           </Text>
 
           <Section style={{ border: "1px solid #e5e5e5", borderRadius: "10px", padding: "16px" }}>
-            <Text style={{ margin: "0 0 8px" }}><strong>Booking token:</strong> {props.bookingToken}</Text>
             <Text style={{ margin: "0 0 8px" }}><strong>Listing:</strong> {props.listingTitle}</Text>
+            {props.fullAddress && (
+              <Text style={{ margin: "0 0 8px" }}><strong>Address:</strong> {props.fullAddress}</Text>
+            )}
             <Text style={{ margin: "0 0 8px" }}><strong>Dates:</strong> {props.checkIn} - {props.checkOut}</Text>
+            {(props.checkInTime || props.checkOutTime) && (
+              <Text style={{ margin: "0 0 8px" }}>
+                <strong>Check-in / Check-out time:</strong> {props.checkInTime ?? "—"} / {props.checkOutTime ?? "—"}
+              </Text>
+            )}
             <Text style={{ margin: "0 0 8px" }}><strong>Guests:</strong> {props.guestsText}</Text>
             <Text style={{ margin: "0 0 8px" }}><strong>Total:</strong> {props.totalText}</Text>
             <Text style={{ margin: "0" }}>
               <strong>Free cancellation until:</strong> {props.cancellationDeadlineKst}
             </Text>
           </Section>
+
+          {props.checkInGuide && (
+            <Section style={{ marginTop: "16px", border: "1px solid #e5e5e5", borderRadius: "10px", padding: "16px" }}>
+              <Text style={{ margin: "0 0 8px", fontWeight: 600 }}>Check-in instructions</Text>
+              <Text style={{ margin: 0, whiteSpace: "pre-wrap", color: "#444" }}>{props.checkInGuide}</Text>
+            </Section>
+          )}
+          {props.houseRules && (
+            <Section style={{ marginTop: "16px", border: "1px solid #e5e5e5", borderRadius: "10px", padding: "16px" }}>
+              <Text style={{ margin: "0 0 8px", fontWeight: 600 }}>House rules &amp; info</Text>
+              <Text style={{ margin: 0, whiteSpace: "pre-wrap", color: "#444" }}>{props.houseRules}</Text>
+            </Section>
+          )}
 
           <Text style={{ margin: "16px 0 8px", color: "#444" }}>
             You can review your booking details any time:

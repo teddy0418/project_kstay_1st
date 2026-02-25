@@ -32,6 +32,7 @@ async function request<T>(input: string, options: RequestOptions = {}): Promise<
   try {
     const res = await fetch(input, {
       ...rest,
+      credentials: "same-origin",
       headers: {
         "Content-Type": "application/json",
         ...headers,

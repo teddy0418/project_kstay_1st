@@ -28,16 +28,18 @@ function formatKrw(n: number) {
   return `₩${n.toLocaleString()}`;
 }
 
-export default function BookingDetailModal({ open, onClose, bookingId, listingId }: Props) {
+export default function BookingDetailModal({ open, onClose, bookingId }: Props) {
   const [detail, setDetail] = useState<BookingDetailData | null>(null);
   const [loading, setLoading] = useState(false);
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
 
   useEffect(() => {
     if (!open || !bookingId) return;
-    setDetail(null);
-    setErrorMessage(null);
-    setLoading(true);
+    queueMicrotask(() => {
+      setDetail(null);
+      setErrorMessage(null);
+      setLoading(true);
+    });
     fetch(`/api/host/bookings/${bookingId}/detail`)
       .then(async (r) => {
         const text = await r.text();

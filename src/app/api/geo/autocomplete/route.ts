@@ -8,6 +8,11 @@ export type GeoAutocompleteResult = {
   lng: number;
   city?: string;
   area?: string;
+  /** 구조화: 시/도, 시/군/구, 도로명, 우편번호 */
+  stateProvince?: string;
+  cityDistrict?: string;
+  roadAddress?: string;
+  zipCode?: string;
 };
 
 const NOMINATIM_BASE = "https://nominatim.openstreetmap.org";
@@ -93,23 +98,30 @@ export async function GET(request: NextRequest) {
         documents?: Array<{
           address_name: string;
           address?: { region_1depth_name?: string; region_2depth_name?: string };
-          road_address?: { address_name?: string };
+          road_address?: { address_name?: string; zone_no?: string };
           x?: string;
           y?: string;
         }>;
       };
       const documents = json.documents ?? [];
       const results: GeoAutocompleteResult[] = documents.map((doc) => {
-        const addr = doc.road_address?.address_name || doc.address_name;
+        const roadAddr = safeString(doc.road_address?.address_name);
+        const addr = roadAddr || doc.address_name;
         const lat = parseFloat(doc.y ?? "0");
         const lng = parseFloat(doc.x ?? "0");
+        const stateProvince = safeString(doc.address?.region_1depth_name);
+        const cityDistrict = safeString(doc.address?.region_2depth_name);
         return {
           label: typeof addr === "string" ? addr : String(doc.address_name ?? ""),
           address: typeof addr === "string" ? addr : String(doc.address_name ?? ""),
           lat: Number.isFinite(lat) ? lat : 0,
           lng: Number.isFinite(lng) ? lng : 0,
-          city: safeString(doc.address?.region_1depth_name),
-          area: safeString(doc.address?.region_2depth_name),
+          city: stateProvince,
+          area: cityDistrict,
+          stateProvince,
+          cityDistrict,
+          roadAddress: roadAddr,
+          zipCode: safeString(doc.road_address?.zone_no),
         };
       });
       return NextResponse.json({ data: { results } });

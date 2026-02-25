@@ -33,19 +33,40 @@ export function totalGuestPriceKRW(baseKRW: number) {
   return calcGuestDisplayTotalKRW(baseKRW);
 }
 
+/** 환불 불가 특가: 게스트 할인율 (10%) */
+export const NON_REFUNDABLE_DISCOUNT_RATE = 0.1;
+
 // ---- End Pricing Policy ----
 
-export const FREE_CANCELLATION_DAYS = 7; // Free cancel until 7 days before check-in (KST)
+/** 표준: 체크인 N일 전 23:59 KST까지 무료 취소 (기본 5일) */
+export const FREE_CANCELLATION_DAYS = 5;
 export const HOST_DECISION_HOURS = 24; // Host can decline within 24h (then void/refund)
+
+/** 환불 불가 특가: 예약 후 24h(KST)까지만 환불. 체크인 48h 미만 남으면 그레이스 없음(바로 환불 불가) */
+export const NON_REFUNDABLE_GRACE_HOURS = 24;
+export const NON_REFUNDABLE_MIN_CHECKIN_HOURS = 48; // 체크인까지 48h 미만 = 초임박 → 바로 환불 불가
 
 const KST_OFFSET_MS = 9 * 60 * 60 * 1000;
 const DAY_MS = 24 * 60 * 60 * 1000;
+const HOUR_MS = 60 * 60 * 1000;
 
-export function freeCancellationDeadlineUtcMs(checkInDateISO: string) {
+/** 표준 정책: 체크인 N일 전 23:59:59 KST (UTC ms). days 기본값 5 */
+export function freeCancellationDeadlineUtcMs(checkInDateISO: string, days: number = FREE_CANCELLATION_DAYS) {
   const [y, m, d] = checkInDateISO.split("-").map(Number);
   const checkInKstMidnightUtcMs = Date.UTC(y, (m ?? 1) - 1, d ?? 1) - KST_OFFSET_MS;
-  const cutoffUtcMs = checkInKstMidnightUtcMs - FREE_CANCELLATION_DAYS * DAY_MS;
-  return cutoffUtcMs - 60 * 1000;
+  const cutoffUtcMs = checkInKstMidnightUtcMs - days * DAY_MS;
+  return cutoffUtcMs - 60 * 1000; // 23:59:59
+}
+
+/** 환불 불가 특가: 무료 취소 마감 시각(UTC ms). 초임박(체크인 48h 미만)이면 예약 시각=이미 지남 → 환불 불가 */
+export function nonRefundableFreeCancelEndsAtUtcMs(bookingCreatedAtUtcMs: number, checkInDateISO: string): number {
+  const [y, m, d] = checkInDateISO.split("-").map(Number);
+  const checkInStartUtcMs = Date.UTC(y, (m ?? 1) - 1, d ?? 1);
+  const hoursToCheckIn = (checkInStartUtcMs - bookingCreatedAtUtcMs) / HOUR_MS;
+  if (hoursToCheckIn < NON_REFUNDABLE_MIN_CHECKIN_HOURS) {
+    return bookingCreatedAtUtcMs; // 이미 지난 시각 → 바로 환불 불가
+  }
+  return bookingCreatedAtUtcMs + NON_REFUNDABLE_GRACE_HOURS * HOUR_MS;
 }
 
 export function formatKSTDateTimeFromUtcMs(utcMs: number) {
@@ -62,7 +83,23 @@ export function formatKSTDateTimeFromUtcMs(utcMs: number) {
   return `${fmt.format(dt)} (KST)`;
 }
 
-export function isCancellationAllowedNow(checkInDateISO: string, nowMs = Date.now()) {
-  const deadline = freeCancellationDeadlineUtcMs(checkInDateISO);
+/** 게스트 로컬 시간 표시용 (KST + 로컬 동시 표기 시 사용) */
+export function formatLocalDateTimeFromUtcMs(utcMs: number, locale = "en-US", timeZone?: string) {
+  const dt = new Date(utcMs);
+  const tz = timeZone ?? Intl.DateTimeFormat().resolvedOptions().timeZone;
+  const fmt = new Intl.DateTimeFormat(locale, {
+    timeZone: tz,
+    year: "numeric",
+    month: "short",
+    day: "2-digit",
+    hour: "2-digit",
+    minute: "2-digit",
+    hour12: false,
+  });
+  return `${fmt.format(dt)} (${tz})`;
+}
+
+export function isCancellationAllowedNow(checkInDateISO: string, nowMs = Date.now(), days = FREE_CANCELLATION_DAYS) {
+  const deadline = freeCancellationDeadlineUtcMs(checkInDateISO, days);
   return nowMs <= deadline;
 }

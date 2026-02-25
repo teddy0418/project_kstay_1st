@@ -1,7 +1,6 @@
 "use client";
 
 import { useEffect, useMemo, useState } from "react";
-import Link from "next/link";
 import {
   ChevronLeft,
   ChevronRight,
@@ -36,7 +35,7 @@ function buildMonthGrid(year: number, month: number): (number | null)[][] {
   const startSunday = new Date(first);
   startSunday.setDate(first.getDate() - first.getDay());
   const grid: (number | null)[][] = [];
-  let current = new Date(startSunday);
+  const current = new Date(startSunday);
   for (let row = 0; row < 6; row++) {
     const week: (number | null)[] = [];
     for (let col = 0; col < 7; col++) {
@@ -99,7 +98,7 @@ export default function HostCalendarTabs({
 
   useEffect(() => {
     if (!listingId) {
-      setBookings([]);
+      queueMicrotask(() => setBookings([]));
       return;
     }
     fetch(

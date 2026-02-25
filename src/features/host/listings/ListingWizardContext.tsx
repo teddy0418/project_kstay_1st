@@ -26,6 +26,20 @@ export type WizardListing = {
   hostBioJa: string | null;
   hostBioZh: string | null;
   amenities: string[];
+  propertyType?: string | null;
+  maxGuests?: number | null;
+  country?: string | null;
+  stateProvince?: string | null;
+  cityDistrict?: string | null;
+  roadAddress?: string | null;
+  detailedAddress?: string | null;
+  zipCode?: string | null;
+  weekendSurchargePct?: number | null;
+  peakSurchargePct?: number | null;
+  nonRefundableSpecialEnabled?: boolean;
+  freeCancellationDays?: number | null;
+  businessRegistrationDocUrl?: string | null;
+  lodgingReportDocUrl?: string | null;
   images: { id: string; url: string; sortOrder: number }[];
 };
 
@@ -74,6 +88,11 @@ export function ListingWizardProvider({
     setError(null);
     try {
       const data = await apiClient.get<WizardListing>(`/api/host/listings/${listingId}`);
+      if (!data?.id) {
+        setError("숙소 정보를 불러올 수 없습니다.");
+        setListing(null);
+        return;
+      }
       const imgs = (data?.images ?? []).slice().sort((a: { sortOrder: number }, b: { sortOrder: number }) => a.sortOrder - b.sortOrder);
       setListing({
         ...data,
@@ -82,6 +101,7 @@ export function ListingWizardProvider({
       } as WizardListing);
     } catch (e) {
       setError(e instanceof Error ? e.message : "Failed to load listing");
+      setListing(null);
     } finally {
       setLoading(false);
     }

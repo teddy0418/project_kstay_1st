@@ -15,10 +15,11 @@ function getBounds(map: L.Map): ViewBounds {
   return { south: b.getSouth(), west: b.getWest(), north: b.getNorth(), east: b.getEast() };
 }
 
-function makePriceIcon(label: string, active: boolean) {
+function makePriceIcon(label: string, active: boolean, hovered?: boolean) {
+  const classes = ["kst-price", active ? "kst-price--active" : "", hovered ? "kst-price--hovered" : ""].filter(Boolean).join(" ");
   return L.divIcon({
     className: "kst-price-wrap",
-    html: `<div class="kst-price ${active ? "kst-price--active" : ""}">${label}</div>`,
+    html: `<div class="${classes}">${label}</div>`,
     iconAnchor: [0, 0],
   });
 }
@@ -77,7 +78,7 @@ function MapEvents({
 
 export default function LeafletMap({
   items,
-  hoveredId,
+  hoveredId, // reserved for future highlight; parent passes it
   selectedId = null,
   onHoverChange,
   onMarkerClick,
@@ -108,6 +109,7 @@ export default function LeafletMap({
 
       {items.map((l) => {
         const active = selectedId === l.id;
+        const hovered = hoveredId === l.id;
         const allIn = totalGuestPriceKRW(l.pricePerNightKRW);
         const label = formatFromKRW(allIn, currency);
 
@@ -115,7 +117,7 @@ export default function LeafletMap({
           <Marker
             key={l.id}
             position={[l.lat, l.lng]}
-            icon={makePriceIcon(label, active)}
+            icon={makePriceIcon(label, active, hovered)}
             eventHandlers={{
               mouseover: () => onHoverChange?.(l.id),
               mouseout: () => onHoverChange?.(null),

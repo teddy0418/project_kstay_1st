@@ -2,7 +2,7 @@ import { getOrCreateServerUser } from "@/lib/auth/server";
 import { apiError, apiOk } from "@/lib/api/response";
 import { parseJsonBody } from "@/lib/api/validation";
 import { addListingImageSchema } from "@/lib/validation/schemas";
-import { findHostListingOwnership, addListingImage } from "@/lib/repositories/host-listings";
+import { findHostListingOwnership, addListingImage, countListingImages } from "@/lib/repositories/host-listings";
 
 export async function POST(
   req: Request,
@@ -27,6 +27,11 @@ export async function POST(
     const parsed = await parseJsonBody(req, addListingImageSchema);
     if (!parsed.ok) return parsed.response;
     const { url, sortOrder } = parsed.data;
+
+    const currentCount = await countListingImages(listingId);
+    if (currentCount >= 20) {
+      return apiError(400, "VALIDATION_ERROR", "이미지는 최대 20장까지 등록할 수 있습니다.");
+    }
 
     const image = await addListingImage(listingId, url, sortOrder);
     return apiOk(image, 201);

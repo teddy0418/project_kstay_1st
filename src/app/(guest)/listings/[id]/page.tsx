@@ -20,7 +20,7 @@ function normalizeId(v: unknown) {
 function freeCancelUntilKST(checkInISO?: string) {
   if (!checkInISO) return null;
   const checkIn = parseISODate(checkInISO);
-  const deadline = addDays(checkIn, -7);
+  const deadline = addDays(checkIn, -5);
   return `${formatDateEn(deadline)} 23:59 (KST)`;
 }
 
@@ -461,10 +461,17 @@ export default async function ListingDetailPage({
           verifiedPartner: "정부 인증 숙소 파트너",
           about: "숙소 소개",
           noSurprise: "안내: KSTAY는 최종 결제금액을 먼저 표시해 결제 단계의 추가 요금을 줄입니다.",
-          cancellationPolicy: "취소 정책",
+          cancellationPolicy: "취소 규정",
+          policyTitle: "KSTAY 안심 환불 정책",
+          policy24h: "24시간 프리 패스: 예약 후 24시간 내 취소 시 무조건 100% 환불 (체크인 48시간 전 예약에 한함)",
+          policyGeneral: "일반 예약: 체크인 5일 전까지 취소 시 100% 환불",
+          policyLate: "임박 취소: 체크인 5일 전부터는 환불 불가 (노쇼 포함)",
+          policySpecial: "특가 예약: '환불 불가' 상품은 24시간 경과 후 취소 시 전액 환불 불가",
+          policyFee: "결제 수단에 따라 소정의 취소 수수료가 부과될 수 있습니다.",
+          kstAndLocal: "모든 마감 시각은 KST(서울) 기준입니다. 예약 시 당신의 현지 시간으로도 안내됩니다.",
           freeUntilPrefix: "무료 취소 가능 기한:",
-          freeUntilDefault: "체크인 7일 전(23:59 KST)까지 무료 취소 가능합니다.",
-          noRefund: "무료 취소 기한 이후 취소는 환불 불가입니다. (MVP 정책)",
+          freeUntilDefault: "체크인 5일 전(23:59 KST)까지 무료 취소 가능합니다.",
+          noRefund: "무료 취소 기한 이후 취소는 환불 불가입니다.",
           instantPay:
             "즉시 결제 모델: 예약은 바로 생성되지만 호스트가 24시간 내 거절할 수 있습니다. 거절 시 결제는 자동 취소/환불됩니다.",
           kstBase: "모든 정책 시간 기준은 한국 표준시(KST)입니다.",
@@ -485,10 +492,17 @@ export default async function ListingDetailPage({
             verifiedPartner: "政府認証宿泊施設パートナー",
             about: "この宿泊先について",
             noSurprise: "注記: KSTAYは総額を先に表示し、チェックアウト時の追加料金を抑えます。",
-            cancellationPolicy: "キャンセルポリシー",
+            cancellationPolicy: "キャンセル規定",
+            policyTitle: "KSTAY安心返金ポリシー",
+            policy24h: "24時間フリーパス: 予約後24時間以内のキャンセルは100%返金（チェックイン48時間前までの予約に限る）",
+            policyGeneral: "一般予約: チェックイン5日前までキャンセルで100%返金",
+            policyLate: "直前キャンセル: チェックイン5日前からは返金不可（ノーショー含む）",
+            policySpecial: "特割予約: 「返金不可」商品は24時間経過後のキャンセルで全額返金不可",
+            policyFee: "お支払い方法によりキャンセル手数料がかかる場合があります。",
+            kstAndLocal: "すべての期限はKST(ソウル)基準です。予約時に現地時間でも案内します。",
             freeUntilPrefix: "無料キャンセル期限:",
-            freeUntilDefault: "チェックイン7日前（23:59 KST）まで無料キャンセル可能です。",
-            noRefund: "無料キャンセル期限後のキャンセルは返金不可です。（MVPルール）",
+            freeUntilDefault: "チェックイン5日前（23:59 KST）まで無料キャンセル可能です。",
+            noRefund: "無料キャンセル期限後のキャンセルは返金不可です。",
             instantPay:
               "即時決済モデル: 予約はすぐ作成されますが、ホストは24時間以内に拒否できます。拒否された場合、決済は自動取消/返金されます。",
             kstBase: "すべてのポリシー時刻は韓国標準時(KST)基準です。",
@@ -509,10 +523,17 @@ export default async function ListingDetailPage({
               verifiedPartner: "政府认证住宿伙伴",
               about: "房源介绍",
               noSurprise: "说明: KSTAY 会提前展示总价，减少结算阶段的额外费用。",
-              cancellationPolicy: "取消政策",
+              cancellationPolicy: "取消规定",
+              policyTitle: "KSTAY 安心退款政策",
+              policy24h: "24小时免费取消：预订后24小时内取消可100%退款（仅限入住48小时前的预订）",
+              policyGeneral: "一般预订：入住前5天取消可100%退款",
+              policyLate: "临近取消：入住前5天起不可退款（含未入住）",
+              policySpecial: "特价预订：「不可退款」产品在24小时后取消将不退款",
+              policyFee: "根据支付方式可能产生少量取消手续费。",
+              kstAndLocal: "所有截止时间以KST(首尔)为准。预订时会同时显示您当地时间。",
               freeUntilPrefix: "免费取消截止:",
-              freeUntilDefault: "入住前 7 天（23:59 KST）可免费取消。",
-              noRefund: "免费取消截止后取消将不予退款。（MVP 规则）",
+              freeUntilDefault: "入住前 5 天（23:59 KST）可免费取消。",
+              noRefund: "免费取消截止后取消将不予退款。",
               instantPay:
                 "即时支付模式：预订会立即创建，但房东可在24小时内拒绝。若被拒绝，将自动撤销/退款。",
               kstBase: "所有政策时间均以韩国标准时间(KST)为准。",
@@ -533,9 +554,16 @@ export default async function ListingDetailPage({
               about: "About this stay",
               noSurprise: "Note: KSTAY shows all-in price early. No surprise fees at checkout.",
               cancellationPolicy: "Cancellation policy",
+              policyTitle: "KSTAY refund policy",
+              policy24h: "24-hour free pass: Cancel within 24 hours of booking for 100% refund (only for bookings made 48+ hours before check-in).",
+              policyGeneral: "Standard: 100% refund if you cancel by 5 days before check-in.",
+              policyLate: "Late cancellation: From 5 days before check-in, no refund (including no-show).",
+              policySpecial: "Non-refundable rate: No refund after 24 hours from booking.",
+              policyFee: "Your payment method may charge a small cancellation fee.",
+              kstAndLocal: "All deadlines are in KST (Seoul). We also show your local time at checkout.",
               freeUntilPrefix: "Free cancellation until",
-              freeUntilDefault: "Free cancellation until 7 days before check-in (23:59 KST).",
-              noRefund: "After the free cancellation deadline, cancellations are not refundable (MVP rule).",
+              freeUntilDefault: "Free cancellation until 5 days before check-in (23:59 KST).",
+              noRefund: "After the free cancellation deadline, cancellations are not refundable.",
               instantPay:
                 "Instant pay model: your booking is confirmed immediately, but the host may decline within 24 hours. If declined, payment will be voided/refunded automatically.",
               kstBase: "All policy times are based on Korea Standard Time (KST).",
@@ -752,22 +780,24 @@ export default async function ListingDetailPage({
           <section className="mt-12">
             <h2 className="text-lg font-semibold">{tx.cancellationPolicy}</h2>
             <div className="mt-4 rounded-2xl border border-neutral-200 p-5 text-sm text-neutral-700 leading-7">
-              <ul className="list-disc pl-5 space-y-2">
-                <li>
-                  {cancelUntil ? (
-                    <>
-                      {tx.freeUntilPrefix} <span className="font-semibold">{cancelUntil}</span>.
-                    </>
-                  ) : (
-                    <>{tx.freeUntilDefault}</>
-                  )}
-                </li>
-                <li>{tx.noRefund}</li>
-                <li>
-                  {tx.instantPay}
-                </li>
-                <li>{tx.kstBase}</li>
+              <p className="font-semibold text-neutral-900 flex items-center gap-2">
+                <ShieldCheck className="h-5 w-5 shrink-0" />
+                {tx.policyTitle}
+              </p>
+              <ul className="mt-4 list-disc pl-5 space-y-2">
+                <li>{tx.policy24h}</li>
+                <li>{tx.policyGeneral}</li>
+                <li>{tx.policyLate}</li>
+                <li>{tx.policySpecial}</li>
+                <li>{tx.policyFee}</li>
               </ul>
+              {cancelUntil && (
+                <p className="mt-4 font-medium">
+                  {tx.freeUntilPrefix} <span className="font-semibold">{cancelUntil}</span>
+                </p>
+              )}
+              <p className="mt-3 text-xs text-neutral-500">{tx.kstAndLocal}</p>
+              <p className="mt-2 text-xs text-neutral-500">{tx.instantPay}</p>
             </div>
           </section>
         </section>

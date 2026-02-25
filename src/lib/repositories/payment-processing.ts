@@ -71,7 +71,23 @@ export async function findBookingForConfirmationEmailById(bookingId: string) {
   return prisma.booking.findUnique({
     where: { id: bookingId },
     include: {
-      listing: { select: { title: true } },
+      listing: {
+        select: {
+          title: true,
+          checkInTime: true,
+          checkOutTime: true,
+          checkInGuideMessage: true,
+          houseRulesMessage: true,
+          address: true,
+          roadAddress: true,
+          detailedAddress: true,
+          city: true,
+          area: true,
+          stateProvince: true,
+          cityDistrict: true,
+          zipCode: true,
+        },
+      },
     },
   });
 }
@@ -107,6 +123,7 @@ export async function findBookingForPaymentSync(paymentId: string) {
   });
 }
 
+/** 결제 완료 반영. PENDING_PAYMENT인 경우만 CONFIRMED로 변경. 이미 CANCELLED(만료 등)면 null 반환. */
 export async function applyPaidPaymentSync(input: {
   bookingId: string;
   currentConfirmedAt: Date | null;
@@ -115,8 +132,16 @@ export async function applyPaidPaymentSync(input: {
   storeId: string | null;
   pgTid: string | null;
   paymentRawJson: string;
-}) {
+}): Promise<Awaited<ReturnType<typeof prisma.booking.findUnique>> & { status: string } | null> {
   return prisma.$transaction(async (tx: TransactionClient) => {
+    const existing = await tx.booking.findUnique({
+      where: { id: input.bookingId },
+      select: { status: true },
+    });
+    if (!existing || existing.status !== "PENDING_PAYMENT") {
+      return null;
+    }
+
     const updatedBooking = await tx.booking.update({
       where: { id: input.bookingId },
       data: {

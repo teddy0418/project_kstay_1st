@@ -27,13 +27,6 @@ export async function GET() {
   });
 }
 
-const PATCH_BODY = {
-  displayName: String,
-  payoutBank: String,
-  payoutAccount: String,
-  payoutName: String,
-} as const;
-
 /** PATCH: 호스트 프로필·정산 계좌 저장 */
 export async function PATCH(req: Request) {
   const user = await getOrCreateServerUser();

@@ -1,7 +1,6 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { useRouter } from "next/navigation";
 import Link from "next/link";
 import { Star } from "lucide-react";
 import { apiClient } from "@/lib/api/client";
@@ -57,7 +56,6 @@ function StarRow({
 }
 
 export default function AdminTestReviewPage() {
-  const router = useRouter();
   const [listings, setListings] = useState<Listing[]>([]);
   const [loadingListings, setLoadingListings] = useState(true);
   const [listingId, setListingId] = useState("");
@@ -78,6 +76,7 @@ export default function AdminTestReviewPage() {
       })
       .catch(() => setListings([]))
       .finally(() => setLoadingListings(false));
+    // eslint-disable-next-line react-hooks/exhaustive-deps -- run once on mount to load listings
   }, []);
 
   const setCategory = (key: (typeof CATEGORY_KEYS)[number], value: number) => {

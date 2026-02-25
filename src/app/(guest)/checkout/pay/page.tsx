@@ -1,6 +1,7 @@
 "use client";
 
 import { useCallback, useEffect, useState } from "react";
+import Link from "next/link";
 import { useSearchParams } from "next/navigation";
 import Container from "@/components/layout/Container";
 import { useI18n } from "@/components/ui/LanguageProvider";
@@ -64,25 +65,25 @@ export default function CheckoutPayPage() {
     const token = searchParams.get("token");
     const invalidMsg = c.invalidSession;
     if (!token) {
-      setError(invalidMsg);
+      queueMicrotask(() => setError(invalidMsg));
       return;
     }
     try {
       const raw = localStorage.getItem(STORAGE_KEY);
       if (!raw) {
-        setError(invalidMsg);
+        queueMicrotask(() => setError(invalidMsg));
         return;
       }
       const parsed = JSON.parse(raw) as PortonePayParams;
       if (parsed.paymentId !== token) {
-        setError(invalidMsg);
+        queueMicrotask(() => setError(invalidMsg));
         return;
       }
-      setParams(parsed);
+      queueMicrotask(() => setParams(parsed));
     } catch {
-      setError(invalidMsg);
+      queueMicrotask(() => setError(invalidMsg));
     }
-  }, [searchParams, lang]);
+  }, [searchParams, lang, c.invalidSession]);
 
   const onPayNow = useCallback(async () => {
     if (!params || paying) return;
@@ -102,12 +103,12 @@ export default function CheckoutPayPage() {
       <Container className="py-12">
         <h1 className="text-2xl font-semibold tracking-tight">{c.title}</h1>
         <p className="mt-4 text-sm text-amber-600">{error}</p>
-        <a
+        <Link
           href="/"
           className="mt-6 inline-flex rounded-xl bg-neutral-900 px-5 py-3 text-sm font-semibold text-white hover:opacity-90"
         >
           {c.backToCheckout}
-        </a>
+        </Link>
       </Container>
     );
   }
@@ -139,12 +140,12 @@ export default function CheckoutPayPage() {
         {paying ? c.processing : c.payNow}
       </button>
 
-      <a
+      <Link
         href="/"
         className="mt-4 inline-block text-sm text-neutral-600 underline hover:text-neutral-900"
       >
         {c.backToCheckout}
-      </a>
+      </Link>
     </Container>
   );
 }

@@ -41,7 +41,7 @@ export async function POST(
   try {
     await blockDate(listingId, user.id, date);
     return apiOk({ ok: true });
-  } catch (e) {
+  } catch {
     return apiError(403, "FORBIDDEN", "Not your listing");
   }
 }
@@ -64,7 +64,7 @@ export async function DELETE(
   try {
     await unblockDate(listingId, user.id, date);
     return apiOk({ ok: true });
-  } catch (e) {
+  } catch {
     return apiError(403, "FORBIDDEN", "Not your listing");
   }
 }

@@ -10,7 +10,8 @@ function isHostEntryPath(pathname: string): boolean {
   return false;
 }
 
-export default async function proxy(req: NextRequest, _ev: NextFetchEvent) {
+export default async function proxy(req: NextRequest, _ev: NextFetchEvent): Promise<NextResponse> {
+  void _ev;
   const pathname = req.nextUrl.pathname;
   const secret = process.env.AUTH_SECRET || process.env.NEXTAUTH_SECRET;
   const token = secret ? await getToken({ req, secret }) : null;

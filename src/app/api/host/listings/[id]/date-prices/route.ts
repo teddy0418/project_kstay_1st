@@ -42,7 +42,7 @@ export async function PUT(
   try {
     await setDatePrice(listingId, user.id, date, priceKrw);
     return apiOk({ ok: true });
-  } catch (e) {
+  } catch {
     return apiError(403, "FORBIDDEN", "Not your listing");
   }
 }

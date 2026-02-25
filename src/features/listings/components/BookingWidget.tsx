@@ -25,7 +25,7 @@ function toISO(d: Date) {
   return `${y}-${m}-${day}`;
 }
 function freeCancelUntilKST(checkInDate: Date) {
-  const deadline = addDays(checkInDate, -7);
+  const deadline = addDays(checkInDate, -5);
   return `${formatDateEn(deadline)} 23:59 (KST)`;
 }
 
@@ -89,7 +89,7 @@ export default function BookingWidget({
       return { from: range.from, to };
     }
     return { from: today, to: addDays(today, 1) };
-  }, [range?.from, range?.to, today]);
+  }, [range, today]);
   const nights = useMemo(
     () => nightsBetween(effectiveRange.from, effectiveRange.to),
     [effectiveRange.from, effectiveRange.to]

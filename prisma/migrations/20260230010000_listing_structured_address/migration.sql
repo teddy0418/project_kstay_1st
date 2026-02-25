@@ -1,0 +1,7 @@
+-- AlterTable: Listing 구조화 주소 필드
+ALTER TABLE "Listing" ADD COLUMN IF NOT EXISTS "country" TEXT DEFAULT 'KR';
+ALTER TABLE "Listing" ADD COLUMN IF NOT EXISTS "stateProvince" TEXT;
+ALTER TABLE "Listing" ADD COLUMN IF NOT EXISTS "cityDistrict" TEXT;
+ALTER TABLE "Listing" ADD COLUMN IF NOT EXISTS "roadAddress" TEXT;
+ALTER TABLE "Listing" ADD COLUMN IF NOT EXISTS "detailedAddress" TEXT;
+ALTER TABLE "Listing" ADD COLUMN IF NOT EXISTS "zipCode" TEXT;

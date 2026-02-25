@@ -248,6 +248,7 @@ export default function HostListingNewEditor() {
         setError(msg ?? "불러오기 실패");
         notify(msg ?? "불러오기 실패");
       });
+    // eslint-disable-next-line react-hooks/exhaustive-deps -- notify is stable in practice (toast)
   }, [searchParams]);
 
   // 신규 모드만: URL에 id 없을 때만 localStorage 복구
@@ -453,6 +454,12 @@ export default function HostListingNewEditor() {
   }
 
   const isLocked = status !== "DRAFT";
+  const canRequestReview = useMemo(() => {
+    const price = parsePriceInt(form.basePriceKrw) ?? 0;
+    const hasAnyTitle = !!pickBestTitle(form).trim();
+    const hasLocation = !!form.city.trim() && !!form.area.trim() && !!form.address.trim();
+    return hasAnyTitle && hasLocation && price > 0;
+  }, [form]);
 
   if (loadState === "loading") {
     return (
@@ -463,13 +470,6 @@ export default function HostListingNewEditor() {
       </div>
     );
   }
-
-  const canRequestReview = useMemo(() => {
-    const price = parsePriceInt(form.basePriceKrw) ?? 0;
-    const hasAnyTitle = !!pickBestTitle(form).trim();
-    const hasLocation = !!form.city.trim() && !!form.area.trim() && !!form.address.trim();
-    return hasAnyTitle && hasLocation && price > 0;
-  }, [form]);
 
   return (
     <div className="mx-auto max-w-4xl p-6">

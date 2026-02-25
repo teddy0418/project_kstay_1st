@@ -2,7 +2,12 @@ import { getOrCreateServerUser } from "@/lib/auth/server";
 import { apiError, apiOk } from "@/lib/api/response";
 import { parseJsonBody } from "@/lib/api/validation";
 import { updateHostListingSchema } from "@/lib/validation/schemas";
-import { deleteHostListing, findHostListingForEdit, findHostListingOwnership, updateHostListing } from "@/lib/repositories/host-listings";
+import {
+  deleteHostListing,
+  findHostListingForEdit,
+  findHostListingOwnership,
+  updateHostListing,
+} from "@/lib/repositories/host-listings";
 
 export async function GET(_req: Request, ctx: { params: Promise<{ id: string }> }) {
   try {
@@ -67,34 +72,58 @@ export async function PATCH(req: Request, ctx: { params: Promise<{ id: string }>
       if (typeof effectiveBasePriceKrw !== "number" || effectiveBasePriceKrw <= 0) {
         return apiError(400, "VALIDATION_ERROR", "1박 기준가(basePriceKrw)를 0보다 큰 값으로 입력해 주세요.");
       }
-      if (imageCount < 1) {
-        return apiError(400, "VALIDATION_ERROR", "사진을 1장 이상 등록해 주세요.");
+      if (imageCount < 5) {
+        return apiError(400, "VALIDATION_ERROR", "사진을 5장 이상 등록해 주세요.");
       }
     }
 
-    const updated = await updateHostListing({
-      id,
-      title: body.title,
-      titleKo: body.titleKo,
-      titleJa: body.titleJa,
-      titleZh: body.titleZh,
-      city: body.city,
-      area: body.area,
-      address: body.address,
-      basePriceKrw: body.basePriceKrw,
-      status: body.status,
-      checkInTime: body.checkInTime,
-      checkOutTime: body.checkOutTime,
-      checkInGuideMessage: body.checkInGuideMessage,
-      houseRulesMessage: body.houseRulesMessage,
-      hostBio: body.hostBio,
-      hostBioKo: body.hostBioKo,
-      hostBioJa: body.hostBioJa,
-      hostBioZh: body.hostBioZh,
-      lat: body.lat,
-      lng: body.lng,
-      amenities: body.amenities,
-    });
+    const isApproved = current.status === "APPROVED";
+    const payload: Parameters<typeof updateHostListing>[0] = { id };
+    if (isApproved) {
+      payload.checkInGuideMessage = body.checkInGuideMessage;
+      payload.houseRulesMessage = body.houseRulesMessage;
+      payload.detailedAddress = body.detailedAddress;
+    } else {
+      Object.assign(payload, {
+        title: body.title,
+        titleKo: body.titleKo,
+        titleJa: body.titleJa,
+        titleZh: body.titleZh,
+        city: body.city,
+        area: body.area,
+        address: body.address,
+        basePriceKrw: body.basePriceKrw,
+        status: body.status,
+        checkInTime: body.checkInTime,
+        checkOutTime: body.checkOutTime,
+        checkInGuideMessage: body.checkInGuideMessage,
+        houseRulesMessage: body.houseRulesMessage,
+        hostBio: body.hostBio,
+        hostBioKo: body.hostBioKo,
+        hostBioJa: body.hostBioJa,
+        hostBioZh: body.hostBioZh,
+        lat: body.lat,
+        lng: body.lng,
+        amenities: body.amenities,
+        propertyType: body.propertyType,
+        maxGuests: body.maxGuests,
+        country: body.country,
+        stateProvince: body.stateProvince,
+        cityDistrict: body.cityDistrict,
+        roadAddress: body.roadAddress,
+        detailedAddress: body.detailedAddress,
+        zipCode: body.zipCode,
+        weekendSurchargePct: body.weekendSurchargePct,
+        peakSurchargePct: body.peakSurchargePct,
+        nonRefundableSpecialEnabled: body.nonRefundableSpecialEnabled,
+        freeCancellationDays: body.freeCancellationDays,
+        extraGuestFeeKrw: body.extraGuestFeeKrw,
+        businessRegistrationDocUrl: (body.businessRegistrationDocUrl?.trim() || null) ?? null,
+        lodgingReportDocUrl: (body.lodgingReportDocUrl?.trim() || null) ?? null,
+      });
+    }
+
+    const updated = await updateHostListing(payload);
 
     return apiOk(updated);
   } catch (error) {

@@ -125,6 +125,13 @@ async function syncPaymentAndBookingFromPortOne(paymentId: string) {
     booking.payments[0];
 
   if (paymentStatus === "PAID") {
+    if (booking.status === "CANCELLED") {
+      console.warn("[portone-webhook] payment arrived for already expired/cancelled booking", {
+        paymentId,
+        bookingId: booking.id,
+      });
+      return;
+    }
     if (!verifyAmountMatches(booking, targetPayment, portoneAmount, portoneCurrency)) {
       console.warn("[portone-webhook] amount mismatch, skipping confirmation", {
         paymentId,
@@ -145,7 +152,7 @@ async function syncPaymentAndBookingFromPortOne(paymentId: string) {
       paymentRawJson,
     });
 
-    await sendBookingConfirmedEmailIfNeeded(confirmed.id);
+    if (confirmed) await sendBookingConfirmedEmailIfNeeded(confirmed.id);
     return;
   }
 

@@ -12,7 +12,18 @@ const DEFAULT_LAT = 37.5665;
 const DEFAULT_LNG = 126.978;
 const ADDRESS_SEARCH_DEBOUNCE_MS = 300;
 
-type GeoResult = { label: string; address: string; lat: number; lng: number; city?: string; area?: string };
+type GeoResult = {
+  label: string;
+  address: string;
+  lat: number;
+  lng: number;
+  city?: string;
+  area?: string;
+  stateProvince?: string;
+  cityDistrict?: string;
+  roadAddress?: string;
+  zipCode?: string;
+};
 
 const LocationMap = dynamic(
   () => import("@/features/host/listings/LocationMap"),
@@ -20,16 +31,22 @@ const LocationMap = dynamic(
 );
 
 export default function WizardLocationPage() {
-  const { listing, patch, isLocked, dirty, setDirty, performSaveRef, setSaving } = useListingWizard();
+  const { listing, patch, isLocked, dirty, setDirty, performSaveRef, setSaving, saving, performSave } = useListingWizard();
   const { toast } = useToast();
   const router = useRouter();
+  const [country, setCountry] = useState("South Korea");
+  const [stateProvince, setStateProvince] = useState("");
+  const [cityDistrict, setCityDistrict] = useState("");
+  const [roadAddress, setRoadAddress] = useState("");
+  const [detailedAddress, setDetailedAddress] = useState("");
+  const [zipCode, setZipCode] = useState("");
+  const [lat, setLat] = useState<number | null>(null);
+  const [lng, setLng] = useState<number | null>(null);
+  // 하위 호환: city, area, address (공개용 표시 주소)
   const [city, setCity] = useState("");
   const [area, setArea] = useState("");
   const [address, setAddress] = useState("");
-  const [lat, setLat] = useState<number | null>(null);
-  const [lng, setLng] = useState<number | null>(null);
 
-  const [searchQuery, setSearchQuery] = useState("");
   const [suggestions, setSuggestions] = useState<GeoResult[]>([]);
   const [suggestLoading, setSuggestLoading] = useState(false);
   const [suggestOpen, setSuggestOpen] = useState(false);
@@ -37,6 +54,20 @@ export default function WizardLocationPage() {
 
   useEffect(() => {
     if (!listing) return;
+    const L = listing as typeof listing & {
+      country?: string | null;
+      stateProvince?: string | null;
+      cityDistrict?: string | null;
+      roadAddress?: string | null;
+      detailedAddress?: string | null;
+      zipCode?: string | null;
+    };
+    setCountry(L.country ?? "South Korea");
+    setStateProvince(L.stateProvince ?? "");
+    setCityDistrict(L.cityDistrict ?? "");
+    setRoadAddress(L.roadAddress ?? "");
+    setDetailedAddress(L.detailedAddress ?? "");
+    setZipCode(L.zipCode ?? "");
     setCity(listing.city ?? "");
     setArea(listing.area ?? "");
     setAddress(listing.address ?? "");
@@ -45,7 +76,7 @@ export default function WizardLocationPage() {
   }, [listing]);
 
   useEffect(() => {
-    const q = searchQuery.trim();
+    const q = roadAddress.trim();
     if (q.length < 2) {
       setSuggestions([]);
       setSuggestOpen(false);
@@ -77,7 +108,7 @@ export default function WizardLocationPage() {
       clearTimeout(t);
       ac.abort();
     };
-  }, [searchQuery]);
+  }, [roadAddress, toast]);
 
   useEffect(() => {
     function handleClickOutside(e: MouseEvent) {
@@ -90,12 +121,15 @@ export default function WizardLocationPage() {
   }, []);
 
   const onSelectSuggestion = useCallback((r: GeoResult) => {
-    setAddress(typeof r.address === "string" ? r.address : "");
-    setCity(typeof r.city === "string" ? r.city : "");
-    setArea(typeof r.area === "string" ? r.area : "");
+    setStateProvince(r.stateProvince ?? r.city ?? "");
+    setCityDistrict(r.cityDistrict ?? r.area ?? "");
+    setRoadAddress(r.roadAddress ?? r.address ?? "");
+    setZipCode(r.zipCode ?? "");
+    setCity(r.city ?? r.stateProvince ?? "");
+    setArea(r.area ?? r.cityDistrict ?? "");
+    setAddress(r.address ?? "");
     setLat(Number.isFinite(r.lat) ? r.lat : null);
     setLng(Number.isFinite(r.lng) ? r.lng : null);
-    setSearchQuery("");
     setSuggestions([]);
     setSuggestOpen(false);
     setDirty(true);
@@ -106,9 +140,15 @@ export default function WizardLocationPage() {
     setSaving(true);
     try {
       await patch({
-        city: city.trim() || undefined,
-        area: area.trim() || undefined,
-        address: address.trim() || undefined,
+        country: country.trim() || "KR",
+        stateProvince: stateProvince.trim() || undefined,
+        cityDistrict: cityDistrict.trim() || undefined,
+        roadAddress: roadAddress.trim() || undefined,
+        detailedAddress: detailedAddress.trim() || undefined,
+        zipCode: zipCode.trim() || undefined,
+        city: city.trim() || stateProvince.trim() || undefined,
+        area: area.trim() || cityDistrict.trim() || undefined,
+        address: address.trim() || roadAddress.trim() || undefined,
         lat: lat ?? undefined,
         lng: lng ?? undefined,
       });
@@ -117,7 +157,7 @@ export default function WizardLocationPage() {
     } finally {
       setSaving(false);
     }
-  }, [listing, isLocked, patch, city, area, address, lat, lng, setDirty, setSaving, toast]);
+  }, [listing, isLocked, patch, country, stateProvince, cityDistrict, roadAddress, detailedAddress, zipCode, city, area, address, lat, lng, setDirty, setSaving, toast]);
 
   useEffect(() => {
     performSaveRef.current = save;
@@ -132,9 +172,15 @@ export default function WizardLocationPage() {
       setSaving(true);
       try {
         await patch({
-          city: city.trim() || undefined,
-          area: area.trim() || undefined,
-          address: address.trim() || undefined,
+          country: country.trim() || "KR",
+          stateProvince: stateProvince.trim() || undefined,
+          cityDistrict: cityDistrict.trim() || undefined,
+          roadAddress: roadAddress.trim() || undefined,
+          detailedAddress: detailedAddress.trim() || undefined,
+          zipCode: zipCode.trim() || undefined,
+          city: city.trim() || stateProvince.trim() || undefined,
+          area: area.trim() || cityDistrict.trim() || undefined,
+          address: address.trim() || roadAddress.trim() || undefined,
           lat: lat ?? undefined,
           lng: lng ?? undefined,
         });
@@ -148,7 +194,21 @@ export default function WizardLocationPage() {
     } else {
       router.push(`/host/listings/new/${listing.id}/pricing`);
     }
-  }, [listing, dirty, city, area, address, lat, lng, patch, setDirty, setSaving, router, toast]);
+  }, [listing, dirty, country, stateProvince, cityDistrict, roadAddress, detailedAddress, zipCode, city, area, address, lat, lng, patch, setDirty, setSaving, router, toast]);
+
+  const isPlaceholderAddress =
+    address.trim() === "주소를 입력해 주세요" || !address.trim();
+  const hasRealAddress =
+    (address.trim().length > 0 && !isPlaceholderAddress) || roadAddress.trim().length > 0;
+  const canGoNext = hasRealAddress && lat != null && lng != null;
+
+  const onNextClick = useCallback(() => {
+    if (!canGoNext) {
+      toast("주소를 검색해 선택하고, 지도에서 위치를 확인해 주세요.");
+      return;
+    }
+    void goNext();
+  }, [canGoNext, goNext, toast]);
 
   if (!listing) return null;
 
@@ -158,15 +218,19 @@ export default function WizardLocationPage() {
   return (
     <div className="rounded-3xl border border-neutral-200 bg-white p-8 shadow-sm">
       <h2 className="text-xl font-semibold">위치</h2>
-      <p className="mt-1 text-sm text-neutral-600">주소 검색 후 선택하거나, 직접 입력·지도에서 설정하세요.</p>
+      <p className="mt-1 text-sm text-neutral-600">도로명 주소를 검색해 선택하면 해당 주소가 채워지고, 시/도·시/군/구·우편번호는 자동 입력됩니다.</p>
 
       <div className="mt-6 relative" ref={suggestRef}>
-        <label className="text-sm font-medium text-neutral-700">주소 검색</label>
+        <label className="text-sm font-medium text-neutral-700">도로명 주소 (주소 검색)</label>
+        <p className="mt-1 text-xs text-neutral-500">검색 후 선택하면 시/도·시/군/구·우편번호가 자동으로 채워집니다.</p>
         <input
-          value={searchQuery}
-          onChange={(e) => setSearchQuery(e.target.value)}
+          value={roadAddress}
+          onChange={(e) => {
+            setDirty(true);
+            setRoadAddress(e.target.value);
+          }}
           disabled={isLocked}
-          placeholder="주소 또는 건물명을 입력하세요"
+          placeholder="도로명, 지번 또는 건물명 입력"
           className="mt-2 w-full rounded-2xl border border-neutral-200 px-4 py-3 text-sm disabled:bg-neutral-50"
           autoComplete="off"
         />
@@ -193,40 +257,50 @@ export default function WizardLocationPage() {
         )}
       </div>
 
-      <p className="mt-6 text-xs text-neutral-500">
-        도시·지역은 검색 결과에서 자동으로 채워집니다. 비어 있으면 직접 입력해 주세요.
-      </p>
-      <div className="mt-4 grid gap-4 sm:grid-cols-2">
+      <div className="mt-6 space-y-4">
+        <div className="grid gap-4 sm:grid-cols-2">
+          <div>
+            <label className="text-sm font-medium text-neutral-700">시/도 (State/Province)</label>
+            <input
+              value={stateProvince}
+              onChange={(e) => { setDirty(true); setStateProvince(e.target.value); }}
+              disabled={isLocked}
+              placeholder="Seoul, Busan, Gyeonggi-do 등"
+              className="mt-2 w-full rounded-2xl border border-neutral-200 px-4 py-3 text-sm disabled:bg-neutral-50"
+            />
+          </div>
+          <div>
+            <label className="text-sm font-medium text-neutral-700">시/군/구 (City/District)</label>
+            <input
+              value={cityDistrict}
+              onChange={(e) => { setDirty(true); setCityDistrict(e.target.value); }}
+              disabled={isLocked}
+              placeholder="Mapo-gu, Jongno-gu 등"
+              className="mt-2 w-full rounded-2xl border border-neutral-200 px-4 py-3 text-sm disabled:bg-neutral-50"
+            />
+          </div>
+        </div>
         <div>
-          <label className="text-sm font-medium text-neutral-700">도시 (city)</label>
+          <label className="text-sm font-medium text-neutral-700">상세 주소 (Detailed Address)</label>
+          <p className="mt-1 text-xs text-neutral-500">예: 3층 301호. 게스트에게는 예약 확정 전까지 비공개됩니다.</p>
           <input
-            value={city}
-            onChange={(e) => { setDirty(true); setCity(e.target.value); }}
+            value={detailedAddress}
+            onChange={(e) => { setDirty(true); setDetailedAddress(e.target.value); }}
             disabled={isLocked}
-            placeholder="Seoul"
+            placeholder="예: 3층 301호"
             className="mt-2 w-full rounded-2xl border border-neutral-200 px-4 py-3 text-sm disabled:bg-neutral-50"
           />
         </div>
         <div>
-          <label className="text-sm font-medium text-neutral-700">지역/구 (area)</label>
+          <label className="text-sm font-medium text-neutral-700">우편번호 (Zip Code)</label>
           <input
-            value={area}
-            onChange={(e) => { setDirty(true); setArea(e.target.value); }}
+            value={zipCode}
+            onChange={(e) => { setDirty(true); setZipCode(e.target.value); }}
             disabled={isLocked}
-            placeholder="Jongno"
-            className="mt-2 w-full rounded-2xl border border-neutral-200 px-4 py-3 text-sm disabled:bg-neutral-50"
+            placeholder="예: 04050"
+            className="mt-2 w-full max-w-[200px] rounded-2xl border border-neutral-200 px-4 py-3 text-sm disabled:bg-neutral-50"
           />
         </div>
-      </div>
-      <div className="mt-4">
-        <label className="text-sm font-medium text-neutral-700">주소 (address)</label>
-        <input
-          value={address}
-          onChange={(e) => { setDirty(true); setAddress(e.target.value); }}
-          disabled={isLocked}
-          placeholder="종로구 북촌로 123"
-          className="mt-2 w-full rounded-2xl border border-neutral-200 px-4 py-3 text-sm disabled:bg-neutral-50"
-        />
       </div>
 
       <div className="mt-6">
@@ -248,10 +322,18 @@ export default function WizardLocationPage() {
         </p>
       </div>
 
-      <div className="mt-8 flex justify-end">
+      <div className="mt-8 flex justify-end gap-3">
         <button
           type="button"
-          onClick={() => void goNext()}
+          onClick={() => void performSave()}
+          disabled={isLocked || !dirty || saving}
+          className="rounded-2xl border border-neutral-200 bg-white px-6 py-3 text-sm font-medium text-neutral-900 hover:bg-neutral-50 disabled:opacity-50"
+        >
+          {saving ? "저장 중…" : "저장"}
+        </button>
+        <button
+          type="button"
+          onClick={onNextClick}
           disabled={isLocked}
           className="rounded-2xl bg-neutral-900 px-6 py-3 text-sm font-medium text-white hover:bg-neutral-800 disabled:opacity-50"
         >

@@ -1,0 +1,2 @@
+-- AlterTable
+ALTER TABLE "Listing" ADD COLUMN IF NOT EXISTS "extraGuestFeeKrw" INTEGER DEFAULT 0;

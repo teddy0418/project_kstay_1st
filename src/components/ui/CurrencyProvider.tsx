@@ -24,9 +24,9 @@ export function CurrencyProvider({
   useEffect(() => {
     const saved = window.localStorage.getItem("kst_currency") as Currency | null;
     if (saved && SUPPORTED_CURRENCIES.includes(saved)) {
-      setCurrencyState(saved);
+      queueMicrotask(() => setCurrencyState(saved));
     } else if (initialCurrency && SUPPORTED_CURRENCIES.includes(initialCurrency)) {
-      setCurrencyState(initialCurrency);
+      queueMicrotask(() => setCurrencyState(initialCurrency));
     }
   }, [initialCurrency]);
 

@@ -51,7 +51,8 @@ export async function POST(req: NextRequest) {
 }
 
 /** GET: 내가 쓴 리뷰 목록 (프로필 Your reviews용). */
-export async function GET(req: NextRequest) {
+// eslint-disable-next-line @typescript-eslint/no-unused-vars -- Route handler signature
+export async function GET(_req: NextRequest) {
   try {
     const user = await getServerSessionUser();
     if (!user) return apiError(401, "UNAUTHORIZED", "Login required");
