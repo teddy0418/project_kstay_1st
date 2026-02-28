@@ -68,17 +68,24 @@ export default function BookingWidget({
   const [childCount, setChildCount] = useState(0);
   const [openPanel, setOpenPanel] = useState<"date" | "guests" | null>(null);
   const [disabledRanges, setDisabledRanges] = useState<Array<{ from: string; to: string }>>([]);
+  const [bookedRanges, setBookedRanges] = useState<Array<{ from: string; to: string }>>([]);
+  const [blockedRanges, setBlockedRanges] = useState<Array<{ from: string; to: string }>>([]);
 
   useEffect(() => {
     if (!listingId) return;
-    fetch(`/api/listings/${encodeURIComponent(listingId)}/unavailable-dates`)
+    fetch(`/api/listings/${encodeURIComponent(listingId)}/unavailable-dates`, { cache: "no-store" })
       .then((r) => r.json())
       .then((res) => {
-        if (res?.data?.ranges) setDisabledRanges(res.data.ranges);
+        const data = res?.data;
+        if (data?.ranges) setDisabledRanges(data.ranges);
+        if (data?.bookedRanges) setBookedRanges(data.bookedRanges);
+        if (data?.blockedRanges) setBlockedRanges(data.blockedRanges ?? []);
       })
       .catch(() => {});
   }, [listingId]);
 
+  const cardRef = useRef<HTMLDivElement>(null);
+  const priceRef = useRef<HTMLDivElement>(null);
   const dateRef = useRef<HTMLButtonElement>(null);
   const guestsRef = useRef<HTMLButtonElement>(null);
 
@@ -122,11 +129,7 @@ export default function BookingWidget({
 
   const reserve = () => {
     if (overlapsDisabled) {
-      alert(
-        lang === "ko"
-          ? "선택한 날짜는 이미 예약되어 있습니다. 다른 날짜를 선택해 주세요."
-          : "Selected dates are not available. Please choose different dates."
-      );
+      alert(t("dates_unavailable"));
       return;
     }
     const params = new URLSearchParams();
@@ -181,8 +184,8 @@ export default function BookingWidget({
             };
 
   return (
-    <div className="relative rounded-2xl border border-neutral-200 bg-white p-5 shadow-md">
-      <div className="flex items-end justify-between">
+    <div ref={cardRef} className="relative rounded-2xl border border-neutral-200 bg-white p-5 shadow-md">
+      <div ref={priceRef} className="flex items-end justify-between">
         <div>
           <div className="text-xs text-neutral-500">{c.total}</div>
           <div className="mt-1 text-2xl font-semibold text-neutral-900">{totalDual.main}</div>
@@ -215,15 +218,19 @@ export default function BookingWidget({
             {guestsLabel}
           </button>
           {openPanel === "date" && (
-            <div className="border-t border-neutral-200 p-3">
-              <DateDropdown
-                range={range}
-                onChange={setRange}
-                onClose={() => setOpenPanel(null)}
-                numberOfMonths={1}
-                disabledRanges={disabledRanges}
-              />
-            </div>
+            <DateDropdown
+              range={range}
+              onChange={setRange}
+              onClose={() => setOpenPanel(null)}
+              overlay
+              anchorRef={priceRef}
+              bookingCardRef={cardRef}
+              disabledRanges={disabledRanges}
+              bookedRanges={bookedRanges}
+              blockedRanges={blockedRanges}
+              listingId={listingId}
+              basePricePerNightKRW={basePricePerNightKRW}
+            />
           )}
           {openPanel === "guests" && (
             <div className="border-t border-neutral-200 p-3">
@@ -247,6 +254,7 @@ export default function BookingWidget({
         type="button"
         onClick={reserve}
         disabled={overlapsDisabled}
+        title={overlapsDisabled ? t("dates_unavailable") : undefined}
         className="mt-4 w-full rounded-full bg-neutral-900 py-3 text-sm font-semibold text-white hover:opacity-95 transition disabled:opacity-50 disabled:cursor-not-allowed"
       >
         {c.reserve}

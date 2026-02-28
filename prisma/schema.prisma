@@ -120,6 +120,11 @@ model Listing {
   peakSurchargePct       Int?     @default(0)  // 성수기 할증 % (KSTAY 표준 달력 추후 적용)
   nonRefundableSpecialEnabled Boolean @default(false)  // 환불 불가 특가 옵션 (10% 할인)
   freeCancellationDays   Int?     @default(5)  // 표준: 체크인 N일 전 23:59 KST까지 무료 취소
+  refundPolicyAgreedAt   DateTime?  // 호스트가 표준 환불 정책에 동의한 시각 (가격 단계 완료용)
+
+  // 외부 캘린더(iCal) 연동
+  icalUrl         String?   @db.Text
+  icalLastSyncedAt DateTime?
 
   // 검토 시 제출 서류 (URL: 업로드 후 저장된 이미지 URL)
   businessRegistrationDocUrl String?  @db.Text // 사업자등록증
@@ -135,6 +140,8 @@ model Listing {
   reviews Review[]
   blockedDates   ListingBlockedDate[]
   datePrices     ListingDatePrice[]
+  icalFeeds      ListingIcalFeed[]
+  icalBlockedDates ListingIcalBlockedDate[]
 
   @@index([status, createdAt])
   @@index([hostId, createdAt])
@@ -159,6 +166,38 @@ model ListingDatePrice {
   listingId String
   date      DateTime @db.Date
   priceKrw  Int
+
+  listing Listing @relation(fields: [listingId], references: [id], onDelete: Cascade)
+
+  @@unique([listingId, date])
+  @@index([listingId])
+}
+
+/// 외부 iCal 캘린더 설정 (Airbnb, Booking.com 등)
+model ListingIcalFeed {
+  id        String   @id @default(cuid())
+  listingId String
+  name      String
+  url       String   @db.Text
+  color     String?
+
+  lastSyncedAt   DateTime?
+  lastSyncStatus String?  @db.Text
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  listing Listing @relation(fields: [listingId], references: [id], onDelete: Cascade)
+
+  @@index([listingId])
+  @@unique([listingId, url])
+}
+
+/// 외부 iCal에서 동기화된 차단일(막힘 날짜)
+model ListingIcalBlockedDate {
+  id        String   @id @default(cuid())
+  listingId String
+  date      DateTime @db.Date
 
   listing Listing @relation(fields: [listingId], references: [id], onDelete: Cascade)
 

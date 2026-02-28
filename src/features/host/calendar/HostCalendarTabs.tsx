@@ -1,11 +1,11 @@
 "use client";
 
-import { useEffect, useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useState } from "react";
+import { useRouter, useSearchParams } from "next/navigation";
 import {
   ChevronLeft,
   ChevronRight,
   User,
-  Ban,
   Calendar as CalendarIcon,
   List,
   DollarSign,
@@ -21,6 +21,8 @@ type TabId = "calendar" | "bookings" | "pricing";
 type Props = {
   listings: HostCalendarListing[];
   initialListingId: string | null;
+  /** 서버에서 getBlockedDates로 채운 이번 달 차단일 (대시보드와 동일 소스) */
+  initialBlockedDates?: string[];
   year: number;
   month: number;
 };
@@ -53,37 +55,80 @@ function buildMonthGrid(year: number, month: number): (number | null)[][] {
 export default function HostCalendarTabs({
   listings,
   initialListingId,
+  initialBlockedDates = [],
   year: initialYear,
   month: initialMonth,
 }: Props) {
+  const router = useRouter();
+  const searchParams = useSearchParams();
   const [tab, setTab] = useState<TabId>("calendar");
-  const [listingId, setListingId] = useState<string | null>(initialListingId);
+  const [listingId, setListingIdState] = useState<string | null>(initialListingId);
+  useEffect(() => {
+    setListingIdState(initialListingId);
+  }, [initialListingId]);
+  const setListingId = (id: string | null) => {
+    setListingIdState(id);
+    const params = new URLSearchParams(searchParams.toString());
+    if (id) params.set("listingId", id);
+    else params.delete("listingId");
+    router.replace(`/host/calendar?${params.toString()}`, { scroll: false });
+  };
   const [year, setYear] = useState(initialYear);
   const [month, setMonth] = useState(initialMonth);
   const [bookings, setBookings] = useState<HostCalendarBooking[]>([]);
-  const [blockedDates, setBlockedDates] = useState<string[]>([]);
+  const [blockedDates, setBlockedDates] = useState<string[]>(initialBlockedDates);
   const [datePrices, setDatePrices] = useState<Record<string, number>>({});
   const [modal, setModal] = useState<{ bookingId: string | null; date: string } | null>(null);
   const [bookingFilter, setBookingFilter] = useState<string>("");
   const [allBookings, setAllBookings] = useState<HostCalendarBooking[]>([]);
+  const [syncVersion, setSyncVersion] = useState(0);
+
+  useEffect(() => {
+    if (listingId === initialListingId && year === initialYear && month === initialMonth) {
+      setBlockedDates(initialBlockedDates);
+    }
+  }, [initialListingId, initialYear, initialMonth, initialBlockedDates, listingId, year, month]);
 
   const selectedListing = listings.find((l) => l.id === listingId) ?? null;
   const basePriceKrw = selectedListing?.basePriceKrw ?? 0;
+  const [icalUrlInput, setIcalUrlInput] = useState<string>(selectedListing?.icalUrl ?? "");
 
   const monthStart = useMemo(() => new Date(year, month - 1, 1), [year, month]);
   const monthEnd = useMemo(() => new Date(year, month, 0), [year, month]);
-  const fromStr = monthStart.toISOString().slice(0, 10);
-  const toStr = monthEnd.toISOString().slice(0, 10);
+  const fromStr = useMemo(
+    () => `${year}-${String(month).padStart(2, "0")}-01`,
+    [year, month]
+  );
+  const toStr = useMemo(
+    () =>
+      `${year}-${String(month).padStart(2, "0")}-${String(monthEnd.getDate()).padStart(2, "0")}`,
+    [year, month, monthEnd]
+  );
+
+  // 대시보드에서 판매 닫기 후 캘린더 탭으로 돌아오면 차단일 다시 불러오기
+  useEffect(() => {
+    const onVisible = () => setSyncVersion((v) => v + 1);
+    document.addEventListener("visibilitychange", onVisible);
+    return () => document.removeEventListener("visibilitychange", onVisible);
+  }, []);
 
   // Fetch blocked dates & date prices for calendar month
   useEffect(() => {
+    setIcalUrlInput(selectedListing?.icalUrl ?? "");
+  }, [selectedListing?.id, selectedListing?.icalUrl]);
+
+  const refetchBlockedAndPrices = useCallback(() => {
     if (!listingId) return;
+    const t = Date.now();
     Promise.all([
       fetch(
-        `/api/host/listings/${listingId}/blocked-dates?from=${fromStr}&to=${toStr}`
-      ).then((r) => r.json().then((d) => setBlockedDates(d.data?.dates ?? []))),
+        `/api/host/listings/${listingId}/blocked-dates?from=${fromStr}&to=${toStr}&_=${t}`,
+        { cache: "no-store" }
+      )
+        .then((r) => r.json())
+        .then((d) => setBlockedDates(Array.isArray(d?.data?.dates) ? d.data.dates : [])),
       fetch(
-        `/api/host/listings/${listingId}/date-prices?from=${fromStr}&to=${toStr}`
+        `/api/host/listings/${listingId}/date-prices?from=${fromStr}&to=${toStr}&_=${t}`
       ).then((r) =>
         r.json().then((d) => {
           const map: Record<string, number> = {};
@@ -97,6 +142,10 @@ export default function HostCalendarTabs({
   }, [listingId, fromStr, toStr]);
 
   useEffect(() => {
+    refetchBlockedAndPrices();
+  }, [refetchBlockedAndPrices, syncVersion]);
+
+  useEffect(() => {
     if (!listingId) {
       queueMicrotask(() => setBookings([]));
       return;
@@ -106,7 +155,7 @@ export default function HostCalendarTabs({
     ).then((r) => r.json()).then((res) => {
       setBookings(res.data?.bookings ?? []);
     }).catch(() => setBookings([]));
-  }, [listingId, year, month]);
+  }, [listingId, year, month, syncVersion]);
 
   useEffect(() => {
     const params = new URLSearchParams();
@@ -116,7 +165,7 @@ export default function HostCalendarTabs({
       .then((r) => r.json())
       .then((res) => setAllBookings(res.data?.bookings ?? []))
       .catch(() => setAllBookings([]));
-  }, [listingId, bookingFilter, tab]);
+  }, [listingId, bookingFilter, tab, syncVersion]);
 
   const grid = useMemo(() => buildMonthGrid(year, month), [year, month]);
 
@@ -151,6 +200,25 @@ export default function HostCalendarTabs({
     { id: "pricing", label: "유동 가격 설정", icon: <DollarSign className="h-4 w-4" /> },
   ];
 
+  const handleSaveIcal = async () => {
+    if (!listingId) return;
+    const body: { icalUrl: string | null } = { icalUrl: icalUrlInput ? icalUrlInput : null };
+    await fetch(`/api/host/listings/${listingId}`, {
+      method: "PATCH",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify(body),
+    });
+  };
+
+  const handleSyncIcal = async () => {
+    if (!listingId) return;
+    await handleSaveIcal();
+    await fetch(`/api/host/listings/${listingId}/ical-sync`, {
+      method: "POST",
+    });
+    setSyncVersion((v) => v + 1);
+  };
+
   return (
     <div className="space-y-6">
       <div className="flex flex-wrap items-center justify-between gap-4">
@@ -183,9 +251,49 @@ export default function HostCalendarTabs({
         )}
       </div>
 
+      {selectedListing && (
+        <div className="flex flex-wrap items-center justify-between gap-3 rounded-2xl border border-neutral-200 bg-white p-4">
+          <div className="space-y-1">
+            <div className="text-sm font-semibold text-neutral-800">외부 캘린더(iCal) 연동</div>
+            <p className="text-xs text-neutral-500">
+              Airbnb, Booking.com 등에서 제공하는 iCal 주소를 입력하면 해당 일정이 이 캘린더에 막힘 날짜로 표시됩니다.
+            </p>
+            {selectedListing.icalLastSyncedAt && (
+              <p className="text-xs text-neutral-500">
+                마지막 동기화:{" "}
+                {new Date(selectedListing.icalLastSyncedAt).toLocaleString("ko-KR")}
+              </p>
+            )}
+          </div>
+          <div className="flex flex-1 flex-wrap items-center justify-end gap-2 min-w-[260px]">
+            <input
+              type="url"
+              value={icalUrlInput ?? ""}
+              onChange={(e) => setIcalUrlInput(e.target.value)}
+              placeholder="https://example.com/calendar.ics"
+              className="min-w-[220px] flex-1 rounded-xl border border-neutral-200 px-3 py-2 text-sm"
+            />
+            <button
+              type="button"
+              onClick={() => void handleSaveIcal()}
+              className="rounded-xl border border-neutral-200 bg-white px-3 py-2 text-xs font-semibold text-neutral-800 hover:bg-neutral-50"
+            >
+              URL 저장
+            </button>
+            <button
+              type="button"
+              onClick={() => void handleSyncIcal()}
+              className="rounded-xl bg-neutral-900 px-3 py-2 text-xs font-semibold text-white hover:bg-neutral-800"
+            >
+              지금 동기화
+            </button>
+          </div>
+        </div>
+      )}
+
       {tab === "calendar" && (
         <div className="rounded-2xl border border-neutral-200 bg-white overflow-hidden">
-          <div className="flex items-center justify-between border-b border-neutral-100 p-4">
+          <div className="flex items-center justify-between border-b border-neutral-100 p-4 flex-wrap gap-2">
             <div className="flex gap-2">
               <button
                 type="button"
@@ -215,6 +323,14 @@ export default function HostCalendarTabs({
                 <ChevronRight className="h-5 w-5" />
               </button>
             </div>
+            <button
+              type="button"
+              onClick={() => setSyncVersion((v) => v + 1)}
+              className="rounded-xl border border-neutral-200 bg-white px-3 py-2 text-xs font-semibold text-neutral-700 hover:bg-neutral-50"
+              title="대시보드에서 판매 중지한 날짜를 반영합니다"
+            >
+              차단일 새로고침
+            </button>
           </div>
           <div className="grid grid-cols-7 border-b border-neutral-100 bg-neutral-50">
             {WEEKDAYS.map((w) => (
@@ -225,36 +341,52 @@ export default function HostCalendarTabs({
             <div key={wi} className="grid grid-cols-7 border-b border-neutral-100 last:border-b-0">
               {week.map((day, di) => {
                 const isCurrentMonth = day !== null;
-                const dateStr = isCurrentMonth
-                  ? `${year}-${String(month).padStart(2, "0")}-${String(day).padStart(2, "0")}`
-                  : "";
+                const dateStr =
+                  isCurrentMonth && day !== null
+                    ? `${year}-${String(month).padStart(2, "0")}-${String(day).padStart(2, "0")}`
+                    : "";
+                const cellDate = isCurrentMonth && day !== null ? new Date(year, month - 1, day) : null;
+                const today = new Date();
+                const isPast =
+                  cellDate != null &&
+                  (cellDate.getFullYear() < today.getFullYear() ||
+                    (cellDate.getFullYear() === today.getFullYear() &&
+                      (cellDate.getMonth() < today.getMonth() ||
+                        (cellDate.getMonth() === today.getMonth() && cellDate.getDate() < today.getDate()))));
                 const booked = isCurrentMonth && day !== null && isDayBooked(year, month, day);
                 const blocked = dateStr && blockedDates.includes(dateStr);
                 const price = dateStr && (datePrices[dateStr] ?? basePriceKrw);
                 return (
                   <div
                     key={di}
-                    className={`min-h-[88px] border-r border-neutral-100 p-2 last:border-r-0 ${
-                      blocked ? "bg-red-50" : "bg-white"
-                    }`}
+                    className={`min-h-[72px] sm:min-h-[88px] border-r border-neutral-100 p-1.5 sm:p-2 last:border-r-0 ${
+                      isPast ? "bg-neutral-50" : blocked ? "bg-red-50 border-l-2 border-l-red-300" : "bg-white"
+                    } ${isPast ? "opacity-80" : ""}`}
                   >
                     {isCurrentMonth && (
                       <>
-                        <div className="flex items-center justify-between">
-                          <span className="text-sm font-semibold">{day}</span>
-                          {!booked && (
+                        <div className="flex items-center justify-between gap-0.5 min-h-[24px]">
+                          <span className={`text-xs sm:text-sm font-semibold truncate ${isPast ? "text-neutral-400" : blocked ? "text-red-800" : "text-neutral-900"}`}>
+                            {day}
+                            {isPast && <span className="ml-0.5 text-[10px] sm:text-xs text-neutral-400">(지남)</span>}
+                          </span>
+                          {!booked && !isPast && (
                             <button
                               type="button"
                               onClick={() => toggleBlock(dateStr)}
-                              className={`rounded p-1 ${blocked ? "text-red-600 hover:bg-red-100" : "text-neutral-400 hover:bg-neutral-100"}`}
+                              className={`rounded px-1 py-0.5 min-w-[28px] text-[10px] font-semibold shrink-0 ${
+                                blocked
+                                  ? "bg-emerald-100 text-emerald-700 hover:bg-emerald-200"
+                                  : "bg-white text-red-600 hover:bg-red-50 border border-red-200"
+                              }`}
                               title={blocked ? "판매 재개" : "판매 중지"}
                             >
-                              <Ban className="h-4 w-4" />
+                              {blocked ? "판매" : "중지"}
                             </button>
                           )}
                         </div>
                         {!booked && !blocked && Number(price) > 0 && (
-                          <div className="mt-1 text-xs text-neutral-600">{formatKrw(Number(price))}</div>
+                          <div className="mt-0.5 text-[10px] sm:text-xs text-neutral-600 truncate">{formatKrw(Number(price))}</div>
                         )}
                         {booked && (
                           <button

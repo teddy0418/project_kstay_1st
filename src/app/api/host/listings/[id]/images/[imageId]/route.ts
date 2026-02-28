@@ -24,6 +24,7 @@ export async function DELETE(
 
     const result = await deleteListingImage(imageId, listingId);
     if (result.count === 0) return apiError(404, "NOT_FOUND", "Image not found");
+    await setListingStatusToPendingIfApproved(listingId);
     return apiOk({ deleted: true });
   } catch (error) {
     console.error("[api/host/listings/:id/images/:imageId] DELETE failed", error);

@@ -1,9 +1,11 @@
 import { redirect } from "next/navigation";
 import { getCurrentHostFlow } from "@/lib/host/server";
-import { getHostListingsForCalendar } from "@/lib/repositories/host-calendar";
+import { getHostListingsForCalendar, getBlockedDates } from "@/lib/repositories/host-calendar";
 import HostCalendarTabs from "@/features/host/calendar/HostCalendarTabs";
 
-export default async function HostCalendarPage() {
+type PageProps = { searchParams?: Promise<{ listingId?: string | string[] }> | { listingId?: string | string[] } };
+
+export default async function HostCalendarPage(props: PageProps) {
   const current = await getCurrentHostFlow();
   if (!current) redirect("/login?next=/host/calendar");
   if (current.status === "NONE") redirect("/host/onboarding");
@@ -13,6 +15,26 @@ export default async function HostCalendarPage() {
   const listings = await getHostListingsForCalendar(current.user.id);
   const now = new Date();
   const firstId = listings[0]?.id ?? null;
+  const year = now.getFullYear();
+  const month = now.getMonth() + 1;
+
+  const raw = props.searchParams;
+  const params = raw != null && typeof (raw as Promise<unknown>).then === "function"
+    ? await (raw as Promise<{ listingId?: string | string[] }>)
+    : (raw as { listingId?: string | string[] }) ?? {};
+  const listingIdParam = typeof params.listingId === "string" ? params.listingId : params.listingId?.[0];
+  const initialListingId =
+    listingIdParam && listings.some((l) => l.id === listingIdParam)
+      ? listingIdParam
+      : firstId;
+
+  const monthEnd = new Date(year, month, 0);
+  const from = new Date(Date.UTC(year, month - 1, 1));
+  const to = new Date(Date.UTC(year, month - 1, monthEnd.getDate(), 23, 59, 59, 999));
+  const initialBlockedDates =
+    initialListingId != null
+      ? await getBlockedDates(initialListingId, from, to)
+      : [];
 
   return (
     <div className="space-y-6">
@@ -24,9 +46,10 @@ export default async function HostCalendarPage() {
       </div>
       <HostCalendarTabs
         listings={listings}
-        initialListingId={firstId}
-        year={now.getFullYear()}
-        month={now.getMonth() + 1}
+        initialListingId={initialListingId}
+        initialBlockedDates={initialBlockedDates}
+        year={year}
+        month={month}
       />
     </div>
   );

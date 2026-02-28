@@ -1,5 +1,4 @@
 import { prisma } from "@/lib/db";
-import { listings as mockListings } from "@/lib/mockData";
 import type { Listing } from "@/types";
 
 type DbListing = {
@@ -67,6 +66,31 @@ export type ListingsFilter = {
   end?: string;   // YYYY-MM-DD
 };
 
+/** 게스트 노출용으로 필요한 필드만 선택 (DB에 없는 컬럼 참조 방지) */
+const publicListingSelect = {
+  id: true,
+  title: true,
+  city: true,
+  area: true,
+  address: true,
+  location: true,
+  lat: true,
+  lng: true,
+  basePriceKrw: true,
+  rating: true,
+  reviewCount: true,
+  hostBio: true,
+  hostBioKo: true,
+  hostBioJa: true,
+  hostBioZh: true,
+  checkInTime: true,
+  checkInGuideMessage: true,
+  houseRulesMessage: true,
+  amenities: true,
+  images: { select: { url: true, sortOrder: true } },
+  host: { select: { name: true, image: true, displayName: true, profilePhotoUrl: true } },
+} as const;
+
 export async function getPublicListings(filters?: ListingsFilter): Promise<Listing[]> {
   try {
     const q = filters?.where?.trim();
@@ -98,29 +122,28 @@ export async function getPublicListings(filters?: ListingsFilter): Promise<Listi
           },
         }),
       },
-      include: { images: true, host: { select: { name: true, image: true, displayName: true, profilePhotoUrl: true } } },
+      select: publicListingSelect,
       orderBy: { createdAt: "desc" },
     });
-    if (rows.length > 0) {
-      return rows.map((r) => toListing(r as DbListing));
-    }
-  } catch {
-    // fall through to mock data when DB unavailable (e.g. dev)
+    return rows.map((r) => toListing(r as DbListing));
+  } catch (e) {
+    // DB 오류 시 mock 노출 방지. 에러는 로그로 남겨 원인 파악 가능하게 함.
+    console.error("[getPublicListings]", e);
+    return [];
   }
-  return mockListings;
 }
 
 export async function getPublicListingById(id: string): Promise<Listing | null> {
   try {
     const row = await prisma.listing.findFirst({
       where: { id, status: "APPROVED" },
-      include: { images: true, host: { select: { name: true, image: true, displayName: true, profilePhotoUrl: true } } },
+      select: publicListingSelect,
     });
     if (row) return toListing(row as DbListing);
-  } catch {
-    // fall through to mock data
+  } catch (e) {
+    console.error("[getPublicListingById]", e);
   }
-  return mockListings.find((x) => x.id === id) ?? null;
+  return null;
 }
 
 /** DB만 사용. 승인된 숙소만 반환 (mock 미사용). 관리자 테스트 리뷰 등용. */
@@ -128,7 +151,7 @@ export async function getApprovedListingsFromDb(): Promise<Listing[]> {
   try {
     const rows = await prisma.listing.findMany({
       where: { status: "APPROVED" },
-      include: { images: true, host: { select: { name: true, image: true, displayName: true, profilePhotoUrl: true } } },
+      select: publicListingSelect,
       orderBy: { createdAt: "desc" },
     });
     return rows.map((r) => toListing(r as DbListing));
@@ -144,7 +167,7 @@ export async function getPublicListingsByIds(ids: string[]): Promise<Listing[]> 
   try {
     const rows = await prisma.listing.findMany({
       where: { id: { in: unique }, status: "APPROVED" },
-      include: { images: true, host: { select: { name: true, image: true, displayName: true, profilePhotoUrl: true } } },
+      select: publicListingSelect,
     });
     const byId = new Map(rows.map((r) => [r.id, toListing(r as DbListing)]));
     return unique.map((id) => byId.get(id)).filter(Boolean) as Listing[];

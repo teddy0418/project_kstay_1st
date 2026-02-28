@@ -24,7 +24,7 @@ export default function Providers({
 }) {
   return (
     <LanguageProvider initialLang={initialLang}>
-      <SessionProvider>
+      <SessionProvider refetchInterval={0} refetchOnWindowFocus={false}>
         <AuthProvider>
           <AuthModalProvider>
             <WishlistProvider>

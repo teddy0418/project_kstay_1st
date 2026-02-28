@@ -4,6 +4,9 @@ import RecommendedListings from "@/features/home/components/RecommendedListings"
 import { getPublicListings } from "@/lib/repositories/listings";
 import { getServerLang } from "@/lib/i18n/server";
 
+/** 승인된 숙소 목록이 바뀐 뒤에도 메인에 바로 반영되도록 캐시 사용 안 함 */
+export const dynamic = "force-dynamic";
+
 const COPY = {
   en: {
     title: "Top Recommended Stays",

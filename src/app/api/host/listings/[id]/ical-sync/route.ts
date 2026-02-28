@@ -1,0 +1,68 @@
+import { async as ical } from "node-ical";
+import { apiError, apiOk } from "@/lib/api/response";
+import { getOrCreateServerUser } from "@/lib/auth/server";
+import { prisma } from "@/lib/db";
+import { blockDate } from "@/lib/repositories/host-calendar";
+
+export async function POST(req: Request, ctx: { params: Promise<{ id: string }> }) {
+  try {
+    const user = await getOrCreateServerUser();
+    if (!user) return apiError(401, "UNAUTHORIZED", "Login required");
+    if (user.role !== "HOST" && user.role !== "ADMIN") {
+      return apiError(403, "FORBIDDEN", "Host role required");
+    }
+
+    const { id } = await ctx.params;
+    if (!id) return apiError(400, "BAD_REQUEST", "listing id is required");
+
+    const listing = await prisma.listing.findFirst({
+      where: { id, ...(user.role === "HOST" ? { hostId: user.id } : {}) },
+      select: { id: true, hostId: true, icalUrl: true },
+    });
+    if (!listing) return apiError(404, "NOT_FOUND", "Listing not found");
+    if (!listing.icalUrl) {
+      return apiError(400, "BAD_REQUEST", "iCal URL is not configured for this listing.");
+    }
+
+    const url = listing.icalUrl;
+    let events;
+    try {
+      events = await ical.fromURL(url, {});
+    } catch (e) {
+      console.error("[ical-sync] failed to fetch or parse iCal", e);
+      return apiError(400, "BAD_REQUEST", "iCal 데이터를 불러오지 못했습니다. URL을 다시 확인해 주세요.");
+    }
+
+    const today = new Date();
+    const oneYearLater = new Date(today.getFullYear() + 1, today.getMonth(), today.getDate());
+
+    for (const value of Object.values(events)) {
+      if (!value || value.type !== "VEVENT") continue;
+      const start = value.start instanceof Date ? value.start : null;
+      const end = value.end instanceof Date ? value.end : null;
+      if (!start || !end) continue;
+
+      const cursor = new Date(start.getFullYear(), start.getMonth(), start.getDate());
+      const last = new Date(end.getFullYear(), end.getMonth(), end.getDate());
+
+      while (cursor <= last && cursor <= oneYearLater) {
+        if (cursor >= today) {
+          await blockDate(listing.id, listing.hostId, new Date(cursor));
+        }
+        cursor.setDate(cursor.getDate() + 1);
+      }
+    }
+
+    await prisma.listing.update({
+      where: { id: listing.id },
+      data: { icalLastSyncedAt: new Date() },
+    });
+
+    return apiOk({ ok: true });
+  } catch (error) {
+    console.error("[api/host/listings/:id/ical-sync] failed", error);
+    const message = error instanceof Error ? error.message : "Failed to sync iCal";
+    return apiError(500, "INTERNAL_ERROR", message);
+  }
+}
+

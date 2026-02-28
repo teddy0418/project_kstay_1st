@@ -15,42 +15,54 @@ export type AdminBookingRow = {
   payment: { status: string; pgTid: string | null } | null;
 };
 
-export async function getAdminBookings(statusFilter?: string): Promise<AdminBookingRow[]> {
+const DEFAULT_PAGE_SIZE = 10;
+
+export async function getAdminBookings(
+  statusFilter?: string,
+  opts?: { page?: number; pageSize?: number }
+): Promise<{ bookings: AdminBookingRow[]; total: number }> {
   const status = statusFilter && ["PENDING_PAYMENT", "CONFIRMED", "CANCELLED"].includes(statusFilter)
     ? statusFilter
     : undefined;
   const where = status ? { status: status as "PENDING_PAYMENT" | "CONFIRMED" | "CANCELLED" } : {};
+  const page = Math.max(1, opts?.page ?? 1);
+  const pageSize = Math.min(100, Math.max(1, opts?.pageSize ?? DEFAULT_PAGE_SIZE));
+  const skip = (page - 1) * pageSize;
 
-  const rows = await prisma.booking.findMany({
-    where,
-    select: {
-      id: true,
-      guestName: true,
-      guestEmail: true,
-      checkIn: true,
-      checkOut: true,
-      nights: true,
-      totalKrw: true,
-      status: true,
-      createdAt: true,
-      listing: {
-        select: {
-          id: true,
-          title: true,
-          host: { select: { id: true, name: true } },
+  const [total, rows] = await Promise.all([
+    prisma.booking.count({ where }),
+    prisma.booking.findMany({
+      where,
+      select: {
+        id: true,
+        guestName: true,
+        guestEmail: true,
+        checkIn: true,
+        checkOut: true,
+        nights: true,
+        totalKrw: true,
+        status: true,
+        createdAt: true,
+        listing: {
+          select: {
+            id: true,
+            title: true,
+            host: { select: { id: true, name: true } },
+          },
+        },
+        payments: {
+          orderBy: { createdAt: "desc" },
+          take: 1,
+          select: { status: true, pgTid: true },
         },
       },
-      payments: {
-        orderBy: { createdAt: "desc" },
-        take: 1,
-        select: { status: true, pgTid: true },
-      },
-    },
-    orderBy: { createdAt: "desc" },
-    take: 500,
-  });
+      orderBy: { createdAt: "desc" },
+      skip,
+      take: pageSize,
+    }),
+  ]);
 
-  return rows.map((r) => ({
+  const bookings = rows.map((r) => ({
     id: r.id,
     guestName: r.guestName,
     guestEmail: r.guestEmail,
@@ -64,4 +76,6 @@ export async function getAdminBookings(statusFilter?: string): Promise<AdminBook
     host: r.listing?.host ? { id: r.listing.host.id, name: r.listing.host.name } : { id: "", name: null },
     payment: r.payments[0] ? { status: r.payments[0].status, pgTid: r.payments[0].pgTid } : null,
   }));
+
+  return { bookings, total };
 }

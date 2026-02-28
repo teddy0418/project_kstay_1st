@@ -43,6 +43,7 @@ export const authOptions: NextAuthOptions = {
   pages: {
     signIn: "/login",
   },
+  trustHost: true,
   callbacks: {
     async signIn({ user, account }) {
       const provider = account?.provider;

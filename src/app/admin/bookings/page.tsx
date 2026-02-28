@@ -36,35 +36,64 @@ export default function AdminBookingsPage() {
   const router = useRouter();
   const searchParams = useSearchParams();
   const statusParam = searchParams.get("status") ?? "";
+  const pageParam = searchParams.get("page") ?? "1";
   const [status, setStatus] = useState(statusParam);
+  const [page, setPage] = useState(Math.max(1, parseInt(pageParam, 10) || 1));
   const [items, setItems] = useState<AdminBooking[]>([]);
+  const [total, setTotal] = useState(0);
+  const PAGE_SIZE = 10;
   const [loading, setLoading] = useState(true);
 
   const load = useCallback(async () => {
     setLoading(true);
     try {
-      const url = status ? `/api/admin/bookings?status=${encodeURIComponent(status)}` : "/api/admin/bookings";
-      const rows = await apiClient.get<AdminBooking[]>(url);
-      setItems(Array.isArray(rows) ? rows : []);
+      const params = new URLSearchParams();
+      if (status) params.set("status", status);
+      params.set("page", String(page));
+      params.set("pageSize", String(PAGE_SIZE));
+      const res = await apiClient.get<{ bookings: AdminBooking[]; total: number; page: number; pageSize: number }>(
+        `/api/admin/bookings?${params}`
+      );
+      setItems(Array.isArray(res?.bookings) ? res.bookings : []);
+      setTotal(res?.total ?? 0);
     } catch (err) {
       if (err instanceof ApiClientError && (err.status === 401 || err.status === 403)) {
         router.replace("/");
         return;
       }
       setItems([]);
+      setTotal(0);
     } finally {
       setLoading(false);
     }
-  }, [status, router]);
+  }, [status, page, router]);
 
   useEffect(() => {
     void load();
   }, [load]);
 
+  useEffect(() => {
+    const p = searchParams.get("page");
+    setPage(Math.max(1, parseInt(p ?? "1", 10) || 1));
+  }, [searchParams.get("page")]);
+
   const setStatusAndReplace = (v: string) => {
     setStatus(v);
-    const q = v ? `?status=${encodeURIComponent(v)}` : "";
-    router.replace(`/admin/bookings${q}`);
+    setPage(1);
+    const params = new URLSearchParams();
+    if (v) params.set("status", v);
+    params.set("page", "1");
+    router.replace(`/admin/bookings?${params}`);
+  };
+
+  const totalPages = Math.max(1, Math.ceil(total / PAGE_SIZE));
+  const goToPage = (p: number) => {
+    const next = Math.max(1, Math.min(p, totalPages));
+    setPage(next);
+    const params = new URLSearchParams();
+    if (status) params.set("status", status);
+    if (next > 1) params.set("page", String(next));
+    router.replace(`/admin/bookings${params.toString() ? `?${params}` : ""}`);
   };
 
   return (
@@ -147,6 +176,35 @@ export default function AdminBookingsPage() {
               ))}
             </tbody>
           </table>
+        </div>
+      )}
+
+      {!loading && total > 0 && (
+        <div className="flex flex-wrap items-center justify-between gap-3 rounded-2xl border border-neutral-200 bg-white px-4 py-3">
+          <span className="text-sm text-neutral-600">
+            총 {total}건 ({(page - 1) * PAGE_SIZE + 1}–{Math.min(page * PAGE_SIZE, total)})
+          </span>
+          <div className="flex items-center gap-2">
+            <button
+              type="button"
+              onClick={() => goToPage(page - 1)}
+              disabled={page <= 1}
+              className="rounded-lg border border-neutral-200 bg-white px-3 py-2 text-sm font-medium text-neutral-700 disabled:opacity-40 disabled:cursor-not-allowed hover:bg-neutral-50"
+            >
+              이전
+            </button>
+            <span className="text-sm text-neutral-600">
+              {page} / {totalPages}
+            </span>
+            <button
+              type="button"
+              onClick={() => goToPage(page + 1)}
+              disabled={page >= totalPages}
+              className="rounded-lg border border-neutral-200 bg-white px-3 py-2 text-sm font-medium text-neutral-700 disabled:opacity-40 disabled:cursor-not-allowed hover:bg-neutral-50"
+            >
+              다음
+            </button>
+          </div>
         </div>
       )}
     </div>

@@ -28,6 +28,7 @@ export async function PATCH(
     if (!parsed.ok) return parsed.response;
 
     const images = await reorderListingImages(listingId, parsed.data.imageIds);
+    await setListingStatusToPendingIfApproved(listingId);
     return apiOk(images);
   } catch (error) {
     console.error("[api/host/listings/:id/images/reorder] PATCH failed", error);
