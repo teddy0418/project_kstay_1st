@@ -5,12 +5,20 @@ import { async as ical } from "node-ical";
  * 호스트 캘린더의 외부 캘린더(iCal) 동기화에서 사용합니다.
  */
 export async function fetchIcalBlockedDates(url: string): Promise<string[]> {
-  const events = await ical.fromURL(url.trim(), {});
+  const rawEvents: unknown = await (ical as unknown as { fromURL: (u: string, o: unknown) => Promise<unknown> }).fromURL(
+    url.trim(),
+    {}
+  );
   const keys = new Set<string>();
   const today = new Date();
   today.setHours(0, 0, 0, 0);
 
-  for (const value of Object.values(events)) {
+  const values =
+    rawEvents && typeof rawEvents === "object"
+      ? Object.values(rawEvents as Record<string, { type?: string; start?: unknown; end?: unknown }>)
+      : [];
+
+  for (const value of values) {
     if (!value || value.type !== "VEVENT") continue;
     const start = value.start instanceof Date ? value.start : null;
     const end = value.end instanceof Date ? value.end : null;

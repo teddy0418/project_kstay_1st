@@ -116,6 +116,17 @@ export async function findHostListingOwnership(id: string) {
   });
 }
 
+/**
+ * 승인(APPROVED)된 숙소가 수정되면, 재검토를 위해 PENDING으로 되돌린다.
+ * (승인 상태가 아닌 경우에는 변경 없음)
+ */
+export async function setListingStatusToPendingIfApproved(listingId: string) {
+  await prisma.listing.updateMany({
+    where: { id: listingId, status: "APPROVED" },
+    data: { status: "PENDING" },
+  });
+}
+
 /** 승인(APPROVED)된 숙소에서 호스트가 수정 가능한 필드만 */
 export const APPROVED_LISTING_EDITABLE_FIELDS = [
   "checkInGuideMessage",

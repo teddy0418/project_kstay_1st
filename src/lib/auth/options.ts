@@ -16,7 +16,7 @@ function isAdminEmail(email: string) {
   return allowlist.has(normalized);
 }
 
-export const authOptions: NextAuthOptions = {
+export const authOptions = {
   providers: [
     GoogleProvider({
       clientId: process.env.GOOGLE_CLIENT_ID || "",
@@ -129,4 +129,4 @@ export const authOptions: NextAuthOptions = {
     },
   },
   secret: process.env.AUTH_SECRET,
-};
+} as NextAuthOptions;

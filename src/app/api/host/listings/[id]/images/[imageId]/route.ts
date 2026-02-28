@@ -1,6 +1,10 @@
 import { getOrCreateServerUser } from "@/lib/auth/server";
 import { apiError, apiOk } from "@/lib/api/response";
-import { findHostListingOwnership, deleteListingImage } from "@/lib/repositories/host-listings";
+import {
+  findHostListingOwnership,
+  deleteListingImage,
+  setListingStatusToPendingIfApproved,
+} from "@/lib/repositories/host-listings";
 
 export async function DELETE(
   _req: Request,

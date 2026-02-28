@@ -2,7 +2,11 @@ import { getOrCreateServerUser } from "@/lib/auth/server";
 import { apiError, apiOk } from "@/lib/api/response";
 import { parseJsonBody } from "@/lib/api/validation";
 import { reorderListingImagesSchema } from "@/lib/validation/schemas";
-import { findHostListingOwnership, reorderListingImages } from "@/lib/repositories/host-listings";
+import {
+  findHostListingOwnership,
+  reorderListingImages,
+  setListingStatusToPendingIfApproved,
+} from "@/lib/repositories/host-listings";
 
 export async function PATCH(
   req: Request,
