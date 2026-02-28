@@ -4,6 +4,7 @@ import type { RefObject } from "react";
 import { createPortal } from "react-dom";
 import { DayPicker } from "react-day-picker";
 import type { DateRange } from "react-day-picker";
+import { enUS, ko, ja, zhCN } from "react-day-picker/locale";
 import { Calendar, X } from "lucide-react";
 import { useCallback, useEffect, useLayoutEffect, useMemo, useRef, useState } from "react";
 import { useCurrency } from "@/components/ui/CurrencyProvider";
@@ -128,6 +129,12 @@ export default function DateDropdown({
   const { t, locale } = useI18n();
   const { currency } = useCurrency();
   const { formatFromKRW } = useExchangeRates();
+  const dayPickerLocale = useMemo(() => {
+    if (locale.startsWith("ko")) return ko;
+    if (locale.startsWith("ja")) return ja;
+    if (locale.startsWith("zh")) return zhCN;
+    return enUS;
+  }, [locale]);
   const [datePrices, setDatePrices] = useState<Record<string, number>>({});
   const [visibleMonth, setVisibleMonth] = useState<Date>(() => startOfDay(new Date()));
   const [monthsResponsive, setMonthsResponsive] = useState(1);
@@ -418,10 +425,11 @@ export default function DateDropdown({
             selected={range}
             onSelect={onChange}
             numberOfMonths={months}
-            showOutsideDays
+            showOutsideDays={false}
             startMonth={today}
             month={visibleMonth}
             onMonthChange={setVisibleMonth}
+            locale={dayPickerLocale}
             disabled={(date) =>
               date < today || (disabledRanges.length > 0 && isDateInRanges(date, disabledRanges))
             }

@@ -6,6 +6,7 @@ import LanguageProvider, { Lang } from "@/components/ui/LanguageProvider";
 import { CurrencyProvider } from "@/components/ui/CurrencyProvider";
 import { ExchangeRatesProvider } from "@/components/ui/ExchangeRatesProvider";
 import GeoDetector from "@/components/ui/GeoDetector";
+import InAppBrowserGate from "@/components/ui/InAppBrowserGate";
 import type { Currency } from "@/lib/currency";
 import { ToastProvider } from "@/components/ui/ToastProvider";
 
@@ -31,7 +32,10 @@ export default function Providers({
               <CurrencyProvider initialCurrency={initialCurrency}>
                 <ExchangeRatesProvider>
                   <GeoDetector />
-                  <ToastProvider>{children}</ToastProvider>
+                  <ToastProvider>
+                    <InAppBrowserGate />
+                    {children}
+                  </ToastProvider>
                 </ExchangeRatesProvider>
               </CurrencyProvider>
             </WishlistProvider>
