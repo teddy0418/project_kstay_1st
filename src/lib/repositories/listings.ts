@@ -23,6 +23,7 @@ type DbListing = {
   amenities: string[];
   images: Array<{ url: string; sortOrder: number }>;
   host?: { name: string | null; image: string | null; displayName: string | null; profilePhotoUrl: string | null } | null;
+  nonRefundableSpecialEnabled?: boolean;
 };
 
 const DEFAULT_HOST_AVATAR =
@@ -57,6 +58,7 @@ function toListing(row: DbListing): Listing {
     checkInGuideMessage: row.checkInGuideMessage ?? undefined,
     houseRulesMessage: row.houseRulesMessage ?? undefined,
     amenities: Array.isArray(row.amenities) ? row.amenities : [],
+    nonRefundableSpecialEnabled: row.nonRefundableSpecialEnabled ?? false,
   };
 }
 
@@ -87,6 +89,7 @@ const publicListingSelect = {
   checkInGuideMessage: true,
   houseRulesMessage: true,
   amenities: true,
+  nonRefundableSpecialEnabled: true,
   images: { select: { url: true, sortOrder: true } },
   host: { select: { name: true, image: true, displayName: true, profilePhotoUrl: true } },
 } as const;

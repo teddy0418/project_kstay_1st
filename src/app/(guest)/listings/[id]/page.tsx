@@ -391,8 +391,24 @@ function ReviewsSection({
           </div>
         </div>
 
-        {/* categories: overall 열 축소로 한 줄에 여유 있게 표시 */}
-        <div className="grid min-w-0 grid-cols-2 gap-4 xl:grid-cols-3">
+        {/* 모바일: 한 카드 안에 6개 항목 컴팩트 배치 / 데스크톱: 기존 6개 카드 */}
+        <div className="md:hidden rounded-2xl border border-neutral-200 p-4">
+          <div className="grid grid-cols-2 gap-x-4 gap-y-3">
+            {cats.map((c) => {
+              const Icon = c.icon;
+              return (
+                <div key={c.label} className="flex items-center justify-between gap-2 min-w-0">
+                  <div className="flex items-center gap-1.5 min-w-0">
+                    <Icon className="h-3.5 w-3.5 shrink-0 text-neutral-500" />
+                    <span className="text-xs font-medium text-neutral-700 truncate">{c.label}</span>
+                  </div>
+                  <span className="text-sm font-semibold tabular-nums shrink-0">{c.value.toFixed(1)}</span>
+                </div>
+              );
+            })}
+          </div>
+        </div>
+        <div className="hidden md:grid min-w-0 grid-cols-2 gap-4 xl:grid-cols-3">
           {cats.map((c) => {
             const Icon = c.icon;
             return (
@@ -620,7 +636,7 @@ export default async function ListingDetailPage({
   return (
     <Container className="py-8">
       {/* Breadcrumbs */}
-      <nav className="text-sm text-neutral-500 flex items-center gap-2">
+      <nav className="text-xs md:text-sm text-neutral-500 flex flex-wrap items-center gap-2 min-w-0">
         <Link href="/" className="hover:underline">
           {tx.home}
         </Link>
@@ -631,9 +647,9 @@ export default async function ListingDetailPage({
       </nav>
 
       {/* Title + actions */}
-      <div className="mt-4 flex items-start justify-between gap-4">
+      <div className="mt-4 flex flex-wrap items-start justify-between gap-4">
         <div className="min-w-0">
-          <h1 className="text-2xl font-semibold tracking-tight">{listing.title}</h1>
+          <h1 className="text-xl font-semibold tracking-tight md:text-2xl">{listing.title}</h1>
           <div className="mt-2 flex flex-wrap items-center gap-2 text-sm text-neutral-600">
             <span className="inline-flex items-center gap-1 text-neutral-900">
               <Star className="h-4 w-4" />
@@ -664,6 +680,7 @@ export default async function ListingDetailPage({
         <BookingWidget
           listingId={String(listing.id)}
           basePricePerNightKRW={listing.pricePerNightKRW}
+          nonRefundableSpecialEnabled={listing.nonRefundableSpecialEnabled}
           defaultStart={start}
           defaultEnd={end}
           defaultGuests={Number.isFinite(guests) ? guests : undefined}
@@ -671,7 +688,7 @@ export default async function ListingDetailPage({
       </div>
 
       {/* ✅ 사진 아래 3카드 (리뷰/부대시설/위치) */}
-      <div className="mt-6 grid gap-4 md:grid-cols-3">
+      <div className="mt-6 grid grid-cols-1 gap-4 sm:grid-cols-2 md:grid-cols-3">
         {/* Reviews card */}
         <a
           href="#reviews"
@@ -727,21 +744,21 @@ export default async function ListingDetailPage({
         {/* Left */}
         <section className="min-w-0">
           {/* Host card */}
-          <div className="flex items-center gap-4 rounded-2xl border border-neutral-200 p-5">
-            <div className="relative h-12 w-12 overflow-hidden rounded-full bg-neutral-100">
+          <div className="flex flex-wrap items-center gap-4 rounded-2xl border border-neutral-200 p-5">
+            <div className="relative h-12 w-12 shrink-0 overflow-hidden rounded-full bg-neutral-100">
               <Image
                 src={listing.hostProfileImageUrl}
                 alt={listing.hostName}
-                className="object-cover"
+                className="h-full w-full object-cover"
                 fill
                 sizes="48px"
               />
             </div>
-            <div className="min-w-0">
+            <div className="min-w-0 flex-1">
               <div className="text-sm font-semibold">{tx.hostedBy} {listing.hostName}</div>
               <div className="mt-1 text-xs text-neutral-500">{tx.verifiedPartner}</div>
             </div>
-            <div className="ml-auto flex items-center gap-1.5 rounded-full bg-neutral-900 px-3 py-1 text-xs font-semibold text-white">
+            <div className="flex shrink-0 items-center gap-1.5 rounded-full bg-neutral-900 px-3 py-1 text-xs font-semibold text-white w-full sm:w-auto">
               <ShieldCheck className="h-4 w-4 shrink-0 text-blue-400" aria-hidden />
               {tx.govCertified}
             </div>
@@ -788,7 +805,7 @@ export default async function ListingDetailPage({
                 <li>{tx.policy24h}</li>
                 <li>{tx.policyGeneral}</li>
                 <li>{tx.policyLate}</li>
-                <li>{tx.policySpecial}</li>
+                {listing.nonRefundableSpecialEnabled && <li>{tx.policySpecial}</li>}
                 <li>{tx.policyFee}</li>
               </ul>
               {cancelUntil && (
@@ -807,6 +824,7 @@ export default async function ListingDetailPage({
           <BookingWidget
             listingId={String(listing.id)}
             basePricePerNightKRW={listing.pricePerNightKRW}
+            nonRefundableSpecialEnabled={listing.nonRefundableSpecialEnabled}
             defaultStart={start}
             defaultEnd={end}
             defaultGuests={Number.isFinite(guests) ? guests : undefined}

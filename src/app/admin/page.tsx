@@ -23,11 +23,11 @@ export default async function AdminPage() {
   return (
     <div className="grid gap-6">
       <div>
-        <h1 className="text-3xl font-extrabold tracking-tight">요약</h1>
-        <p className="mt-1 text-sm text-neutral-500">플랫폼 현황을 한눈에 확인하세요</p>
+        <h1 className="text-xl font-extrabold tracking-tight md:text-3xl">요약</h1>
+        <p className="mt-1 text-xs text-neutral-500 md:text-sm">플랫폼 현황을 한눈에 확인하세요</p>
       </div>
 
-      <div className="grid grid-cols-2 sm:grid-cols-3 gap-3">
+      <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 lg:grid-cols-3">
         {summary.map((s) => (
           <div
             key={s.label}
@@ -45,7 +45,7 @@ export default async function AdminPage() {
 
       <div className="rounded-2xl border border-neutral-200 bg-white p-6">
         <h2 className="text-lg font-bold text-neutral-900">빠른 작업</h2>
-        <div className="mt-4 grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
+        <div className="mt-4 grid grid-cols-1 gap-3 sm:grid-cols-2 lg:grid-cols-3">
           <Link
             href="/admin/listings?status=PENDING"
             className="rounded-2xl border border-neutral-200 bg-white px-4 py-3 text-sm font-semibold hover:bg-neutral-50 transition text-center block"

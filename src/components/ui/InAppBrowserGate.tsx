@@ -43,9 +43,9 @@ export default function InAppBrowserGate() {
     if (isIOS()) {
       try {
         const dismissed = sessionStorage.getItem(STORAGE_KEY_DISMISSED);
-        if (!dismissed) setShowIosModal(true);
+        if (!dismissed) queueMicrotask(() => setShowIosModal(true));
       } catch {
-        setShowIosModal(true);
+        queueMicrotask(() => setShowIosModal(true));
       }
     }
   }, []);

@@ -244,29 +244,27 @@ export default function HostDashboard() {
 
       {/* 3) 하단 정보: KSTAY 센터 */}
       <section>
-        <Card className="p-6">
-          <div className="flex items-end justify-between gap-3">
-            <div>
-              <div className="text-lg font-bold">KSTAY 센터</div>
-              <div className="mt-1 text-sm text-neutral-500">공지사항 · 운영 인사이트 · 가이드라인</div>
-            </div>
+        <Card className="p-4 sm:p-6">
+          <div className="min-w-0">
+            <div className="text-base sm:text-lg font-bold">KSTAY 센터</div>
+            <div className="mt-0.5 sm:mt-1 text-xs sm:text-sm text-neutral-500">공지사항 · 운영 인사이트 · 가이드라인</div>
           </div>
 
-          <div className="mt-5 space-y-3">
+          <div className="mt-3 sm:mt-5 space-y-2 sm:space-y-3">
             {centerFeed.map((it, idx) => (
-              <div key={idx} className="flex items-start gap-4 rounded-xl border border-neutral-200 bg-white p-4">
+              <div key={idx} className="flex items-start gap-2 sm:gap-4 rounded-xl border border-neutral-200 bg-white p-3 sm:p-4 min-w-0">
                 <div
                   className={[
-                    "mt-0.5 shrink-0 rounded-full px-3 py-1 text-xs font-semibold",
+                    "shrink-0 rounded-full px-2.5 py-0.5 sm:px-3 sm:py-1 text-[10px] sm:text-xs font-semibold",
                     it.type === "공지" ? "bg-neutral-900 text-white" : "bg-neutral-100 text-neutral-700",
                   ].join(" ")}
                 >
                   {it.type}
                 </div>
 
-                <div className="min-w-0">
-                  <div className="text-sm font-semibold leading-6">{it.title}</div>
-                  <div className="mt-1 text-xs text-neutral-500">{it.date}</div>
+                <div className="min-w-0 flex-1">
+                  <div className="text-xs sm:text-sm font-semibold leading-snug sm:leading-6">{it.title}</div>
+                  <div className="mt-0.5 sm:mt-1 text-[11px] sm:text-xs text-neutral-500">{it.date}</div>
                 </div>
               </div>
             ))}

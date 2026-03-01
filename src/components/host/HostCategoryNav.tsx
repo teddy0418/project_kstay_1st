@@ -16,10 +16,10 @@ export default function HostCategoryNav() {
 
   return (
     <nav
-      className="sticky top-14 z-30 flex flex-wrap items-center gap-2 border-b border-neutral-200 bg-white px-4 py-3 shadow-sm sm:gap-3"
+      className="sticky top-14 z-30 flex items-center border-b border-neutral-200 bg-white px-2 py-3 shadow-sm sm:px-4 overflow-x-auto"
       aria-label="호스트 메뉴"
     >
-      <div className="mx-auto flex w-full max-w-[1200px] flex-wrap items-center gap-2 sm:gap-3">
+      <div className="mx-auto flex w-full max-w-screen-xl min-w-0 flex-shrink-0 items-center justify-center sm:justify-start gap-2 sm:gap-3">
         {ITEMS.map((item) => {
           const isActive =
             item.href === "/host/dashboard"
@@ -29,7 +29,7 @@ export default function HostCategoryNav() {
             <Link
               key={item.href}
               href={item.href}
-              className={`rounded-xl px-4 py-3 text-base font-semibold transition sm:px-5 sm:py-3.5 sm:text-lg ${
+              className={`rounded-xl px-3 py-2.5 text-sm font-semibold transition sm:px-5 sm:py-3.5 sm:text-lg whitespace-nowrap ${
                 isActive
                   ? "bg-neutral-900 text-white hover:bg-neutral-800"
                   : "text-neutral-700 hover:bg-neutral-100 hover:text-neutral-900"

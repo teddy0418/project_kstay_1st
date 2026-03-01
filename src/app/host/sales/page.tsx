@@ -2,8 +2,8 @@ import Link from "next/link";
 
 export default function HostSalesPage() {
   return (
-    <div className="rounded-2xl border border-neutral-200 bg-white shadow-sm p-6">
-      <div className="text-lg font-bold">판매 관리</div>
+    <div className="rounded-2xl border border-neutral-200 bg-white shadow-sm p-4 sm:p-6">
+      <div className="text-base font-bold md:text-lg">판매 관리</div>
       <div className="mt-1 text-sm text-neutral-500">
         MVP에서는 기본 기능부터 연결합니다. (숙소 등록/캘린더/가격정책)
       </div>

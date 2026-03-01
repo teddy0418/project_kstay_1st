@@ -15,11 +15,11 @@ export default async function HostListingsPage() {
   const listings = await listHostListings(current.user.id);
 
   return (
-    <div className="rounded-3xl border border-neutral-200 bg-white shadow-sm p-8">
+    <div className="rounded-2xl border border-neutral-200 bg-white shadow-sm p-4 sm:p-6 lg:p-8">
       <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
-        <div>
-          <div className="text-2xl font-extrabold tracking-tight">판매 관리</div>
-          <p className="mt-2 text-sm text-neutral-600">숙소 정보/가격/판매 상태를 관리합니다. (MVP)</p>
+        <div className="min-w-0">
+          <div className="text-xl font-extrabold tracking-tight md:text-2xl">판매 관리</div>
+          <p className="mt-2 text-xs text-neutral-600 md:text-sm">숙소 정보/가격/판매 상태를 관리합니다. (MVP)</p>
         </div>
         <div className="flex flex-wrap items-center gap-2">
           <Link

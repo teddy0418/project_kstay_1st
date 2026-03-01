@@ -12,9 +12,9 @@ import { useExchangeRates } from "@/components/ui/ExchangeRatesProvider";
 import { useI18n } from "@/components/ui/LanguageProvider";
 import { nightsBetween, addDays } from "@/lib/format";
 
-const POPOVER_MIN_WIDTH = 800;
 const POPOVER_GAP = 8;
 const MOBILE_BREAKPOINT = 640;
+const TABLET_MAX = 1023; // 640..1023 = tablet, 1024+ = desktop
 
 function startOfDay(d: Date) {
   const x = new Date(d);
@@ -140,12 +140,15 @@ export default function DateDropdown({
   const [monthsResponsive, setMonthsResponsive] = useState(1);
   const [mounted, setMounted] = useState(false);
   const [isMobile, setIsMobile] = useState(false);
+  const [isTablet, setIsTablet] = useState(false);
   const [popoverRect, setPopoverRect] = useState<{ top: number; right: number } | null>(null);
   const panelRef = useRef<HTMLDivElement>(null);
-  useEffect(() => setMounted(true), []);
+  useEffect(() => {
+    queueMicrotask(() => setMounted(true));
+  }, []);
   const today = useMemo(() => startOfDay(new Date()), []);
   const monthsDesktop = overlay ? 2 : (numberOfMonthsProp ?? monthsResponsive);
-  const months = overlay && isMobile ? 1 : monthsDesktop;
+  const months = overlay && (isMobile || isTablet) ? 1 : monthsDesktop;
 
   const modifiers = useMemo(() => {
     const m: Record<string, (date: Date) => boolean> = {};
@@ -238,6 +241,13 @@ export default function DateDropdown({
     mq.addEventListener("change", apply);
     return () => mq.removeEventListener("change", apply);
   }, []);
+  useEffect(() => {
+    const mq = window.matchMedia(`(min-width: ${MOBILE_BREAKPOINT}px) and (max-width: ${TABLET_MAX}px)`);
+    const apply = () => setIsTablet(mq.matches);
+    apply();
+    mq.addEventListener("change", apply);
+    return () => mq.removeEventListener("change", apply);
+  }, []);
 
   const updatePopoverPosition = useCallback(() => {
     if (!anchorRef?.current) return;
@@ -326,12 +336,13 @@ export default function DateDropdown({
 
   const nights = range?.from && range?.to ? Math.max(1, nightsBetween(range.from, range.to)) : 0;
   const showBookingHeader = overlay && anchorRef && !isMobile;
+  const isTabletOverlay = overlay && anchorRef && isTablet;
 
   const panelContent = (
     <>
       {showBookingHeader ? (
-        <div className="flex flex-wrap items-start justify-between gap-2 pt-3 pb-1.5">
-          <div className="min-w-[140px] flex flex-col gap-0.5">
+        <div className={`flex flex-wrap items-start justify-between gap-2 ${isTabletOverlay ? "pt-1.5 pb-1" : "pt-3 pb-1.5"}`}>
+          <div className={`flex flex-col gap-0.5 ${isTabletOverlay ? "min-w-0" : "min-w-[140px]"}`}>
             <div className="min-h-[1.5rem] text-base font-bold text-neutral-900">
               {nights > 0 ? `${nights}${nights === 1 ? t("night") : t("nights")}` : t("select_your_dates")}
             </div>
@@ -350,8 +361,8 @@ export default function DateDropdown({
               </div>
             )}
           </div>
-          <div className="flex gap-3 flex-1 min-w-0">
-            <div className="flex min-w-[200px] flex-1 items-center gap-2 rounded-xl border border-neutral-300 bg-white px-3 py-2.5 transition-[border-color,box-shadow] focus-within:border-neutral-900 focus-within:ring-2 focus-within:ring-neutral-900 focus-within:ring-offset-0">
+          <div className="flex flex-1 min-w-0 gap-2 sm:gap-3 flex-row">
+            <div className={`flex flex-1 items-center gap-2 rounded-xl border border-neutral-300 bg-white px-3 py-2.5 transition-[border-color,box-shadow] focus-within:border-neutral-900 focus-within:ring-2 focus-within:ring-neutral-900 focus-within:ring-offset-0 ${isTabletOverlay ? "min-w-0" : "min-w-[200px]"}`}>
               <span className="shrink-0 text-xs font-medium text-neutral-500">{t("check_in")}</span>
               <span className="min-w-0 flex-1 text-sm text-neutral-900">
                 {range?.from ? inputDateFormatter(range.from) : "—"}
@@ -369,7 +380,7 @@ export default function DateDropdown({
                 )}
               </span>
             </div>
-            <div className="flex min-w-[200px] flex-1 items-center gap-2 rounded-xl border border-neutral-300 bg-white px-3 py-2.5 transition-[border-color,box-shadow] focus-within:border-neutral-900 focus-within:ring-2 focus-within:ring-neutral-900 focus-within:ring-offset-0">
+            <div className={`flex flex-1 items-center gap-2 rounded-xl border border-neutral-300 bg-white px-3 py-2.5 transition-[border-color,box-shadow] focus-within:border-neutral-900 focus-within:ring-2 focus-within:ring-neutral-900 focus-within:ring-offset-0 ${isTabletOverlay ? "min-w-0" : "min-w-[200px]"}`}>
               <span className="shrink-0 text-xs font-medium text-neutral-500">{t("check_out")}</span>
               <span className="min-w-0 flex-1 text-sm text-neutral-900">
                 {range?.to ? inputDateFormatter(range.to) : "—"}
@@ -403,7 +414,7 @@ export default function DateDropdown({
         </div>
       )}
 
-      <div className={showBookingHeader ? "mt-2" : "p-2"}>
+      <div className={`min-w-0 ${showBookingHeader ? (isTabletOverlay ? "mt-1 px-0.5" : "mt-2 px-0.5") : "px-1 py-2 sm:p-2"}`}>
         {!showBookingHeader && (
           <div className="mb-2 text-sm text-neutral-700">
             <span className="font-semibold">{t("selected")}:</span> {summary}
@@ -411,14 +422,14 @@ export default function DateDropdown({
         )}
 
         {basePricePerNightKRW != null && basePricePerNightKRW > 0 && (
-          <div className="mb-2 flex items-center gap-1.5 text-xs text-neutral-500" role="status" aria-live="polite">
+          <div className={`flex items-center gap-1.5 text-xs text-neutral-500 ${isTabletOverlay ? "mb-1" : "mb-2"}`} role="status" aria-live="polite">
             <span className="text-neutral-400" aria-hidden>ⓘ</span>
             <span>{t("calendar_price_hint")}</span>
           </div>
         )}
 
         <div
-          className={`w-max max-w-full mx-auto overflow-x-auto rounded-xl ${basePricePerNightKRW != null && basePricePerNightKRW > 0 ? "rdp-with-price" : ""}`}
+          className={`rdp-calendar-wrap w-max max-w-full mx-auto overflow-x-auto rounded-xl min-w-0 ${basePricePerNightKRW != null && basePricePerNightKRW > 0 ? "rdp-with-price" : ""}`}
         >
           <DayPicker
             mode="range"
@@ -440,9 +451,9 @@ export default function DateDropdown({
           />
         </div>
         {(bookedRanges.length > 0 || blockedRanges.length > 0 || (basePricePerNightKRW != null && basePricePerNightKRW > 0)) && (
-          <div className="mt-1.5 flex flex-wrap items-center gap-x-4 gap-y-1.5 text-xs text-neutral-500">
+          <div className={`min-w-0 flex flex-wrap items-center gap-x-4 gap-y-1.5 text-xs text-neutral-500 ${isTabletOverlay ? "mt-1" : "mt-1.5"}`}>
             {basePricePerNightKRW != null && basePricePerNightKRW > 0 && (
-              <span className="tabular-nums font-medium text-neutral-700 shrink-0">
+              <span className="tabular-nums font-medium text-neutral-700">
                 {t("per_night")} {formatFromKRW(basePricePerNightKRW, currency)}
               </span>
             )}
@@ -461,7 +472,7 @@ export default function DateDropdown({
           </div>
         )}
 
-        <div className={`mt-2 flex flex-wrap items-center ${showBookingHeader ? "justify-between" : "justify-end"} gap-2`}>
+        <div className={`flex flex-wrap items-center ${showBookingHeader ? "justify-between" : "justify-end"} gap-2 ${isTabletOverlay ? "mt-1.5" : "mt-2"}`}>
           {showBookingHeader ? (
             <span className="inline-flex h-9 w-9 items-center justify-center rounded-lg text-neutral-400" aria-hidden>
               <Calendar className="h-5 w-5" />
@@ -516,12 +527,14 @@ export default function DateDropdown({
         className={
           isPopoverMode
             ? isMobile
-              ? "fixed inset-x-0 bottom-0 z-[100] max-h-[85vh] overflow-y-auto rounded-t-2xl border border-neutral-200 border-b-0 bg-white shadow-xl p-3"
-              : "fixed z-[100] min-w-[960px] w-fit max-w-[90vw] rounded-[32px] bg-white font-sans py-3 px-3 shadow-[0_0_0_1px_rgba(0,0,0,0.04),0_8px_28px_rgba(0,0,0,0.12)]"
+              ? "rdp-panel-mobile fixed inset-x-0 bottom-0 z-[100] max-h-[85vh] overflow-y-auto overflow-x-hidden rounded-t-2xl border border-neutral-200 border-b-0 bg-white shadow-xl pt-3 pb-[env(safe-area-inset-bottom)]"
+              : isTablet
+              ? "rdp-panel-compact relative z-10 w-[94vw] max-w-[96vw] min-w-[92vw] rounded-2xl border border-neutral-200 bg-white py-2 px-3 shadow-[0_0_0_1px_rgba(0,0,0,0.04),0_8px_28px_rgba(0,0,0,0.12)] pb-[env(safe-area-inset-bottom,0)]"
+              : "rdp-panel-compact fixed z-[100] min-w-[680px] w-fit max-w-[90vw] rounded-2xl bg-white font-sans py-2 px-2 shadow-[0_0_0_1px_rgba(0,0,0,0.04),0_8px_28px_rgba(0,0,0,0.12)]"
             : "relative z-10 w-fit max-w-[90vw] rounded-[32px] border border-neutral-200 bg-white py-3 px-3 shadow-[0_0_0_1px_rgba(0,0,0,0.04),0_8px_28px_rgba(0,0,0,0.12)]"
         }
         style={
-          isPopoverMode && !isMobile && popoverRect
+          isPopoverMode && !isMobile && !isTablet && popoverRect
             ? { top: popoverRect.top, right: popoverRect.right, position: "fixed" as const }
             : undefined
         }
@@ -537,6 +550,17 @@ export default function DateDropdown({
           <>
             <div className="fixed inset-0 z-[99] bg-black/20" onClick={onClose} aria-hidden />
             {panel}
+          </>,
+          document.body
+        );
+      }
+      if (isTablet) {
+        return createPortal(
+          <>
+            <div className="fixed inset-0 z-[99] bg-black/20" onClick={onClose} aria-hidden />
+            <div className="fixed inset-0 z-[100] flex items-center justify-center p-4">
+              {panel}
+            </div>
           </>,
           document.body
         );

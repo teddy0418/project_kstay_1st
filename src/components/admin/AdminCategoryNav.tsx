@@ -6,6 +6,7 @@ import { usePathname } from "next/navigation";
 const ITEMS = [
   { label: "요약", href: "/admin" },
   { label: "숙소 관리", href: "/admin/listings" },
+  { label: "게시판 관리", href: "/admin/board" },
   { label: "예약 관리", href: "/admin/bookings" },
   { label: "정산", href: "/admin/settlements" },
   { label: "테스트 리뷰", href: "/admin/test-review" },
@@ -19,7 +20,7 @@ export default function AdminCategoryNav() {
       className="sticky top-14 z-30 flex flex-wrap items-center gap-2 border-b border-neutral-200 bg-white px-4 py-3 shadow-sm sm:gap-3"
       aria-label="관리자 메뉴"
     >
-      <div className="mx-auto flex w-full max-w-[1200px] flex-wrap items-center gap-2 sm:gap-3">
+      <div className="mx-auto flex w-full max-w-screen-xl flex-wrap items-center gap-2 sm:gap-3">
         {ITEMS.map((item) => {
           const isActive =
             item.href === "/admin"

@@ -1,7 +1,7 @@
 import Container from "@/components/layout/Container";
 import { redirect } from "next/navigation";
 import { diffNights, addDays } from "@/lib/format";
-import { calcGuestServiceFeeKRW } from "@/lib/policy";
+import { calcGuestServiceFeeKRW, NON_REFUNDABLE_DISCOUNT_RATE } from "@/lib/policy";
 import { getPublicListingById } from "@/lib/repositories/listings";
 import CheckoutPaymentCard from "./CheckoutPaymentCard";
 import CheckoutPriceDisplay from "./CheckoutPriceDisplay";
@@ -78,6 +78,11 @@ export default async function CheckoutPage({
   let start = safeStr(resolvedSearchParams?.start);
   let end = safeStr(resolvedSearchParams?.end);
   const guests = safeInt(resolvedSearchParams?.guests, 1);
+  const specialParam = resolvedSearchParams?.special;
+  const specialRequested =
+    specialParam === "1" ||
+    specialParam === "true" ||
+    (Array.isArray(specialParam) && (specialParam[0] === "1" || specialParam[0] === "true"));
 
   // 날짜 없이 진입 시 기본값 (오늘~내일) - 테스트 편의
   if (!start || !end) {
@@ -94,8 +99,13 @@ export default async function CheckoutPage({
   const listing = await getPublicListingById(listingId);
   if (!listing) redirect("/coming-soon");
 
+  const isNonRefundableSpecial =
+    Boolean(listing.nonRefundableSpecialEnabled) && specialRequested;
   const nights = diffNights(start, end);
-  const baseTotal = listing.pricePerNightKRW * Math.max(1, nights);
+  const baseBeforeDiscount = listing.pricePerNightKRW * Math.max(1, nights);
+  const baseTotal = isNonRefundableSpecial
+    ? Math.round(baseBeforeDiscount * (1 - NON_REFUNDABLE_DISCOUNT_RATE))
+    : baseBeforeDiscount;
   const fee = calcGuestServiceFeeKRW(baseTotal);
   const total = baseTotal + fee;
 
@@ -110,11 +120,25 @@ export default async function CheckoutPage({
           <div className="mt-2 text-sm text-neutral-600">
             {c.dates}: {start && end ? `${start} → ${end}` : c.selectDates} · {c.guests}: {guests}
           </div>
-
+          {isNonRefundableSpecial && (
+            <div className="mt-3 sm:mt-4 rounded-xl border border-amber-200 bg-gradient-to-br from-amber-50 to-amber-50/50 px-3 py-3 sm:px-4 sm:py-3.5">
+              <div className="flex flex-wrap items-center gap-2">
+                <span className="font-bold text-amber-900 text-sm sm:text-base">
+                  {lang === "ko" ? "할인 특가 적용" : lang === "ja" ? "割引特価適用" : lang === "zh" ? "已享特价优惠" : "Discount rate applied"}
+                </span>
+                <span className="rounded-full bg-amber-200/80 px-2 py-0.5 text-[10px] sm:text-xs font-semibold text-amber-900">
+                  {lang === "ko" ? "10% 할인" : lang === "ja" ? "10%OFF" : lang === "zh" ? "9折" : "10% off"}
+                </span>
+              </div>
+              <p className="mt-1.5 text-[11px] sm:text-xs text-amber-700/90">
+                {lang === "ko" ? "예약 후 24시간 지나면 취소 시 환불 불가" : lang === "ja" ? "予約から24時間経過後のキャンセルは返金不可" : lang === "zh" ? "预订超过24小时后取消不可退款" : "No refund after 24 hours from booking"}
+              </p>
+            </div>
+          )}
           <CheckoutPriceDisplay baseTotal={baseTotal} fee={fee} total={total} copy={c} />
         </section>
 
-        <CheckoutPaymentCard listingId={listingId} checkIn={start} checkOut={end} guests={guests} />
+        <CheckoutPaymentCard listingId={listingId} checkIn={start} checkOut={end} guests={guests} isNonRefundableSpecial={isNonRefundableSpecial} />
       </div>
     </Container>
   );

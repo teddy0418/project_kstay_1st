@@ -20,7 +20,7 @@ export default function GlobalError({
         primaryLabel="Back to Home"
       />
 
-      <div className="mx-auto max-w-[560px] px-4 pb-10 -mt-10">
+      <div className="mx-auto w-full max-w-screen-sm px-4 pb-10 -mt-10">
         <button
           type="button"
           onClick={() => reset()}

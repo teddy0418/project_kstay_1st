@@ -183,7 +183,7 @@ export default function SearchBar() {
   const dividerH = <div className="sm:hidden h-px bg-neutral-200" />;
 
   return (
-    <div ref={wrapRef} className="mx-auto w-full max-w-[1200px] relative">
+    <div ref={wrapRef} className="mx-auto w-full max-w-screen-xl px-4 relative">
       <div className="relative z-10 rounded-2xl sm:rounded-full border border-neutral-200 bg-white shadow-md">
         <div className="flex flex-col sm:flex-row sm:items-center">
           <button

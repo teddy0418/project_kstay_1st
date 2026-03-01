@@ -8,7 +8,6 @@ type Ctx = { toast: (message: string) => void };
 const ToastContext = createContext<Ctx | null>(null);
 
 export function ToastProvider({ children }: { children: React.ReactNode }) {
-  console.log("[KSTAY] ToastProvider mount (client)");
   const [items, setItems] = useState<Toast[]>([]);
 
   const toast = useCallback((message: string) => {

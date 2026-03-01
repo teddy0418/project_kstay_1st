@@ -222,13 +222,13 @@ export default function HostCalendarTabs({
   return (
     <div className="space-y-6">
       <div className="flex flex-wrap items-center justify-between gap-4">
-        <div className="flex rounded-xl border border-neutral-200 bg-white p-1">
+        <div className="flex rounded-xl border border-neutral-200 bg-white p-1 overflow-x-auto min-w-0">
           {tabs.map((t) => (
             <button
               key={t.id}
               type="button"
               onClick={() => setTab(t.id)}
-              className={`flex items-center gap-2 rounded-lg px-4 py-2.5 text-sm font-semibold transition ${
+              className={`flex items-center gap-2 rounded-lg px-3 py-2.5 text-sm font-semibold transition shrink-0 whitespace-nowrap ${
                 tab === t.id ? "bg-neutral-900 text-white" : "text-neutral-600 hover:bg-neutral-100"
               }`}
             >
@@ -265,35 +265,39 @@ export default function HostCalendarTabs({
               </p>
             )}
           </div>
-          <div className="flex flex-1 flex-wrap items-center justify-end gap-2 min-w-[260px]">
+          <div className="flex w-full flex-1 flex-col gap-3 min-w-0 sm:flex-row sm:flex-wrap sm:items-center sm:justify-end">
             <input
               type="url"
               value={icalUrlInput ?? ""}
               onChange={(e) => setIcalUrlInput(e.target.value)}
               placeholder="https://example.com/calendar.ics"
-              className="min-w-[220px] flex-1 rounded-xl border border-neutral-200 px-3 py-2 text-sm"
+              className="min-w-0 flex-1 rounded-xl border border-neutral-200 px-3 py-2.5 text-sm"
             />
-            <button
-              type="button"
-              onClick={() => void handleSaveIcal()}
-              className="rounded-xl border border-neutral-200 bg-white px-3 py-2 text-xs font-semibold text-neutral-800 hover:bg-neutral-50"
-            >
-              URL 저장
-            </button>
-            <button
-              type="button"
-              onClick={() => void handleSyncIcal()}
-              className="rounded-xl bg-neutral-900 px-3 py-2 text-xs font-semibold text-white hover:bg-neutral-800"
-            >
-              지금 동기화
-            </button>
+            <div className="flex flex-wrap gap-2 sm:gap-3">
+              <button
+                type="button"
+                onClick={() => void handleSaveIcal()}
+                className="rounded-xl border border-neutral-200 bg-white px-4 py-2.5 text-xs font-semibold text-neutral-800 hover:bg-neutral-50"
+              >
+                URL 저장
+              </button>
+              <button
+                type="button"
+                onClick={() => void handleSyncIcal()}
+                className="rounded-xl bg-neutral-900 px-4 py-2.5 text-xs font-semibold text-white hover:bg-neutral-800"
+              >
+                지금 동기화
+              </button>
+            </div>
           </div>
         </div>
       )}
 
       {tab === "calendar" && (
-        <div className="rounded-2xl border border-neutral-200 bg-white overflow-hidden">
-          <div className="flex items-center justify-between border-b border-neutral-100 p-4 flex-wrap gap-2">
+        <div className="rounded-2xl border border-neutral-200 bg-white overflow-hidden min-w-0">
+          <div className="overflow-x-auto overflow-y-hidden">
+            <div className="min-w-[320px]">
+          <div className="flex items-center justify-between border-b border-neutral-100 p-3 sm:p-4 flex-wrap gap-2">
             <div className="flex gap-2">
               <button
                 type="button"
@@ -359,22 +363,22 @@ export default function HostCalendarTabs({
                 return (
                   <div
                     key={di}
-                    className={`min-h-[72px] sm:min-h-[88px] border-r border-neutral-100 p-1.5 sm:p-2 last:border-r-0 ${
+                    className={`min-h-[72px] sm:min-h-[88px] border-r border-neutral-100 p-1.5 sm:p-2 last:border-r-0 overflow-hidden ${
                       isPast ? "bg-neutral-50" : blocked ? "bg-red-50 border-l-2 border-l-red-300" : "bg-white"
                     } ${isPast ? "opacity-80" : ""}`}
                   >
                     {isCurrentMonth && (
                       <>
-                        <div className="flex items-center justify-between gap-0.5 min-h-[24px]">
-                          <span className={`text-xs sm:text-sm font-semibold truncate ${isPast ? "text-neutral-400" : blocked ? "text-red-800" : "text-neutral-900"}`}>
+                        <div className="flex flex-col gap-0.5 min-h-[24px] min-w-0 sm:flex-row sm:items-center sm:justify-between">
+                          <span className={`text-xs sm:text-sm font-semibold truncate ${isPast ? "text-neutral-400" : blocked ? "text-red-800" : "text-neutral-900"}`} title={isPast ? "지난 날짜" : undefined}>
                             {day}
-                            {isPast && <span className="ml-0.5 text-[10px] sm:text-xs text-neutral-400">(지남)</span>}
+                            {isPast && <span className="hidden sm:inline ml-0.5 text-[10px] sm:text-xs text-neutral-400">(지남)</span>}
                           </span>
                           {!booked && !isPast && (
                             <button
                               type="button"
                               onClick={() => toggleBlock(dateStr)}
-                              className={`rounded px-1 py-0.5 min-w-[28px] text-[10px] font-semibold shrink-0 ${
+                              className={`rounded px-1 py-0.5 w-fit min-w-[28px] text-[10px] font-semibold shrink-0 self-start sm:self-auto ${
                                 blocked
                                   ? "bg-emerald-100 text-emerald-700 hover:bg-emerald-200"
                                   : "bg-white text-red-600 hover:bg-red-50 border border-red-200"
@@ -386,7 +390,7 @@ export default function HostCalendarTabs({
                           )}
                         </div>
                         {!booked && !blocked && Number(price) > 0 && (
-                          <div className="mt-0.5 text-[10px] sm:text-xs text-neutral-600 truncate">{formatKrw(Number(price))}</div>
+                          <div className="mt-0.5 text-[10px] sm:text-xs text-neutral-600 truncate">{formatKrw(Number.isFinite(Number(price)) ? Number(price) : 0)}</div>
                         )}
                         {booked && (
                           <button
@@ -413,6 +417,8 @@ export default function HostCalendarTabs({
               })}
             </div>
           ))}
+            </div>
+          </div>
         </div>
       )}
 
@@ -498,12 +504,12 @@ export default function HostCalendarTabs({
       )}
 
       {tab === "pricing" && (
-        <div className="rounded-2xl border border-neutral-200 bg-white p-6">
-          <div className="mb-4 flex flex-wrap items-center justify-between gap-4">
-            <p className="text-sm text-neutral-600">
-              날짜별로 요금을 다르게 설정할 수 있습니다. 기본 요금: {formatKrw(basePriceKrw)}
+        <div className="rounded-2xl border border-neutral-200 bg-white p-4 sm:p-6">
+          <div className="mb-4 flex flex-wrap items-center justify-between gap-3">
+            <p className="text-xs sm:text-sm text-neutral-600 min-w-0">
+              날짜별 요금 설정 · 기본: {formatKrw(basePriceKrw)}
             </p>
-            <div className="flex items-center gap-1 rounded-xl border border-neutral-200 bg-white p-1">
+            <div className="flex items-center gap-1 rounded-xl border border-neutral-200 bg-white p-1 shrink-0">
               <button
                 type="button"
                 onClick={() => {
@@ -517,7 +523,7 @@ export default function HostCalendarTabs({
               >
                 <ChevronLeft className="h-5 w-5" />
               </button>
-              <span className="min-w-[8rem] px-3 py-2 text-center text-sm font-semibold text-neutral-900">
+              <span className="min-w-0 sm:min-w-[8rem] px-2 sm:px-3 py-2 text-center text-sm font-semibold text-neutral-900">
                 {year}년 {MONTHS[month - 1]}
               </span>
               <button
@@ -535,41 +541,45 @@ export default function HostCalendarTabs({
               </button>
             </div>
           </div>
-          <div className="flex flex-wrap gap-2">
+          {/* 모바일: 3열 그리드로 콤팩트 · 데스크: 4~5열 */}
+          <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-2 min-w-0">
             {Array.from(
               { length: new Date(year, month, 0).getDate() },
               (_, i) => i + 1
             ).map((day) => {
               const dateStr = `${year}-${String(month).padStart(2, "0")}-${String(day).padStart(2, "0")}`;
-              const price = datePrices[dateStr] ?? basePriceKrw;
+              const rawPrice = datePrices[dateStr] ?? basePriceKrw;
+              const price = Number.isFinite(Number(rawPrice)) ? Number(rawPrice) : basePriceKrw;
               return (
                 <div
                   key={dateStr}
-                  className="flex items-center gap-2 rounded-xl border border-neutral-200 bg-neutral-50 px-3 py-2"
+                  className="flex flex-col sm:flex-row sm:items-center gap-1 sm:gap-2 rounded-lg sm:rounded-xl border border-neutral-200 bg-neutral-50 px-2 py-1.5 sm:px-3 sm:py-2 min-w-0"
                 >
-                  <span className="text-sm font-medium">{month}/{day}</span>
-                  <input
-                    type="number"
-                    value={price}
-                    onChange={(e) => {
-                      const v = parseInt(e.target.value, 10);
-                      if (!Number.isNaN(v) && v >= 0) {
-                        setDatePrices((prev) => ({ ...prev, [dateStr]: v }));
-                      }
-                    }}
-                    onBlur={(e) => {
-                      if (!listingId) return;
-                      const v = parseInt((e.target as HTMLInputElement).value, 10);
-                      const priceKrw = Number.isNaN(v) || v < 0 ? basePriceKrw : v;
-                      fetch(`/api/host/listings/${listingId}/date-prices`, {
-                        method: "PUT",
-                        headers: { "Content-Type": "application/json" },
-                        body: JSON.stringify({ date: dateStr, priceKrw }),
-                      });
-                    }}
-                    className="w-24 rounded border border-neutral-200 px-2 py-1 text-sm"
-                  />
-                  <span className="text-xs text-neutral-500">원</span>
+                  <span className="text-xs sm:text-sm font-medium shrink-0 tabular-nums">{month}/{day}</span>
+                  <div className="flex items-center gap-1 min-w-0">
+                    <input
+                      type="number"
+                      value={price}
+                      onChange={(e) => {
+                        const v = parseInt(e.target.value, 10);
+                        if (!Number.isNaN(v) && v >= 0) {
+                          setDatePrices((prev) => ({ ...prev, [dateStr]: v }));
+                        }
+                      }}
+                      onBlur={(e) => {
+                        if (!listingId) return;
+                        const v = parseInt((e.target as HTMLInputElement).value, 10);
+                        const priceKrw = Number.isNaN(v) || v < 0 ? basePriceKrw : v;
+                        fetch(`/api/host/listings/${listingId}/date-prices`, {
+                          method: "PUT",
+                          headers: { "Content-Type": "application/json" },
+                          body: JSON.stringify({ date: dateStr, priceKrw }),
+                        });
+                      }}
+                      className="w-full min-w-0 max-w-[6rem] sm:w-20 rounded border border-neutral-200 px-1.5 py-1 text-xs sm:text-sm tabular-nums"
+                    />
+                    <span className="text-[10px] sm:text-xs text-neutral-500 shrink-0">원</span>
+                  </div>
                 </div>
               );
             })}

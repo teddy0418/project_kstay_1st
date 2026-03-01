@@ -68,12 +68,12 @@ export default function PopularDestinations() {
   };
 
   return (
-    <section className="mt-8">
+    <section className="mt-8 min-w-0 overflow-x-hidden">
       <Container>
-        <div className="flex items-end justify-between gap-3">
-          <div>
-            <div className="text-lg font-semibold tracking-tight">{t("popular_destinations")}</div>
-            <div className="mt-1 text-sm text-neutral-500">{t("swipe_to_explore")}</div>
+        <div className="flex flex-wrap items-end justify-between gap-3">
+          <div className="min-w-0">
+            <div className="text-base font-semibold tracking-tight md:text-lg">{t("popular_destinations")}</div>
+            <div className="mt-1 text-xs text-neutral-500 md:text-sm">{t("swipe_to_explore")}</div>
           </div>
         </div>
 
@@ -104,6 +104,7 @@ export default function PopularDestinations() {
             <ChevronRight className="h-5 w-5" />
           </button>
 
+          <div className="min-w-0 overflow-hidden">
           <div
             ref={scrollerRef}
             className="no-scrollbar flex gap-4 overflow-x-auto scroll-smooth snap-x snap-mandatory pr-2"
@@ -112,7 +113,7 @@ export default function PopularDestinations() {
               <Link
                 key={d.slug}
                 href={`/browse?where=${encodeURIComponent(d.value)}`}
-                className="snap-start shrink-0 w-[220px] rounded-2xl border border-neutral-200 bg-white shadow-sm hover:shadow-md transition overflow-hidden"
+                className="snap-start shrink-0 w-[200px] min-w-[180px] max-w-[45vw] sm:max-w-none sm:w-[220px] rounded-2xl border border-neutral-200 bg-white shadow-sm hover:shadow-md transition overflow-hidden"
               >
                 <div className="h-[130px] bg-neutral-100">
                   <DestinationImage slug={d.slug} label={d.label} />
@@ -123,6 +124,7 @@ export default function PopularDestinations() {
                 </div>
               </Link>
             ))}
+          </div>
           </div>
         </div>
       </Container>

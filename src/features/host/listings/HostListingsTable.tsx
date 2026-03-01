@@ -8,6 +8,13 @@ import { useToast } from "@/components/ui/ToastProvider";
 
 type Row = { id: string; title: string | null; status: string; city: string; area: string };
 
+const STATUS_KR: Record<string, string> = {
+  APPROVED: "승인됨",
+  DRAFT: "초안",
+  PENDING: "검토 대기",
+  REJECTED: "반려됨",
+};
+
 export default function HostListingsTable({ listings }: { listings: Row[] }) {
   const router = useRouter();
   const { toast } = useToast();
@@ -44,7 +51,7 @@ export default function HostListingsTable({ listings }: { listings: Row[] }) {
               {l.city} · {l.area}
             </span>
             <span className="ml-2 rounded-full border border-neutral-200 px-2 py-0.5 text-xs text-neutral-600">
-              {l.status}
+              {STATUS_KR[l.status] ?? l.status}
             </span>
           </div>
           <div className="flex items-center gap-2">

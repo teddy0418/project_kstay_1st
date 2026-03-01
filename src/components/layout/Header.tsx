@@ -82,7 +82,7 @@ export default function Header() {
 
   return (
     <header className="sticky top-0 z-[90] border-b border-neutral-200 bg-white/85 backdrop-blur supports-[backdrop-filter]:bg-white/60">
-      <Container className="flex h-[76px] items-center justify-between gap-3">
+      <Container className="flex flex-wrap h-[76px] items-center justify-between gap-3">
         <Link href="/" className="flex items-center gap-2 shrink-0">
           <div className="h-10 w-10 rounded-xl bg-brand text-brand-foreground grid place-items-center font-semibold">
             K
@@ -93,8 +93,8 @@ export default function Header() {
           </div>
         </Link>
 
-        <div className="flex flex-1 justify-center">
-          <div className="relative grid grid-cols-2 rounded-full border border-neutral-200 bg-white p-1 shadow-soft min-w-[210px]">
+        <div className="flex flex-1 justify-center min-w-0">
+          <div className="relative grid grid-cols-2 rounded-full border border-neutral-200 bg-white p-1 shadow-soft w-full max-w-[280px] min-w-0">
             <span
               className={cn(
                 "absolute inset-y-1 left-1 w-[calc(50%-4px)] rounded-full bg-neutral-900",
@@ -107,23 +107,23 @@ export default function Header() {
             <Link
               href="/"
               className={cn(
-                "relative z-10 inline-flex items-center justify-center gap-2 rounded-full px-4 py-2 text-sm font-semibold transition-colors",
+                "relative z-10 inline-flex items-center justify-center gap-1.5 sm:gap-2 rounded-full px-2 sm:px-4 py-2 text-xs sm:text-sm font-semibold transition-colors min-w-0 overflow-hidden",
                 activeIndex === 0 ? "text-white" : "text-neutral-700 hover:bg-neutral-50"
               )}
             >
-              <Home className="h-4 w-4" />
-              {t("stays")}
+              <Home className="h-4 w-4 shrink-0" />
+              <span className="whitespace-nowrap">{t("stays")}</span>
             </Link>
 
             <Link
               href="/board"
               className={cn(
-                "relative z-10 inline-flex items-center justify-center gap-2 rounded-full px-4 py-2 text-sm font-semibold transition-colors",
+                "relative z-10 inline-flex items-center justify-center gap-1.5 sm:gap-2 rounded-full px-2 sm:px-4 py-2 text-xs sm:text-sm font-semibold transition-colors min-w-0 overflow-hidden",
                 activeIndex === 1 ? "text-white" : "text-neutral-700 hover:bg-neutral-50"
               )}
             >
-              <MapPin className="h-4 w-4" />
-              {t("board")}
+              <MapPin className="h-4 w-4 shrink-0" />
+              <span className="whitespace-nowrap">{t("board")}</span>
             </Link>
           </div>
         </div>

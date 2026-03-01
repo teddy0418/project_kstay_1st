@@ -78,7 +78,7 @@ export default function AdminSettlementsPage() {
       ) : rows.length === 0 ? (
         <div className="mt-6 py-8 text-center text-neutral-500">정산 후보 예약이 없습니다. (결제 완료된 CONFIRMED 예약만 표시됩니다)</div>
       ) : (
-        <div className="mt-6 overflow-x-auto">
+        <div className="mt-6 w-full min-w-0 overflow-x-auto">
           <table className="min-w-[960px] w-full text-sm">
             <thead className="text-left text-neutral-500">
               <tr className="border-b border-neutral-200">

@@ -11,9 +11,9 @@ export default async function HostPendingPage() {
 
   return (
     <div className="grid gap-6">
-      <div className="rounded-3xl border border-neutral-200 bg-white shadow-sm p-8">
-        <div className="text-2xl font-extrabold tracking-tight">숙소 승인을 진행 중입니다</div>
-        <p className="mt-3 text-sm text-neutral-600 leading-6">
+      <div className="rounded-2xl border border-neutral-200 bg-white shadow-sm p-4 sm:p-6 lg:p-8">
+        <div className="text-xl font-extrabold tracking-tight md:text-2xl">숙소 승인을 진행 중입니다</div>
+        <p className="mt-3 text-xs text-neutral-600 leading-6 md:text-sm">
           등록하신 숙소 정보를 운영팀이 확인하고 있어요.
           <br />
           승인 완료 후부터 파트너스 대시보드(홈/판매/예약/정산)를 이용할 수 있습니다.

@@ -14,6 +14,7 @@ type Props = {
   checkIn: string;
   checkOut: string;
   guests: number;
+  isNonRefundableSpecial?: boolean;
 };
 
 type CreateBookingResponse = {
@@ -155,6 +156,7 @@ export default function CheckoutPaymentCard(props: Props) {
         guestsPets: 0,
         currency,
         paymentMethod,
+        isNonRefundableSpecial: props.isNonRefundableSpecial ?? false,
       });
 
       const paymentProvider = (process.env.NEXT_PUBLIC_PAYMENT_PROVIDER || "MOCK").toUpperCase();

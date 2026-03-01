@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import { useEffect, useMemo, useRef, useState } from "react";
-import { Bell, Mail, User2, Settings, LogOut } from "lucide-react";
+import { Bell, Mail, User2, Settings, LogOut, ExternalLink } from "lucide-react";
 
 type MenuKey = "notif" | "msg" | "profile" | null;
 
@@ -72,26 +72,28 @@ export default function HostTopRightMenus() {
   };
 
   return (
-    <div ref={wrapRef} className="relative flex items-center gap-2">
+    <div ref={wrapRef} className="relative flex flex-shrink-0 flex-wrap items-center justify-end gap-1 sm:gap-2 min-w-0">
       <Link
         href="/"
-        className="rounded-full border border-neutral-200 bg-white px-4 py-2 text-sm font-semibold text-neutral-700 hover:bg-neutral-50 transition shrink-0"
+        className="rounded-full border border-neutral-200 bg-white px-2.5 py-1.5 sm:px-4 sm:py-2 text-[11px] sm:text-sm font-medium text-neutral-700 hover:bg-neutral-50 transition shrink-0 inline-flex items-center justify-center gap-1 sm:gap-1.5"
+        aria-label="게스트 모드로 전환"
       >
-        게스트 모드로 전환
+        <ExternalLink className="h-3.5 w-3.5 sm:h-4 sm:w-4 shrink-0" aria-hidden />
+        <span>게스트 모드</span>
       </Link>
       <div className="relative">
         <button
           type="button"
           onClick={() => toggle("notif")}
           className={cx(
-            "h-10 w-10 rounded-full inline-flex items-center justify-center",
+            "h-9 w-9 sm:h-10 sm:w-10 rounded-full inline-flex items-center justify-center shrink-0",
             "hover:bg-neutral-100 transition",
             open === "notif" && "bg-neutral-100"
           )}
           aria-label="알림"
           aria-expanded={open === "notif"}
         >
-          <Bell className="h-5 w-5" />
+          <Bell className="h-4 w-4 sm:h-5 sm:w-5" />
           {counts.notif > 0 ? (
             <span className="absolute right-2 top-2 h-2.5 w-2.5 rounded-full bg-red-500 ring-2 ring-white" />
           ) : null}
@@ -116,14 +118,14 @@ export default function HostTopRightMenus() {
           type="button"
           onClick={() => toggle("msg")}
           className={cx(
-            "h-10 w-10 rounded-full inline-flex items-center justify-center",
+            "h-9 w-9 sm:h-10 sm:w-10 rounded-full inline-flex items-center justify-center shrink-0",
             "hover:bg-neutral-100 transition",
             open === "msg" && "bg-neutral-100"
           )}
           aria-label="메시지"
           aria-expanded={open === "msg"}
         >
-          <Mail className="h-5 w-5" />
+          <Mail className="h-4 w-4 sm:h-5 sm:w-5" />
           {counts.msg > 0 ? (
             <span className="absolute right-2 top-2 h-2.5 w-2.5 rounded-full bg-red-500 ring-2 ring-white" />
           ) : null}
@@ -148,14 +150,14 @@ export default function HostTopRightMenus() {
           type="button"
           onClick={() => toggle("profile")}
           className={cx(
-            "h-10 w-10 rounded-full inline-flex items-center justify-center",
+            "h-9 w-9 sm:h-10 sm:w-10 rounded-full inline-flex items-center justify-center shrink-0",
             "hover:bg-neutral-100 transition",
             open === "profile" && "bg-neutral-100"
           )}
           aria-label="프로필"
           aria-expanded={open === "profile"}
         >
-          <User2 className="h-5 w-5" />
+          <User2 className="h-4 w-4 sm:h-5 sm:w-5" />
         </button>
 
         <Panel open={open === "profile"} widthClass="w-64">

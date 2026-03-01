@@ -19,7 +19,7 @@ export default function EmptyState({
 }) {
   return (
     <div className="min-h-[70vh] flex items-center justify-center px-4">
-      <div className="w-full max-w-[560px] rounded-3xl border border-neutral-200 bg-white shadow-sm p-8 text-center">
+      <div className="w-full max-w-screen-sm mx-auto rounded-3xl border border-neutral-200 bg-white shadow-sm p-6 md:p-8 text-center">
         <div className="text-2xl font-extrabold tracking-tight">{title}</div>
         {description ? <div className="mt-3 text-sm text-neutral-600 leading-6">{description}</div> : null}
 

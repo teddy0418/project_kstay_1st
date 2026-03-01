@@ -115,7 +115,7 @@ export default function AdminListingsPage() {
       ) : items.length === 0 ? (
         <div className="rounded-2xl border border-neutral-200 bg-white p-8 text-center text-neutral-500">해당하는 숙소가 없습니다.</div>
       ) : (
-        <div className="overflow-x-auto rounded-2xl border border-neutral-200 bg-white">
+        <div className="w-full min-w-0 overflow-x-auto rounded-2xl border border-neutral-200 bg-white">
           <table className="w-full min-w-[720px] text-sm">
             <thead className="border-b border-neutral-200 bg-neutral-50 text-left text-neutral-600">
               <tr>

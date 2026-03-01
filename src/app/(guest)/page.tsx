@@ -35,10 +35,10 @@ export default async function Page() {
       <PopularDestinations />
 
       <Container className="py-10">
-        <div className="flex items-end justify-between gap-4">
-          <div>
-            <h2 className="text-xl font-semibold tracking-tight">{c.title}</h2>
-            <p className="mt-1 text-sm text-neutral-600">{c.subtitle}</p>
+        <div className="flex flex-wrap items-end justify-between gap-4">
+          <div className="min-w-0">
+            <h2 className="text-base font-semibold tracking-tight md:text-xl">{c.title}</h2>
+            <p className="mt-1 text-xs text-neutral-600 md:text-sm">{c.subtitle}</p>
           </div>
         </div>
 

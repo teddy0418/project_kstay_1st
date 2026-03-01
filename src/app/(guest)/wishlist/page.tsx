@@ -11,8 +11,8 @@ export default function WishlistPage() {
 
   return (
     <Container className="py-10">
-      <h1 className="text-2xl font-semibold tracking-tight">{t("wishlist")}</h1>
-      <p className="mt-2 text-sm text-neutral-500">{t("wishlist_desc")}</p>
+      <h1 className="text-xl font-semibold tracking-tight md:text-2xl">{t("wishlist")}</h1>
+      <p className="mt-2 text-xs text-neutral-500 md:text-sm">{t("wishlist_desc")}</p>
 
       <div className="mt-6">
         {ids.length === 0 ? (
@@ -29,7 +29,7 @@ export default function WishlistPage() {
               {t("clear")}
             </button>
 
-            <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
+            <div className="grid grid-cols-1 gap-3 md:grid-cols-2 lg:grid-cols-3">
               {ids.map((listingId) => (
                 <Link
                   key={listingId}

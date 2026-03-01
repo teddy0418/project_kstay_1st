@@ -130,8 +130,8 @@ function AuthModal({
       <div className="absolute inset-0 flex items-center justify-center p-4">
         <div
           ref={panelRef}
-          className="w-full max-w-[560px] rounded-3xl bg-white shadow-xl border border-neutral-200
-                     transition-all duration-200 ease-out opacity-100 translate-y-0"
+          className="w-full max-w-screen-sm rounded-3xl bg-white shadow-xl border border-neutral-200
+                     transition-all duration-200 ease-out opacity-100 translate-y-0 mx-4"
         >
           <div className="flex items-center justify-between px-6 py-4 border-b border-neutral-200">
             <button

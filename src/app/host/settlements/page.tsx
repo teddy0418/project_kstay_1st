@@ -10,9 +10,9 @@ export default async function HostSettlementsPage() {
   if (current.status === "PENDING") redirect("/host/pending");
 
   return (
-    <div className="rounded-3xl border border-neutral-200 bg-white shadow-sm p-8">
-      <div className="text-2xl font-extrabold tracking-tight">정산 관리</div>
-      <p className="mt-2 text-sm text-neutral-600">정산 내역/출금 요청 영역 (MVP)</p>
+    <div className="rounded-2xl border border-neutral-200 bg-white shadow-sm p-4 sm:p-6 lg:p-8">
+      <div className="text-xl font-extrabold tracking-tight md:text-2xl">정산 관리</div>
+      <p className="mt-2 text-xs text-neutral-600 md:text-sm">정산 내역/출금 요청 영역 (MVP)</p>
     </div>
   );
 }

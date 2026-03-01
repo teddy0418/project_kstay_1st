@@ -39,8 +39,8 @@ export default async function HostCalendarPage(props: PageProps) {
   return (
     <div className="space-y-6">
       <div>
-        <h1 className="text-2xl font-bold text-neutral-900">캘린더</h1>
-        <p className="mt-1 text-sm text-neutral-500">
+        <h1 className="text-xl font-bold text-neutral-900 md:text-2xl">캘린더</h1>
+        <p className="mt-1 text-xs text-neutral-500 md:text-sm">
           통합 달력, 예약 목록, 유동 가격을 한곳에서 관리하세요.
         </p>
       </div>

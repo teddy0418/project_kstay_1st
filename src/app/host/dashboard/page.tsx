@@ -48,7 +48,7 @@ export default async function HostDashboardPage(props: PageProps) {
     { label: "오늘 입실", value: stats.todayCheckIn },
     { label: "오늘 퇴실", value: stats.todayCheckOut },
     { label: "새 메시지", value: stats.newMessages },
-    { label: "신규 취소", value: stats.newCancels, danger: stats.newCancels > 0 },
+    { label: "신규 취소", value: Number.isFinite(stats.newCancels) ? stats.newCancels : 0, danger: (stats.newCancels ?? 0) > 0 },
     { label: "정산 예정액", value: `₩${formatKRW(stats.pendingSettlementKrw)}` },
   ];
 
@@ -61,23 +61,23 @@ export default async function HostDashboardPage(props: PageProps) {
   return (
     <div className="grid gap-6">
       <div>
-        <div className="text-3xl font-extrabold tracking-tight">DASHBOARD</div>
-        <div className="mt-1 text-sm text-neutral-500">KSTAY 파트너스 운영을 한눈에 확인하세요</div>
+        <div className="text-xl font-extrabold tracking-tight md:text-3xl">DASHBOARD</div>
+        <div className="mt-1 text-xs text-neutral-500 md:text-sm">KSTAY 파트너스 운영을 한눈에 확인하세요</div>
       </div>
 
-      <div className="grid grid-cols-2 md:grid-cols-5 gap-3">
+      <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 md:grid-cols-5">
         {summary.map((s) => (
-          <div key={s.label} className="rounded-2xl border border-neutral-200 bg-white shadow-sm p-4">
+          <div key={s.label} className="rounded-2xl border border-neutral-200 bg-white shadow-sm p-4 min-w-0">
             <div className="text-xs text-neutral-500">{s.label}</div>
-            <div className={"mt-2 text-xl font-extrabold " + (s.danger ? "text-red-600" : "text-neutral-900")}>{s.value}</div>
+            <div className={"mt-2 text-xl font-extrabold truncate " + (s.danger ? "text-red-600" : "text-neutral-900")}>{s.value}</div>
           </div>
         ))}
       </div>
 
       <div className="grid grid-cols-1 lg:grid-cols-10 gap-4">
-        <div className="lg:col-span-7 rounded-3xl border border-neutral-200 bg-white shadow-sm p-6">
-          <div className="flex flex-wrap items-center justify-between gap-3">
-            <div className="text-lg font-bold">이번 주 예약 현황</div>
+        <div className="lg:col-span-7 rounded-2xl border border-neutral-200 bg-white shadow-sm p-3 sm:p-6">
+          <div className="flex flex-wrap items-center justify-between gap-2 sm:gap-3">
+            <div className="text-base sm:text-lg font-bold min-w-0">이번 주 예약 현황</div>
             <div className="flex flex-wrap items-center gap-2">
               <Suspense fallback={<span className="text-sm text-neutral-500">숙소 불러오는 중…</span>}>
                 <DashboardListingSelector listings={listings.map((l) => ({ id: l.id, title: l.title }))} />
@@ -116,7 +116,7 @@ export default async function HostDashboardPage(props: PageProps) {
                     ? "판매 중지됨 (이 날짜는 예약 불가)"
                     : "빈방 (예약 가능)";
               return (
-                <div key={row.date} className={`flex items-center justify-between rounded-2xl border px-4 py-3 ${rowBg}`}>
+                <div key={row.date} className={`flex items-center justify-between gap-2 rounded-xl sm:rounded-2xl border px-3 py-2.5 sm:px-4 sm:py-3 ${rowBg}`}>
                   <div>
                     <div className={`text-sm font-semibold ${isPast ? "text-neutral-500" : "text-neutral-900"}`}>
                       {row.dateLabel}
@@ -138,30 +138,39 @@ export default async function HostDashboardPage(props: PageProps) {
             })}
           </div>
         </div>
-        <div className="lg:col-span-3 rounded-3xl border border-neutral-200 bg-white shadow-sm p-6">
-          <div className="text-lg font-bold">빠른 작업</div>
-          <div className="mt-4 grid gap-3">
-            <Link href="/host/account" className="rounded-2xl border border-neutral-200 bg-white px-4 py-3 text-sm font-semibold hover:bg-neutral-50 transition text-center block">
+        <div className="lg:col-span-3 rounded-2xl border border-neutral-200 bg-white shadow-sm p-4 sm:p-6">
+          <div className="text-base sm:text-lg font-bold">빠른 작업</div>
+          <div className="mt-2 sm:mt-1 text-xs sm:text-sm text-neutral-500">자주 쓰는 기능</div>
+          <div className="mt-3 sm:mt-4 grid gap-2 sm:gap-3">
+            <Link href="/host/account" className="rounded-xl sm:rounded-2xl border border-neutral-200 bg-white px-3 py-2.5 sm:px-4 sm:py-3 text-xs sm:text-sm font-semibold hover:bg-neutral-50 transition text-center block">
               정산 계좌 설정
             </Link>
-            <Link href="/coming-soon" className="rounded-2xl border border-red-300 bg-white px-4 py-3 text-sm font-semibold text-red-600 hover:bg-red-50 transition text-center">
+            <Link href="/coming-soon" className="rounded-xl sm:rounded-2xl border border-red-300 bg-white px-3 py-2.5 sm:px-4 sm:py-3 text-xs sm:text-sm font-semibold text-red-600 hover:bg-red-50 transition text-center block">
               전체 판매 중지
             </Link>
-            <Link href="/" className="rounded-2xl border border-neutral-200 bg-white px-4 py-3 text-sm font-semibold hover:bg-neutral-50 transition text-center block">숙소 미리보기 (게스트 페이지)</Link>
-            <Link href="/coming-soon" className="rounded-2xl border border-neutral-200 bg-white px-4 py-3 text-sm font-semibold hover:bg-neutral-50 transition text-center">
+            <Link href="/" className="rounded-xl sm:rounded-2xl border border-neutral-200 bg-white px-3 py-2.5 sm:px-4 sm:py-3 text-xs sm:text-sm font-semibold hover:bg-neutral-50 transition text-center block">숙소 미리보기 (게스트 페이지)</Link>
+            <Link href="/coming-soon" className="rounded-xl sm:rounded-2xl border border-neutral-200 bg-white px-3 py-2.5 sm:px-4 sm:py-3 text-xs sm:text-sm font-semibold hover:bg-neutral-50 transition text-center block">
               예약자 명단 다운로드
             </Link>
           </div>
         </div>
       </div>
 
-      <div className="rounded-3xl border border-neutral-200 bg-white shadow-sm p-6">
-        <div className="text-lg font-bold">KSTAY 센터</div>
-        <div className="mt-4 grid gap-3">
+      <div className="rounded-2xl border border-neutral-200 bg-white shadow-sm p-4 sm:p-6">
+        <div className="text-base sm:text-lg font-bold">KSTAY 센터</div>
+        <div className="mt-0.5 sm:mt-1 text-xs sm:text-sm text-neutral-500">공지사항 · 운영 인사이트 · 가이드라인</div>
+        <div className="mt-3 sm:mt-4 grid gap-2 sm:gap-3">
           {centerFeed.map((x, idx) => (
-            <div key={idx} className="flex items-start gap-3 rounded-2xl border border-neutral-200 bg-[#F9FAFB] px-4 py-3">
-              <span className="text-xs font-bold text-neutral-700 mt-0.5">{x.type}</span>
-              <div className="text-sm font-semibold text-neutral-900">{x.title}</div>
+            <div key={idx} className="flex items-start gap-2 sm:gap-3 rounded-xl sm:rounded-2xl border border-neutral-200 bg-[#F9FAFB] px-3 py-2.5 sm:px-4 sm:py-3 min-w-0">
+              <span
+                className={[
+                  "shrink-0 rounded-full px-2.5 py-0.5 text-[10px] sm:text-xs font-semibold",
+                  x.type === "공지" ? "bg-neutral-900 text-white" : x.type === "가이드" ? "bg-emerald-100 text-emerald-800" : "bg-neutral-100 text-neutral-700",
+                ].join(" ")}
+              >
+                {x.type}
+              </span>
+              <div className="min-w-0 flex-1 text-xs sm:text-sm font-semibold text-neutral-900 leading-snug">{x.title}</div>
             </div>
           ))}
         </div>

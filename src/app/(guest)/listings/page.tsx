@@ -5,7 +5,7 @@ import { getServerLang } from "@/lib/i18n/server";
 
 const COPY = {
   en: {
-    title: "Listings (debug)",
+    title: "Listings",
     subtitle: "If detail navigation fails, click an ID below to verify routing.",
   },
   ko: {
@@ -28,8 +28,8 @@ export default async function ListingsIndexPage() {
   const listings = await getPublicListings();
   return (
     <Container className="py-10">
-      <h1 className="text-2xl font-semibold tracking-tight">{c.title}</h1>
-      <p className="mt-2 text-sm text-neutral-600">{c.subtitle}</p>
+      <h1 className="text-base font-semibold tracking-tight md:text-xl lg:text-2xl">{c.title}</h1>
+      <p className="mt-2 text-xs text-neutral-600 md:text-sm">{c.subtitle}</p>
 
       <div className="mt-6 grid gap-2">
         {listings.map((l) => (

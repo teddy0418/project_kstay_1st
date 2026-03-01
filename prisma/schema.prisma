@@ -342,3 +342,17 @@ model WishlistItem {
   @@index([listingId])
   @@index([userId, createdAt])
 }
+
+/// 게스트 게시판 글 (admin에서만 작성/수정/삭제). 다국어 title/excerpt/content
+model BoardPost {
+  id        String   @id @default(cuid())
+  cover    String   @db.Text
+  title    Json     // { en, ko, ja, zh }
+  excerpt  Json
+  content  Json
+  sortOrder Int     @default(0)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([sortOrder, createdAt])
+}

@@ -8,9 +8,9 @@ export default async function AdminLayout({ children }: { children: React.ReactN
   if (!admin) redirect("/");
 
   return (
-    <div className="min-h-screen bg-[#F9FAFB]">
+    <div className="min-h-screen min-w-0 overflow-x-hidden bg-[#F9FAFB]">
       <div className="sticky top-0 z-40 border-b border-neutral-200 bg-white/95 backdrop-blur">
-        <div className="mx-auto max-w-[1200px] px-4">
+        <div className="mx-auto w-full max-w-screen-xl px-4">
           <div className="flex h-14 items-center justify-between">
             <Link href="/admin" className="font-extrabold tracking-tight">
               KSTAY <span className="text-rose-600 font-semibold">ADMIN</span>
@@ -27,7 +27,7 @@ export default async function AdminLayout({ children }: { children: React.ReactN
 
       <AdminCategoryNav />
 
-      <main className="mx-auto max-w-[1200px] px-4 py-6">{children}</main>
+      <main className="mx-auto w-full min-w-0 max-w-screen-xl px-4 py-6">{children}</main>
     </div>
   );
 }

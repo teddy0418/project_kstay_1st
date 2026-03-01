@@ -220,7 +220,7 @@ export default function BrowseMapLayout({ items }: { items: Listing[] }) {
               </div>
             ) : (
               <>
-                <div className="grid gap-x-6 gap-y-10 sm:grid-cols-2">
+                <div className="grid grid-cols-1 gap-x-6 gap-y-10 sm:grid-cols-2">
                   {visibleListings.map((l) => (
                     <ListingCard
                       key={l.id}
@@ -282,7 +282,7 @@ export default function BrowseMapLayout({ items }: { items: Listing[] }) {
                           src={selectedListing.images[0]}
                           alt={selectedListing.title}
                           fill
-                          className="object-cover"
+                          className="h-full w-full object-cover"
                           sizes="80px"
                         />
                       ) : null}
@@ -324,7 +324,7 @@ export default function BrowseMapLayout({ items }: { items: Listing[] }) {
           </div>
         ) : (
           <>
-            <div className="grid gap-x-6 gap-y-10 sm:grid-cols-2 xl:grid-cols-2">
+            <div className="grid grid-cols-1 gap-x-6 gap-y-10 sm:grid-cols-2 xl:grid-cols-2">
               {visibleListings.map((l) => (
                 <ListingCard
                   key={l.id}

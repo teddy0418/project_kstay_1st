@@ -53,7 +53,7 @@ export default function AuthModal({
 
       <div
         className={cn(
-          "relative w-full max-w-[520px] rounded-2xl border border-neutral-200 bg-white shadow-xl",
+          "relative w-full max-w-screen-sm rounded-2xl border border-neutral-200 bg-white shadow-xl mx-4",
           "transition-all duration-200 ease-out",
           entered ? "opacity-100 translate-y-0" : "opacity-0 translate-y-2"
         )}

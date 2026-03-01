@@ -12,8 +12,8 @@ export default async function HostAccountPage() {
   return (
     <div className="space-y-8">
       <div>
-        <h1 className="text-2xl font-bold text-neutral-900">계정 관리</h1>
-        <p className="mt-1 text-sm text-neutral-500">
+        <h1 className="text-xl font-bold text-neutral-900 md:text-2xl">계정 관리</h1>
+        <p className="mt-1 text-xs text-neutral-500 md:text-sm">
           정산 계좌를 설정하면 정산 금액이 등록된 계좌로 출금됩니다. 이름·사진은 내 프로필에서 설정한 내용이 숙소 상세에 표시됩니다.
         </p>
       </div>

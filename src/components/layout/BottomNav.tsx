@@ -15,11 +15,10 @@ const items = [
 
 export default function BottomNav() {
   const pathname = usePathname();
-  console.log("[KSTAY] 8. BottomNav render (client)", { pathname });
 
   return (
     <nav className="md:hidden fixed bottom-0 left-0 right-0 z-[70] border-t border-neutral-200 bg-white/90 backdrop-blur supports-[backdrop-filter]:bg-white/70">
-      <div className="mx-auto max-w-[520px] grid grid-cols-5 px-2 py-2">
+      <div className="mx-auto w-full max-w-screen-sm grid grid-cols-5 px-4 py-2">
         {items.map((it) => {
           const active =
             pathname === it.href || (it.href !== "/" && pathname.startsWith(it.href));

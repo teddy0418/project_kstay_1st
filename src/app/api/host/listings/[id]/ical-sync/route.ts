@@ -3,6 +3,13 @@ import { getOrCreateServerUser } from "@/lib/auth/server";
 import { prisma } from "@/lib/db";
 import { blockDate } from "@/lib/repositories/host-calendar";
 
+/** node-ical 파싱 결과의 VEVENT 항목 형태 (타입만 사용, 런타임은 node-ical에 위임) */
+interface IcalEventLike {
+  type?: string;
+  start?: Date;
+  end?: Date;
+}
+
 /** node-ical은 빌드 시 page data 수집 단계에서 BigInt 이슈를 일으킬 수 있어, 호출 시점에만 동적 로드 */
 async function fetchIcalEvents(url: string): Promise<unknown> {
   const mod = await import("node-ical");
@@ -41,9 +48,9 @@ export async function POST(req: Request, ctx: { params: Promise<{ id: string }> 
     const today = new Date();
     const oneYearLater = new Date(today.getFullYear() + 1, today.getMonth(), today.getDate());
 
-    const values =
+    const values: IcalEventLike[] =
       rawEvents && typeof rawEvents === "object"
-        ? Object.values(rawEvents as Record<string, any>)
+        ? (Object.values(rawEvents as Record<string, IcalEventLike>) as IcalEventLike[])
         : [];
 
     for (const value of values) {

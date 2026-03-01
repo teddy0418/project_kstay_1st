@@ -53,7 +53,7 @@ export default function HostAccountClient() {
 
   if (loading) {
     return (
-      <div className="rounded-2xl border border-neutral-200 bg-white p-8 text-center text-neutral-500">
+      <div className="rounded-2xl border border-neutral-200 bg-white p-4 text-center text-neutral-500 sm:p-8">
         불러오는 중...
       </div>
     );
@@ -62,9 +62,9 @@ export default function HostAccountClient() {
   return (
     <div className="grid gap-6">
       {/* 정산 계좌 */}
-      <section className="rounded-2xl border border-neutral-200 bg-white p-6">
-        <h2 className="text-lg font-bold text-neutral-900">정산 계좌 설정</h2>
-        <p className="mt-1 text-sm text-neutral-500">
+      <section className="rounded-2xl border border-neutral-200 bg-white p-4 sm:p-6">
+        <h2 className="text-base font-bold text-neutral-900 md:text-lg">정산 계좌 설정</h2>
+        <p className="mt-1 text-xs text-neutral-500 md:text-sm">
           정산 금액을 받을 은행 계좌를 등록하세요. 등록된 계좌로 출금됩니다.
         </p>
         <div className="mt-4 grid gap-4 sm:max-w-lg sm:grid-cols-1">

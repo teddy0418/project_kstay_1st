@@ -49,7 +49,7 @@ export default async function HelpPage() {
   const c = COPY[lang];
   return (
     <div className="bg-white">
-      <div className="mx-auto max-w-[1200px] px-4 py-10">
+      <div className="mx-auto w-full max-w-screen-xl px-4 py-10">
         <div className="text-3xl font-extrabold tracking-tight">{c.title}</div>
         <div className="mt-2 text-sm text-neutral-600">{c.subtitle}</div>
 
