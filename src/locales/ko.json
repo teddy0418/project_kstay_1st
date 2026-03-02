@@ -44,9 +44,13 @@
   "inapp_browser_copied": "링크가 복사되었습니다",
   "board_headline": "한국 맛집 · 꿀팁",
   "board_subtitle": "맛집, 현지 팁, 여행 꿀팁을 확인하세요.",
+  "board_empty": "등록된 글이 없습니다.",
   "back": "뒤로",
   "read_more": "더 보기",
   "load_more": "더보기",
+  "kstay_black_empty": "선정된 숙소가 없습니다.",
+  "amenities_show_more": "{n}개 더보기",
+  "amenities_collapse": "접기",
   "profile_settings": "프로필 설정",
   "save_changes": "저장하기",
   "photo_url": "프로필 사진 URL",
@@ -89,5 +93,6 @@
   "review_cat_location": "위치",
   "review_cat_value": "가성비",
   "review_select_rating": "모든 항목에 별점(1~5)을 선택해 주세요.",
-  "review_body_placeholder": "숙소에 대한 경험을 남겨 주세요."
+  "review_body_placeholder": "숙소에 대한 경험을 남겨 주세요.",
+  "loading": "로딩 중..."
 }

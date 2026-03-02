@@ -84,6 +84,7 @@ export async function PATCH(req: Request, ctx: { params: Promise<{ id: string }>
       payload.houseRulesMessage = body.houseRulesMessage;
       payload.detailedAddress = body.detailedAddress;
     } else {
+      const bioChanged = body.hostBio !== undefined || body.hostBioKo !== undefined;
       Object.assign(payload, {
         title: body.title,
         titleKo: body.titleKo,
@@ -100,8 +101,8 @@ export async function PATCH(req: Request, ctx: { params: Promise<{ id: string }>
         houseRulesMessage: body.houseRulesMessage,
         hostBio: body.hostBio,
         hostBioKo: body.hostBioKo,
-        hostBioJa: body.hostBioJa,
-        hostBioZh: body.hostBioZh,
+        hostBioJa: body.hostBioJa ?? (bioChanged ? null : undefined),
+        hostBioZh: body.hostBioZh ?? (bioChanged ? null : undefined),
         lat: body.lat,
         lng: body.lng,
         amenities: body.amenities,

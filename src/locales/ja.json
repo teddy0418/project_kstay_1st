@@ -44,9 +44,13 @@
   "inapp_browser_copied": "リンクをコピーしました",
   "board_headline": "韓国グルメ・コツ",
   "board_subtitle": "グルメ、現地情報、旅行ハックをチェック。",
+  "board_empty": "投稿がまだありません。",
   "back": "戻る",
   "read_more": "もっと見る",
   "load_more": "もっと見る",
+  "kstay_black_empty": "選定された宿はまだありません。",
+  "amenities_show_more": "あと{n}件を見る",
+  "amenities_collapse": "閉じる",
   "profile_settings": "プロフィール設定",
   "save_changes": "保存",
   "photo_url": "写真URL",
@@ -89,5 +93,6 @@
   "review_cat_location": "ロケーション",
   "review_cat_value": "コストパフォーマンス",
   "review_select_rating": "各項目に1〜5の評価を選択してください。",
-  "review_body_placeholder": "この宿泊の体験を共有してください。"
+  "review_body_placeholder": "この宿泊の体験を共有してください。",
+  "loading": "読み込み中..."
 }

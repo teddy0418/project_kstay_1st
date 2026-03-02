@@ -44,9 +44,13 @@
   "inapp_browser_copied": "链接已复制",
   "board_headline": "韩国美食与攻略",
   "board_subtitle": "发现餐厅、当地小贴士与旅行技巧。",
+  "board_empty": "暂无文章。",
   "back": "返回",
   "read_more": "查看更多",
   "load_more": "加载更多",
+  "kstay_black_empty": "暂无精选住宿。",
+  "amenities_show_more": "再显示{n}个",
+  "amenities_collapse": "收起",
   "profile_settings": "个人资料设置",
   "save_changes": "保存",
   "photo_url": "头像URL",
@@ -89,5 +93,6 @@
   "review_cat_location": "位置",
   "review_cat_value": "性价比",
   "review_select_rating": "请为各项选择 1–5 星。",
-  "review_body_placeholder": "分享您在此住宿的体验。"
+  "review_body_placeholder": "分享您在此住宿的体验。",
+  "loading": "加载中..."
 }

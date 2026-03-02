@@ -292,7 +292,7 @@ export default function BrowseMapLayout({ items }: { items: Listing[] }) {
                       <div className="mt-1 truncate text-sm font-semibold leading-5">{selectedListing.title}</div>
                       <div className="mt-2 text-sm font-semibold">
                         {formatFromKRW(totalGuestPriceKRW(selectedListing.pricePerNightKRW), currency)}
-                        <span className="ml-1 font-normal text-neutral-500">/ night</span>
+                        <span className="ml-1 font-normal text-neutral-500">{t("per_night")}</span>
                       </div>
                     </div>
                   </div>

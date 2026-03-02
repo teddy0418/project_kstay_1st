@@ -1,9 +1,9 @@
 "use client";
 
 import Link from "next/link";
-import { useEffect, useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useState } from "react";
 import { useParams, useSearchParams } from "next/navigation";
-import { apiClient } from "@/lib/api/client";
+import { apiClient, ApiClientError } from "@/lib/api/client";
 import { useI18n } from "@/components/ui/LanguageProvider";
 
 type PublicBooking = {
@@ -44,6 +44,10 @@ export default function CheckoutSuccessPage() {
           children: "아동",
           infants: "유아",
           pets: "반려동물",
+          cancelReservation: "예약 취소",
+          cancelConfirm: "취소하시겠어요? 전액 환불됩니다.",
+          cancelled: "예약이 취소되었습니다",
+          cancelFailed: "취소할 수 없습니다 (무료 취소 기한이 지났을 수 있습니다).",
         }
       : lang === "ja"
         ? {
@@ -68,6 +72,10 @@ export default function CheckoutSuccessPage() {
             children: "子ども",
             infants: "幼児",
             pets: "ペット",
+            cancelReservation: "予約をキャンセル",
+            cancelConfirm: "キャンセルすると全額返金されます。よろしいですか？",
+            cancelled: "予約をキャンセルしました",
+            cancelFailed: "キャンセルできません（無料キャンセル期間を過ぎている可能性があります）。",
           }
         : lang === "zh"
           ? {
@@ -92,6 +100,10 @@ export default function CheckoutSuccessPage() {
               children: "儿童",
               infants: "婴儿",
               pets: "宠物",
+              cancelReservation: "取消预订",
+              cancelConfirm: "确定要取消吗？您将获得全额退款。",
+              cancelled: "已取消预订",
+              cancelFailed: "无法取消（可能已过免费取消期限）。",
             }
           : {
               processingBooking: "Processing your booking...",
@@ -115,6 +127,10 @@ export default function CheckoutSuccessPage() {
               children: "children",
               infants: "infants",
               pets: "pets",
+              cancelReservation: "Cancel reservation",
+              cancelConfirm: "Are you sure? You will get a full refund.",
+              cancelled: "Reservation cancelled",
+              cancelFailed: "Cannot cancel (free cancellation period may have ended).",
             };
   const params = useParams<{ token: string }>();
   const searchParams = useSearchParams();
@@ -123,6 +139,22 @@ export default function CheckoutSuccessPage() {
   const redirectMessage = searchParams.get("message") || "";
   const [booking, setBooking] = useState<PublicBooking | null>(null);
   const [loading, setLoading] = useState(true);
+  const [cancelling, setCancelling] = useState(false);
+
+  const handleCancel = useCallback(async () => {
+    if (!token || !booking || booking.status !== "CONFIRMED") return;
+    if (!window.confirm(c.cancelConfirm)) return;
+    setCancelling(true);
+    try {
+      await apiClient.post(`/api/bookings/public/${token}/cancel`);
+      setBooking((prev) => (prev ? { ...prev, status: "CANCELLED" } : null));
+    } catch (err) {
+      const msg = err instanceof ApiClientError && err.code === "FREE_CANCEL_EXPIRED" ? c.cancelFailed : c.cancelFailed;
+      window.alert(msg);
+    } finally {
+      setCancelling(false);
+    }
+  }, [token, booking, c.cancelConfirm, c.cancelFailed]);
 
   useEffect(() => {
     if (!token) return;
@@ -210,14 +242,27 @@ export default function CheckoutSuccessPage() {
         </div>
       </section>
 
-      <div className="mt-6 flex gap-3">
+      <div className="mt-6 flex flex-wrap gap-3">
         <Link href="/profile" className="rounded-xl bg-neutral-900 px-5 py-3 text-sm font-semibold text-white">
           {c.goProfile}
         </Link>
         <Link href="/" className="rounded-xl border border-neutral-200 px-5 py-3 text-sm font-semibold">
           {c.backHome}
         </Link>
+        {booking.status === "CONFIRMED" && (
+          <button
+            type="button"
+            onClick={() => void handleCancel()}
+            disabled={cancelling}
+            className="rounded-xl border border-red-300 px-5 py-3 text-sm font-semibold text-red-600 hover:bg-red-50 disabled:opacity-50"
+          >
+            {cancelling ? "..." : c.cancelReservation}
+          </button>
+        )}
       </div>
+      {booking.status === "CANCELLED" && (
+        <p className="mt-4 text-sm font-medium text-neutral-600">{c.cancelled}</p>
+      )}
     </main>
   );
 }

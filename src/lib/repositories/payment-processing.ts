@@ -221,3 +221,48 @@ export async function applyInitiatedPaymentSync(input: {
     },
   });
 }
+
+export type CancelGuestBookingResult =
+  | { ok: true; bookingId: string }
+  | { ok: false; reason: "NOT_FOUND" | "NOT_CONFIRMED" | "FREE_CANCEL_EXPIRED" };
+
+/**
+ * 게스트 예약 취소: publicToken으로 조회 후 무료 취소 기한 내이면 CONFIRMED → CANCELLED, 결제도 CANCELLED 처리.
+ * 무료 취소 마감은 freeCancelEndsAt(권장) 또는 cancellationDeadlineKst 사용.
+ */
+export async function cancelGuestBookingByToken(token: string): Promise<CancelGuestBookingResult> {
+  const booking = await prisma.booking.findUnique({
+    where: { publicToken: token },
+    select: {
+      id: true,
+      status: true,
+      freeCancelEndsAt: true,
+      cancellationDeadlineKst: true,
+      payments: { orderBy: { createdAt: "desc" }, select: { id: true, status: true } },
+    },
+  });
+  if (!booking) return { ok: false, reason: "NOT_FOUND" };
+  if (booking.status !== "CONFIRMED") return { ok: false, reason: "NOT_CONFIRMED" };
+
+  const deadline = booking.freeCancelEndsAt ?? booking.cancellationDeadlineKst;
+  const now = new Date();
+  if (now.getTime() > new Date(deadline).getTime()) {
+    return { ok: false, reason: "FREE_CANCEL_EXPIRED" };
+  }
+
+  await prisma.$transaction(async (tx: TransactionClient) => {
+    await tx.booking.update({
+      where: { id: booking.id },
+      data: { status: "CANCELLED" },
+    });
+    const paidPayment = booking.payments.find((p) => p.status === "PAID");
+    if (paidPayment) {
+      await tx.payment.update({
+        where: { id: paidPayment.id },
+        data: { status: "CANCELLED" },
+      });
+    }
+  });
+
+  return { ok: true, bookingId: booking.id };
+}

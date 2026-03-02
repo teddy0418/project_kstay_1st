@@ -78,6 +78,7 @@ const DICT = {
     provider_google: "Google",
     provider_kakao: "Kakao",
     provider_line: "LINE",
+    loading: "Loading...",
   },
   ko: {
     stays: "숙소",
@@ -142,6 +143,7 @@ const DICT = {
     provider_google: "Google",
     provider_kakao: "Kakao",
     provider_line: "LINE",
+    loading: "로딩 중...",
   },
   ja: {
     stays: "宿泊",
@@ -206,6 +208,7 @@ const DICT = {
     provider_google: "Google",
     provider_kakao: "Kakao",
     provider_line: "LINE",
+    loading: "読み込み中...",
   },
   zh: {
     stays: "住宿",
@@ -270,6 +273,7 @@ const DICT = {
     provider_google: "Google",
     provider_kakao: "Kakao",
     provider_line: "LINE",
+    loading: "加载中...",
   },
 } as const;
 

@@ -24,6 +24,7 @@ type DbListing = {
   images: Array<{ url: string; sortOrder: number }>;
   host?: { name: string | null; image: string | null; displayName: string | null; profilePhotoUrl: string | null } | null;
   nonRefundableSpecialEnabled?: boolean;
+  propertyType?: string | null;
 };
 
 const DEFAULT_HOST_AVATAR =
@@ -59,6 +60,7 @@ function toListing(row: DbListing): Listing {
     houseRulesMessage: row.houseRulesMessage ?? undefined,
     amenities: Array.isArray(row.amenities) ? row.amenities : [],
     nonRefundableSpecialEnabled: row.nonRefundableSpecialEnabled ?? false,
+    propertyType: row.propertyType ?? undefined,
   };
 }
 
@@ -90,6 +92,7 @@ const publicListingSelect = {
   houseRulesMessage: true,
   amenities: true,
   nonRefundableSpecialEnabled: true,
+  propertyType: true,
   images: { select: { url: true, sortOrder: true } },
   host: { select: { name: true, image: true, displayName: true, profilePhotoUrl: true } },
 } as const;
@@ -176,5 +179,84 @@ export async function getPublicListingsByIds(ids: string[]): Promise<Listing[]> 
     return unique.map((id) => byId.get(id)).filter(Boolean) as Listing[];
   } catch {
     return [];
+  }
+}
+
+/** KSTAY Black: 관리자가 선정한 프리미엄 숙소만 (kstayBlackSortOrder 오름차순) */
+export async function getKstayBlackListings(): Promise<Listing[]> {
+  try {
+    const rows = await prisma.listing.findMany({
+      where: { status: "APPROVED", kstayBlackSortOrder: { not: null } },
+      select: publicListingSelect,
+      orderBy: { kstayBlackSortOrder: "asc" },
+    });
+    return rows.map((r) => toListing(r as DbListing));
+  } catch (e) {
+    console.error("[getKstayBlackListings]", e);
+    return [];
+  }
+}
+
+const SECTION_PAGE_SIZE = 10;
+
+export type SectionType = "recommended" | "hanok" | "kstay-black";
+
+export type SectionPageResult = {
+  listings: Listing[];
+  nextCursor: string | null;
+};
+
+/** 섹션별 10개씩 커서 페이지네이션 (더보기용). cursor는 JSON 문자열 (이전 응답의 nextCursor) */
+export async function getPublicListingsBySection(
+  section: SectionType,
+  cursor: string | null,
+  limit: number = SECTION_PAGE_SIZE
+): Promise<SectionPageResult> {
+  try {
+    if (section === "kstay-black") {
+      const cursorObj = cursor ? (JSON.parse(cursor) as { id: string }) : null;
+      const rows = await prisma.listing.findMany({
+        where: { status: "APPROVED", kstayBlackSortOrder: { not: null } },
+        select: publicListingSelect,
+        orderBy: { kstayBlackSortOrder: "asc" },
+        ...(cursorObj?.id ? { cursor: { id: cursorObj.id }, skip: 1 } : {}),
+        take: limit + 1,
+      });
+      const list = rows.slice(0, limit).map((r) => toListing(r as DbListing));
+      const next = rows.length > limit ? rows[limit] : null;
+      const nextCursor = next ? JSON.stringify({ id: next.id }) : null;
+      return { listings: list, nextCursor };
+    }
+
+    const isHanok = section === "hanok";
+    const baseWhere = {
+      status: "APPROVED" as const,
+      ...(isHanok ? { propertyType: "hanok" } : {}),
+    };
+
+    const orderBy = [{ createdAt: "desc" as const }, { id: "desc" as const }];
+    const selectWithCreatedAt = { ...publicListingSelect, createdAt: true };
+    const cursorObj = cursor ? (JSON.parse(cursor) as { createdAt: string; id: string }) : null;
+
+    const rows = await prisma.listing.findMany({
+      where: baseWhere,
+      select: selectWithCreatedAt,
+      orderBy,
+      ...(cursorObj?.createdAt && cursorObj?.id
+        ? { cursor: { createdAt: new Date(cursorObj.createdAt), id: cursorObj.id }, skip: 1 }
+        : {}),
+      take: limit + 1,
+    });
+
+    const list = rows.slice(0, limit).map((r) => toListing(r as DbListing));
+    const next = rows.length > limit ? rows[limit] : null;
+    const nextCursor =
+      next && "createdAt" in next && next.createdAt
+        ? JSON.stringify({ createdAt: (next.createdAt as Date).toISOString(), id: next.id })
+        : null;
+    return { listings: list, nextCursor };
+  } catch (e) {
+    console.error("[getPublicListingsBySection]", e);
+    return { listings: [], nextCursor: null };
   }
 }

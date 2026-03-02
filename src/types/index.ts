@@ -33,6 +33,8 @@ export type Listing = {
   amenities?: string[];
   /** 환불 불가 특가(10% 할인) 옵션 제공 여부. 호스트가 활성화 시 게스트에게 선택 UI 노출 */
   nonRefundableSpecialEnabled?: boolean;
+  /** 숙소 유형 (hanok, apartment 등). 인기한옥 필터용 */
+  propertyType?: string | null;
 };
 
 export type BoardPost = {

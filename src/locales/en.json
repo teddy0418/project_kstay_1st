@@ -44,9 +44,13 @@
   "inapp_browser_copied": "Link copied",
   "board_headline": "Food & Tips in Korea",
   "board_subtitle": "Discover restaurants, local tips, and travel hacks.",
+  "board_empty": "No posts yet.",
   "back": "Back",
   "read_more": "Read more",
   "load_more": "Load more",
+  "kstay_black_empty": "Curated selection coming soon.",
+  "amenities_show_more": "Show {n} more",
+  "amenities_collapse": "Collapse",
   "profile_settings": "Profile settings",
   "save_changes": "Save changes",
   "photo_url": "Photo URL",
@@ -89,5 +93,6 @@
   "review_cat_location": "Location",
   "review_cat_value": "Value",
   "review_select_rating": "Please rate all categories (1–5).",
-  "review_body_placeholder": "Share your experience at this stay."
+  "review_body_placeholder": "Share your experience at this stay.",
+  "loading": "Loading..."
 }

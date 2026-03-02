@@ -347,7 +347,7 @@ export default function ProfileClient({ initialTrips }: ProfileClientProps) {
           <section className="rounded-2xl border border-neutral-200 bg-white p-6 shadow-sm">
             <h2 className="text-lg font-semibold">{t("your_trips")}</h2>
             {tripsLoading ? (
-              <p className="mt-2 text-sm text-neutral-500">불러오는 중…</p>
+              <p className="mt-2 text-sm text-neutral-500">{t("loading")}</p>
             ) : trips.length === 0 ? (
               <p className="mt-2 text-sm text-neutral-600">{t("empty_trips")}</p>
             ) : (
@@ -407,7 +407,7 @@ export default function ProfileClient({ initialTrips }: ProfileClientProps) {
           <section className="rounded-2xl border border-neutral-200 bg-white p-6 shadow-sm">
             <h2 className="text-lg font-semibold">{t("your_reviews")}</h2>
             {myReviewsLoading ? (
-              <p className="mt-2 text-sm text-neutral-500">불러오는 중…</p>
+              <p className="mt-2 text-sm text-neutral-500">{t("loading")}</p>
             ) : myReviews.length === 0 ? (
               <p className="mt-2 text-sm text-neutral-600">{c.reviewSoon}</p>
             ) : (
@@ -449,7 +449,7 @@ export default function ProfileClient({ initialTrips }: ProfileClientProps) {
           <section className="rounded-2xl border border-neutral-200 bg-white p-6 shadow-sm">
             <h2 className="text-lg font-semibold">{t("recently_viewed")}</h2>
             {recentListingsLoading ? (
-              <p className="mt-2 text-sm text-neutral-500">불러오는 중…</p>
+              <p className="mt-2 text-sm text-neutral-500">{t("loading")}</p>
             ) : recentListings.length === 0 ? (
               <p className="mt-2 text-sm text-neutral-600">{t("empty_recently_viewed")}</p>
             ) : (

@@ -1,6 +1,7 @@
 import Container from "@/components/layout/Container";
 import { getPublicListingById, getPublicListings } from "@/lib/repositories/listings";
 import { findReviewsByListingId } from "@/lib/repositories/reviews";
+import { ensureHostBioTranslated } from "@/lib/services/listing-translation";
 import ListingGallery from "@/features/listings/components/ListingGallery";
 import DetailActions from "@/features/listings/components/DetailActions";
 import MapModal from "@/features/listings/components/MapModal";
@@ -589,7 +590,7 @@ export default async function ListingDetailPage({
   const raw = rawParam ?? "";
   const id = decodeURIComponent(raw);
 
-  const listing = (await getPublicListingById(id)) ?? (await getPublicListingById(raw));
+  let listing = (await getPublicListingById(id)) ?? (await getPublicListingById(raw));
 
   if (!listing) {
     const all = await getPublicListings();
@@ -615,6 +616,8 @@ export default async function ListingDetailPage({
       </Container>
     );
   }
+
+  listing = await ensureHostBioTranslated(listing, lang);
 
   const resolvedSearchParams = searchParams ? await searchParams : undefined;
   const start = typeof resolvedSearchParams?.start === "string" ? resolvedSearchParams.start : undefined;

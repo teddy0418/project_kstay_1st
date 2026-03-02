@@ -46,6 +46,14 @@ export const HOST_DECISION_HOURS = 24; // Host can decline within 24h (then void
 export const NON_REFUNDABLE_GRACE_HOURS = 24;
 export const NON_REFUNDABLE_MIN_CHECKIN_HOURS = 48; // 체크인까지 48h 미만 = 초임박 → 바로 환불 불가
 
+/** 정산 가능 시점: 체크인 시각 이후 N시간 경과. env SETTLEMENT_READY_HOURS_AFTER_CHECKIN (기본 24) */
+export function getSettlementReadyHoursAfterCheckIn(): number {
+  const raw = typeof process !== "undefined" ? process.env?.SETTLEMENT_READY_HOURS_AFTER_CHECKIN : undefined;
+  if (raw === undefined || raw === "") return 24;
+  const n = parseInt(raw, 10);
+  return Number.isFinite(n) && n >= 0 ? n : 24;
+}
+
 const KST_OFFSET_MS = 9 * 60 * 60 * 1000;
 const DAY_MS = 24 * 60 * 60 * 1000;
 const HOUR_MS = 60 * 60 * 1000;

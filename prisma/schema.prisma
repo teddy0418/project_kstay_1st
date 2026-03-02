@@ -55,8 +55,9 @@ model User {
   hostProfile HostProfile?
   listings    Listing[]      @relation("HostListings")
   bookings    Booking[]      @relation("GuestBookings")
-  wishlist    WishlistItem[]
-  reviews     Review[]
+  wishlist       WishlistItem[]
+  reviews        Review[]
+  hostSettlements HostSettlement[]
 }
 
 model HostProfile {
@@ -130,6 +131,9 @@ model Listing {
   businessRegistrationDocUrl String?  @db.Text // 사업자등록증
   lodgingReportDocUrl        String?  @db.Text // 민박업 신고증 또는 외국어관광도시민박업 지정증
 
+  /** KSTAY Black 선정: 값이 있으면 메인 KSTAY Black 섹션에 노출, 숫자 오름차순 정렬 (관리자 선정) */
+  kstayBlackSortOrder Int?
+
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 
@@ -146,6 +150,7 @@ model Listing {
   @@index([status, createdAt])
   @@index([hostId, createdAt])
   @@index([hostId, status, createdAt])
+  @@index([kstayBlackSortOrder])
 }
 
 /// 호스트가 특정 날짜를 판매 중지(Block)한 경우
@@ -355,4 +360,36 @@ model BoardPost {
   updatedAt DateTime @updatedAt
 
   @@index([sortOrder, createdAt])
+}
+
+/// 호스트 대시보드 KSTAY 센터용 공지 (admin 전용, 한국어만)
+model HostAnnouncement {
+  id        String   @id @default(cuid())
+  type      String   // "공지" | "팁" | "가이드"
+  title     String   @db.Text
+  body      String?  @db.Text
+  sortOrder Int      @default(0)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([sortOrder, createdAt])
+}
+
+/// 정산 이력: 호스트별·회차별 지급 기록 (관리자 정산 배치 실행 시 생성)
+model HostSettlement {
+  id          String    @id @default(cuid())
+  hostId      String
+  periodLabel String    // 예: "2025-W10" (주간), "2025-03" (월간)
+  periodEndAt DateTime  @db.Date   // 정산 대상 기간 종료일 (예: 해당 주 일요일)
+  totalKrw    Int       // 지급 금액 (원)
+  status      String    @default("PENDING")  // PENDING | PAID
+  paidAt      DateTime?
+  memo        String?   @db.Text   // 비고 (출금 일괄 번호 등)
+  createdAt   DateTime  @default(now())
+  updatedAt   DateTime  @updatedAt
+
+  host User @relation(fields: [hostId], references: [id], onDelete: Restrict)
+
+  @@index([hostId, periodEndAt])
+  @@index([status, periodEndAt])
 }

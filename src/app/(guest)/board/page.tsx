@@ -32,7 +32,7 @@ export default function BoardPage() {
   if (loading) {
     return (
       <Container className="py-10">
-        <p className="text-neutral-500">{t("loading") ?? "불러오는 중..."}</p>
+        <p className="text-neutral-500">{t("loading")}</p>
       </Container>
     );
   }
@@ -44,7 +44,7 @@ export default function BoardPage() {
 
       <div className="mt-8 grid grid-cols-1 gap-6 md:grid-cols-2">
         {posts.length === 0 ? (
-          <p className="col-span-full text-center text-neutral-500 py-8">등록된 글이 없습니다.</p>
+          <p className="col-span-full text-center text-neutral-500 py-8">{t("board_empty")}</p>
         ) : (
         posts.map((p) => (
           <Link

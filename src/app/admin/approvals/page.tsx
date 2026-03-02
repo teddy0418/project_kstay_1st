@@ -1,6 +1,7 @@
 "use client";
 
 import { useCallback, useEffect, useState } from "react";
+import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { apiClient, ApiClientError } from "@/lib/api/client";
 
@@ -71,19 +72,24 @@ export default function AdminApprovalsPage() {
             <div key={item.id} className="rounded-2xl border border-neutral-200 bg-white p-5">
               <div className="flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
                 <div className="min-w-0">
-                  <div className="text-base font-semibold truncate">{item.title}</div>
+                  <Link href={`/admin/listings/${item.id}`} className="text-base font-semibold truncate hover:underline block">
+                    {item.title}
+                  </Link>
                   <div className="mt-1 text-sm text-neutral-600">
                     {item.city} · {item.area} · {item.address}
                   </div>
                   <div className="mt-1 text-xs text-neutral-500">
                     호스트: {item.host.name} ({item.host.id}) / ₩{item.basePriceKrw.toLocaleString()}
                   </div>
+                  <Link href={`/admin/listings/${item.id}`} className="mt-2 inline-block text-sm font-medium text-blue-600 hover:underline">
+                    검토 (정보·서류 확인 후 승인)
+                  </Link>
                 </div>
 
                 <button
                   type="button"
                   onClick={() => void approve(item.id)}
-                  className="inline-flex rounded-xl bg-neutral-900 px-4 py-2 text-sm font-semibold text-white hover:opacity-95 transition"
+                  className="inline-flex rounded-xl bg-neutral-900 px-4 py-2 text-sm font-semibold text-white hover:opacity-95 transition shrink-0"
                 >
                   승인
                 </button>

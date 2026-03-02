@@ -5,6 +5,7 @@ import { CheckCircle2 } from "lucide-react";
 import type { LucideIcon } from "lucide-react";
 import { getAmenityLabel } from "@/lib/amenities";
 import { AMENITY_ICONS } from "@/lib/amenity-icons";
+import { useI18n } from "@/components/ui/LanguageProvider";
 
 const iconMap: Record<string, LucideIcon> = { ...AMENITY_ICONS };
 
@@ -19,10 +20,12 @@ export default function AmenitiesList({
   amenities: string[];
   lang: Lang;
 }) {
+  const { t } = useI18n();
   const [expanded, setExpanded] = useState(false);
   const list = Array.isArray(amenities) ? amenities : [];
   const visible = expanded ? list : list.slice(0, MAX_VISIBLE);
   const hasMore = list.length > MAX_VISIBLE;
+  const moreCount = list.length - MAX_VISIBLE;
 
   if (list.length === 0) {
     return <span className="text-neutral-500">—</span>;
@@ -47,7 +50,7 @@ export default function AmenitiesList({
           onClick={() => setExpanded((e) => !e)}
           className="mt-3 text-sm font-medium text-neutral-600 underline hover:text-neutral-900"
         >
-          {expanded ? "접기" : `더보기 (${list.length - MAX_VISIBLE}개)`}
+          {expanded ? t("amenities_collapse") : t("amenities_show_more", { n: moreCount })}
         </button>
       )}
     </>

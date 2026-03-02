@@ -7,6 +7,8 @@ export type ApiErrorCode =
   | "FORBIDDEN"
   | "NOT_FOUND"
   | "CONFLICT"
+  | "INVALID_STATE"
+  | "FREE_CANCEL_EXPIRED"
   | "INTERNAL_ERROR";
 
 export function apiError(status: number, code: ApiErrorCode, message: string) {

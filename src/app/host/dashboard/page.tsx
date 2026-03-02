@@ -3,6 +3,7 @@ import { Suspense } from "react";
 import { redirect } from "next/navigation";
 import { getCurrentHostFlow } from "@/lib/host/server";
 import { getHostListingsForCalendar, getHostDashboardStats, getHostWeekTimeline } from "@/lib/repositories/host-calendar";
+import { getHostAnnouncements } from "@/lib/repositories/host-announcements";
 import BlockDateButton from "@/features/host/dashboard/BlockDateButton";
 import DashboardListingSelector from "@/features/host/dashboard/DashboardListingSelector";
 
@@ -39,9 +40,10 @@ export default async function HostDashboardPage(props: PageProps) {
     redirect(`/host/dashboard?listingId=${encodeURIComponent(firstId)}`);
   }
 
-  const [stats, timeline] = await Promise.all([
+  const [stats, timeline, centerFeed] = await Promise.all([
     getHostDashboardStats(current.user.id, listingId),
     getHostWeekTimeline(current.user.id, listingId),
+    getHostAnnouncements(),
   ]);
 
   const summary: { label: string; value: string | number; danger?: boolean }[] = [
@@ -50,12 +52,6 @@ export default async function HostDashboardPage(props: PageProps) {
     { label: "새 메시지", value: stats.newMessages },
     { label: "신규 취소", value: Number.isFinite(stats.newCancels) ? stats.newCancels : 0, danger: (stats.newCancels ?? 0) > 0 },
     { label: "정산 예정액", value: `₩${formatKRW(stats.pendingSettlementKrw)}` },
-  ];
-
-  const centerFeed = [
-    { type: "공지", title: "정산 시스템 점검 안내 (화요일 09:00~10:00)" },
-    { type: "팁", title: "외국인 게스트는 셀프 체크인과 와이파이 만족도가 높아요" },
-    { type: "가이드", title: "사진은 거실-침실-화장실-뷰 순으로 올리면 전환율이 좋아요" },
   ];
 
   return (
@@ -160,19 +156,27 @@ export default async function HostDashboardPage(props: PageProps) {
         <div className="text-base sm:text-lg font-bold">KSTAY 센터</div>
         <div className="mt-0.5 sm:mt-1 text-xs sm:text-sm text-neutral-500">공지사항 · 운영 인사이트 · 가이드라인</div>
         <div className="mt-3 sm:mt-4 grid gap-2 sm:gap-3">
-          {centerFeed.map((x, idx) => (
-            <div key={idx} className="flex items-start gap-2 sm:gap-3 rounded-xl sm:rounded-2xl border border-neutral-200 bg-[#F9FAFB] px-3 py-2.5 sm:px-4 sm:py-3 min-w-0">
-              <span
-                className={[
-                  "shrink-0 rounded-full px-2.5 py-0.5 text-[10px] sm:text-xs font-semibold",
-                  x.type === "공지" ? "bg-neutral-900 text-white" : x.type === "가이드" ? "bg-emerald-100 text-emerald-800" : "bg-neutral-100 text-neutral-700",
-                ].join(" ")}
+          {centerFeed.length === 0 ? (
+            <p className="text-sm text-neutral-500">등록된 공지가 없습니다.</p>
+          ) : (
+            centerFeed.map((x) => (
+              <Link
+                key={x.id}
+                href={`/host/announcements/${encodeURIComponent(x.id)}`}
+                className="flex items-start gap-2 sm:gap-3 rounded-xl sm:rounded-2xl border border-neutral-200 bg-[#F9FAFB] px-3 py-2.5 sm:px-4 sm:py-3 min-w-0 hover:bg-neutral-50 transition"
               >
-                {x.type}
-              </span>
-              <div className="min-w-0 flex-1 text-xs sm:text-sm font-semibold text-neutral-900 leading-snug">{x.title}</div>
-            </div>
-          ))}
+                <span
+                  className={[
+                    "shrink-0 rounded-full px-2.5 py-0.5 text-[10px] sm:text-xs font-semibold",
+                    x.type === "공지" ? "bg-neutral-900 text-white" : x.type === "가이드" ? "bg-emerald-100 text-emerald-800" : "bg-neutral-100 text-neutral-700",
+                  ].join(" ")}
+                >
+                  {x.type}
+                </span>
+                <div className="min-w-0 flex-1 text-xs sm:text-sm font-semibold text-neutral-900 leading-snug">{x.title}</div>
+              </Link>
+            ))
+          )}
         </div>
       </div>
     </div>

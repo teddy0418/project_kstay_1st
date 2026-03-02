@@ -162,6 +162,160 @@ async function main() {
     console.log("Admin 예시 예약 생성 (체크아웃 완료)", { bookingId: adminBooking.id, guestEmail: guestUser.email });
   }
 
+  // 메인 섹션 예시 숙소: 추천 10 + 인기한옥 10 + KSTAY Black 10 (추천/Black은 숙소 사진, 인기한옥만 한옥 사진)
+  const recImages = [
+    "https://images.unsplash.com/photo-1522708323590-d24dbb6b0267?auto=format&fit=crop&w=1600&q=80",
+    "https://images.unsplash.com/photo-1505693416388-ac5ce068fe85?auto=format&fit=crop&w=1600&q=80",
+    "https://images.unsplash.com/photo-1560448204-e02f11c3d0e2?auto=format&fit=crop&w=1600&q=80",
+    "https://images.unsplash.com/photo-1493809842364-78817add7ffb?auto=format&fit=crop&w=1600&q=80",
+    "https://images.unsplash.com/photo-1484154214242-ffab274afa4e?auto=format&fit=crop&w=1600&q=80",
+    "https://images.unsplash.com/photo-1502672260266-1c1ef2d93688?auto=format&fit=crop&w=1600&q=80",
+    "https://images.unsplash.com/photo-1499916078039-922301b0eb9b?auto=format&fit=crop&w=1600&q=80",
+    "https://images.unsplash.com/photo-1507089947368-19c1da9775ae?auto=format&fit=crop&w=1600&q=80",
+    "https://images.unsplash.com/photo-1522771739844-6a9f6d5f14af?auto=format&fit=crop&w=1600&q=80",
+    "https://images.unsplash.com/photo-1536376072261-38c75010e6c9?auto=format&fit=crop&w=1600&q=80",
+  ];
+  const blackImages = [
+    "https://images.unsplash.com/photo-1613490493576-7fde63acd811?auto=format&fit=crop&w=1600&q=80",
+    "https://images.unsplash.com/photo-1600607687644-aac4c3eac7f4?auto=format&fit=crop&w=1600&q=80",
+    "https://images.unsplash.com/photo-1600585154526-990dced4db0d?auto=format&fit=crop&w=1600&q=80",
+    "https://images.unsplash.com/photo-1600566752355-35792bedcfea?auto=format&fit=crop&w=1600&q=80",
+    "https://images.unsplash.com/photo-1600047509358-9dc75507daeb?auto=format&fit=crop&w=1600&q=80",
+    "https://images.unsplash.com/photo-1600585154340-be6161a56a0c?auto=format&fit=crop&w=1600&q=80",
+    "https://images.unsplash.com/photo-1600566753086-00f18fb6b3ea?auto=format&fit=crop&w=1600&q=80",
+    "https://images.unsplash.com/photo-1600573472592-401b489a3cdc?auto=format&fit=crop&w=1600&q=80",
+    "https://images.unsplash.com/photo-1600210492486-724fe5c67fb0?auto=format&fit=crop&w=1600&q=80",
+    "https://images.unsplash.com/photo-1600047509807-ba8f99d2cdde?auto=format&fit=crop&w=1600&q=80",
+  ];
+  // 인기한옥: 한옥 사진만 (Wikimedia Commons 무료·안정 + Unsplash 보조)
+  const w = "https://upload.wikimedia.org/wikipedia/commons";
+  const hanokImages = [
+    `${w}/thumb/a/a6/Traditional_hanok_house_with_wooden_doors_along_a_steeply_sloping_street_in_Bukchon_Hanok_Village_Seoul.jpg/800px-Traditional_hanok_house_with_wooden_doors_along_a_steeply_sloping_street_in_Bukchon_Hanok_Village_Seoul.jpg`,
+    `${w}/thumb/7/77/Korea-Hanok-01.jpg/800px-Korea-Hanok-01.jpg`,
+    `${w}/thumb/5/52/Eunpyeong_Hanok_Village_20220725_006.jpg/800px-Eunpyeong_Hanok_Village_20220725_006.jpg`,
+    `${w}/thumb/3/35/Jeonju_Hanok_Village_-_July_2018_%2812%29.jpg/800px-Jeonju_Hanok_Village_-_July_2018_%2812%29.jpg`,
+    `${w}/thumb/f/f9/Bukchon_Hanok_Village_%EB%B6%81%EC%B4%8C_%ED%95%9C%EC%98%A5%EB%A7%88%EC%9D%84_October_1_2020_1.jpg/800px-Bukchon_Hanok_Village_%EB%B6%81%EC%B4%8C_%ED%95%9C%EC%98%A5%EB%A7%88%EC%9D%84_October_1_2020_1.jpg`,
+    `${w}/thumb/a/a6/Traditional_hanok_house_with_wooden_doors_along_a_steeply_sloping_street_in_Bukchon_Hanok_Village_Seoul.jpg/1280px-Traditional_hanok_house_with_wooden_doors_along_a_steeply_sloping_street_in_Bukchon_Hanok_Village_Seoul.jpg`,
+    `${w}/thumb/7/77/Korea-Hanok-01.jpg/1280px-Korea-Hanok-01.jpg`,
+    `${w}/thumb/5/52/Eunpyeong_Hanok_Village_20220725_006.jpg/1280px-Eunpyeong_Hanok_Village_20220725_006.jpg`,
+    `${w}/thumb/3/35/Jeonju_Hanok_Village_-_July_2018_%2812%29.jpg/1280px-Jeonju_Hanok_Village_-_July_2018_%2812%29.jpg`,
+    `${w}/thumb/f/f9/Bukchon_Hanok_Village_%EB%B6%81%EC%B4%8C_%ED%95%9C%EC%98%A5%EB%A7%88%EC%9D%84_October_1_2020_1.jpg/1280px-Bukchon_Hanok_Village_%EB%B6%81%EC%B4%8C_%ED%95%9C%EC%98%A5%EB%A7%88%EC%9D%84_October_1_2020_1.jpg`,
+  ];
+  const recTitles = [
+    "Cozy Hongdae Studio",
+    "Myeongdong Central Stay",
+    "Jongno Comfort House",
+    "Gangnam Modern Apartment",
+    "Itaewon City View",
+    "Mapo Riverside Stay",
+    "Sinsa-dong Quiet Room",
+    "Yeonnam Vintage Loft",
+    "Songpa Han River View",
+    "Seocho Business Stay",
+  ];
+  const hanokTitles = [
+    "Bukchon Traditional Hanok",
+    "Jeonju Hanok Village Stay",
+    "Gyeongju Historic Hanok",
+    "Andong Hahoe Hanok Guesthouse",
+    "Seoul Jongno Hanok Experience",
+    "Namsangol Hanok Village Stay",
+    "Jeju Stone & Wood Hanok",
+    "Gangneung Seaside Hanok",
+    "Suanbo Hanok Spa Stay",
+    "Cheongju Old Town Hanok",
+  ];
+  const blackTitles = [
+    "KSTAY Black | Heritage Suite",
+    "KSTAY Black | Rooftop Penthouse",
+    "KSTAY Black | Designer Loft",
+    "KSTAY Black | Palace View Suite",
+    "KSTAY Black | Urban Retreat",
+    "KSTAY Black | Han River Residence",
+    "KSTAY Black | Garden Villa",
+    "KSTAY Black | Sky Lounge Stay",
+    "KSTAY Black | Art & Culture House",
+    "KSTAY Black | Premium Hanok",
+  ];
+  const areas = ["Jongno", "Hongdae", "Gangnam", "Myeongdong", "Mapo", "Seocho", "Songpa", "Yongsan", "Jung-gu", "Seodaemun"];
+  for (let i = 0; i < 10; i++) {
+    const id = `seed-rec-${i + 1}`;
+    const existingRec = await prisma.listing.findUnique({ where: { id } });
+    if (!existingRec) {
+      const created = await prisma.listing.create({
+        data: {
+          id,
+          hostId: host.id,
+          title: recTitles[i],
+          city: "Seoul",
+          area: areas[i],
+          address: `${areas[i]}-gu, Seoul, Korea`,
+          location: `Seoul · ${areas[i]}`,
+          basePriceKrw: 80000 + i * 15000,
+          status: "APPROVED",
+          approvedAt: new Date(),
+          propertyType: i % 3 === 0 ? "apartment" : "house_villa",
+        },
+      });
+      await prisma.listingImage.create({ data: { listingId: created.id, url: recImages[i], sortOrder: 0 } });
+    } else {
+      const img = await prisma.listingImage.findFirst({ where: { listingId: id }, orderBy: { sortOrder: "asc" } });
+      if (img) await prisma.listingImage.update({ where: { id: img.id }, data: { url: recImages[i] } });
+    }
+  }
+  for (let i = 0; i < 10; i++) {
+    const id = `seed-hanok-${i + 1}`;
+    const existingHanok = await prisma.listing.findUnique({ where: { id } });
+    if (!existingHanok) {
+      const created = await prisma.listing.create({
+        data: {
+          id,
+          hostId: host.id,
+          title: hanokTitles[i],
+          city: i < 3 ? "Seoul" : i < 6 ? "Jeonju" : "Gyeongju",
+          area: ["Jongno", "Bukchon", "Jung-gu", "Hanok Village", "Gyeongju", "Andong", "Jeju", "Gangneung", "Suanbo", "Cheongju"][i],
+          address: "Traditional hanok address, Korea",
+          location: "Hanok stay",
+          basePriceKrw: 120000 + i * 20000,
+          status: "APPROVED",
+          approvedAt: new Date(),
+          propertyType: "hanok",
+        },
+      });
+      await prisma.listingImage.create({ data: { listingId: created.id, url: hanokImages[i], sortOrder: 0 } });
+    } else {
+      const img = await prisma.listingImage.findFirst({ where: { listingId: id }, orderBy: { sortOrder: "asc" } });
+      if (img) await prisma.listingImage.update({ where: { id: img.id }, data: { url: hanokImages[i] } });
+    }
+  }
+  for (let i = 0; i < 10; i++) {
+    const id = `seed-black-${i + 1}`;
+    const existingBlack = await prisma.listing.findUnique({ where: { id } });
+    if (!existingBlack) {
+      const created = await prisma.listing.create({
+        data: {
+          id,
+          hostId: host.id,
+          title: blackTitles[i],
+          city: "Seoul",
+          area: ["Jongno", "Gangnam", "Mapo", "Yongsan", "Seocho", "Songpa", "Jung-gu", "Hongdae", "Jongno", "Seocho"][i],
+          address: "Premium address, Seoul, Korea",
+          location: "Seoul · Premium",
+          basePriceKrw: 200000 + i * 30000,
+          status: "APPROVED",
+          approvedAt: new Date(),
+          propertyType: i === 9 ? "hanok" : "house_villa",
+          kstayBlackSortOrder: i,
+        },
+      });
+      await prisma.listingImage.create({ data: { listingId: created.id, url: blackImages[i], sortOrder: 0 } });
+    } else {
+      const img = await prisma.listingImage.findFirst({ where: { listingId: id }, orderBy: { sortOrder: "asc" } });
+      if (img) await prisma.listingImage.update({ where: { id: img.id }, data: { url: blackImages[i] } });
+    }
+  }
+  console.log("Seed: 추천/인기한옥/KSTAY Black 예시 숙소 확인 완료");
+
   // 게스트 게시판 예시 글 (없을 때만 생성, 4개)
   const boardCount = await prisma.boardPost.count();
   if (boardCount === 0) {

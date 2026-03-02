@@ -38,7 +38,7 @@ export default function BoardDetailPage() {
   if (loading) {
     return (
       <Container className="py-10">
-        <p className="text-neutral-500">불러오는 중...</p>
+        <p className="text-neutral-500">{t("loading")}</p>
       </Container>
     );
   }

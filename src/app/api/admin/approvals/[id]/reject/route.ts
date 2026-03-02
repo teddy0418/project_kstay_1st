@@ -12,6 +12,9 @@ export async function POST(_: Request, ctx: { params: Promise<{ id: string }> })
 
     const current = await findApprovalListingById(id);
     if (!current) return apiError(404, "NOT_FOUND", "Listing not found");
+    if (current.status !== "PENDING") {
+      return apiError(409, "CONFLICT", "Only PENDING listings can be rejected");
+    }
 
     const listing = await rejectListingById(id);
     return apiOk(listing);

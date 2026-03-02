@@ -1,13 +1,32 @@
 "use client";
 
-import Link from "next/link";
+import { useEffect, useState } from "react";
 import Container from "@/components/layout/Container";
 import { useWishlist } from "@/components/ui/WishlistProvider";
 import { useI18n } from "@/components/ui/LanguageProvider";
+import ListingCard from "@/features/listings/components/ListingCard";
+import { apiClient } from "@/lib/api/client";
+import type { Listing } from "@/types";
 
 export default function WishlistPage() {
   const { t } = useI18n();
   const { ids, clear } = useWishlist();
+  const [listings, setListings] = useState<Listing[]>([]);
+  const [loading, setLoading] = useState(false);
+
+  useEffect(() => {
+    if (ids.length === 0) {
+      setListings([]);
+      return;
+    }
+    setLoading(true);
+    const query = "ids=" + encodeURIComponent(ids.join(","));
+    apiClient
+      .get<Listing[]>("/api/listings?" + query)
+      .then((data) => setListings(Array.isArray(data) ? data : []))
+      .catch(() => setListings([]))
+      .finally(() => setLoading(false));
+  }, [ids.join(",")]);
 
   return (
     <Container className="py-10">
@@ -29,18 +48,15 @@ export default function WishlistPage() {
               {t("clear")}
             </button>
 
-            <div className="grid grid-cols-1 gap-3 md:grid-cols-2 lg:grid-cols-3">
-              {ids.map((listingId) => (
-                <Link
-                  key={listingId}
-                  href={`/listings/${listingId}`}
-                  className="rounded-2xl border border-neutral-200 bg-white p-4 shadow-sm hover:shadow-md transition"
-                >
-                  <div className="text-sm font-semibold">Listing #{listingId}</div>
-                  <div className="mt-1 text-xs text-neutral-500">{t("tap_to_open")}</div>
-                </Link>
-              ))}
-            </div>
+            {loading ? (
+              <p className="py-8 text-sm text-neutral-500">{t("loading")}</p>
+            ) : (
+              <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 lg:grid-cols-3">
+                {listings.map((listing) => (
+                  <ListingCard key={listing.id} listing={listing} />
+                ))}
+              </div>
+            )}
           </div>
         )}
       </div>

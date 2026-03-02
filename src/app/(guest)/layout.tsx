@@ -1,4 +1,5 @@
 import Header from "@/components/layout/Header";
+import Footer from "@/components/layout/Footer";
 import BottomNav from "@/components/layout/BottomNav";
 import FloatingSearchWrapper from "@/components/layout/FloatingSearchWrapper";
 import GuestI18nWrapper from "./GuestI18nWrapper";
@@ -12,6 +13,7 @@ export default function GuestLayout({ children }: { children: React.ReactNode })
           <FloatingSearchWrapper />
         </div>
         {children}
+        <Footer />
         <BottomNav />
       </div>
     </GuestI18nWrapper>

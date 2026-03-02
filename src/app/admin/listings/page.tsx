@@ -1,6 +1,7 @@
 "use client";
 
 import { useCallback, useEffect, useState } from "react";
+import Link from "next/link";
 import { useRouter, useSearchParams } from "next/navigation";
 import { apiClient, ApiClientError } from "@/lib/api/client";
 
@@ -131,8 +132,15 @@ export default function AdminListingsPage() {
               {items.map((row) => (
                 <tr key={row.id} className="border-b border-neutral-100 last:border-0">
                   <td className="p-4">
-                    <div className="font-semibold text-neutral-900 truncate max-w-[200px]">{row.title}</div>
+                    <Link href={`/admin/listings/${row.id}`} className="font-semibold text-neutral-900 truncate max-w-[200px] hover:underline block">
+                      {row.title}
+                    </Link>
                     <div className="text-xs text-neutral-500 truncate max-w-[200px]">{row.city} · {row.area}</div>
+                    {row.status === "PENDING" && (
+                      <Link href={`/admin/listings/${row.id}`} className="mt-1 inline-block text-xs font-medium text-blue-600 hover:underline">
+                        검토 (정보·서류 확인)
+                      </Link>
+                    )}
                   </td>
                   <td className="p-4 text-neutral-700">{row.host.name ?? row.host.id}</td>
                   <td className="p-4">₩{row.basePriceKrw.toLocaleString()}</td>

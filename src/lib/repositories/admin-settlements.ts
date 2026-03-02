@@ -1,4 +1,7 @@
+import { getSettlementReadyHoursAfterCheckIn } from "@/lib/policy";
 import { prisma } from "@/lib/db";
+
+const HOUR_MS = 60 * 60 * 1000;
 
 export type AdminSettlementRow = {
   id: string;
@@ -37,10 +40,11 @@ export async function getAdminSettlementRows(): Promise<AdminSettlementRow[]> {
     orderBy: { checkIn: "asc" },
   });
 
+  const hours = getSettlementReadyHoursAfterCheckIn();
   return rows.map((r) => {
     const payment = r.payments[0];
     const checkInDate = new Date(r.checkIn);
-    const readyAt = new Date(checkInDate.getTime() + 24 * 60 * 60 * 1000);
+    const readyAt = new Date(checkInDate.getTime() + hours * HOUR_MS);
     return {
       id: r.id,
       listingId: r.listingId,
