@@ -17,13 +17,13 @@ const SECTION_ACCENT: Record<
   { border: string; title: string; subtitle: string }
 > = {
   recommended: {
-    border: "border-l-blue-500",
-    title: "text-blue-800",
+    border: "border-l-neutral-900",
+    title: "text-neutral-900",
     subtitle: "text-neutral-600",
   },
   hanok: {
-    border: "border-l-amber-500",
-    title: "text-amber-900",
+    border: "border-l-neutral-900",
+    title: "text-neutral-900",
     subtitle: "text-neutral-900",
   },
   "kstay-black": {

@@ -11,6 +11,7 @@ export const createBookingSchema = z.object({
   checkOut: z.string().trim().min(1, "checkOut is required"),
   guestEmail: optionalTrimmedString,
   guestName: optionalTrimmedString,
+  guestMessageToHost: z.string().trim().max(2000).optional().nullable(),
   guestsAdults: z.coerce.number().int().min(1).optional(),
   guestsChildren: z.coerce.number().int().min(0).optional(),
   guestsInfants: z.coerce.number().int().min(0).optional(),
@@ -106,6 +107,12 @@ export const reorderListingImagesSchema = z.object({
 export const updateProfileSchema = z.object({
   displayName: z.string().trim().max(100).optional().nullable(),
   profilePhotoUrl: z.string().trim().max(500000).optional().nullable(), // base64 data URL 허용
+  /** 소셜 로그인 후 추가 정보 수집 완료 */
+  completeOnboarding: z.boolean().optional(),
+  name: z.string().trim().min(1).max(100).optional(),
+  phone: z.string().trim().max(50).optional().nullable(),
+  nationality: z.string().trim().max(100).optional().nullable(),
+  privacyConsent: z.literal(true).optional(),
 });
 
 const categoryRating = z.coerce.number().int().min(1).max(5);

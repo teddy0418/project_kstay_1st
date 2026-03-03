@@ -30,7 +30,13 @@ export default function WizardPricingPage() {
   useEffect(() => {
     if (!listing) return;
     const L = listing as typeof listing & { extraGuestFeeKrw?: number | null };
-    setBasePriceKrw(listing.basePriceKrw != null ? String(listing.basePriceKrw) : "");
+    const isLegacyDraftWithDefaultPrice =
+      listing.status === "DRAFT" &&
+      (listing.title === "신규 숙소" || listing.titleKo === "신규 숙소") &&
+      Number(listing.basePriceKrw) === 100000;
+    setBasePriceKrw(
+      isLegacyDraftWithDefaultPrice ? "" : listing.basePriceKrw != null ? String(listing.basePriceKrw) : ""
+    );
     setExtraGuestFeeKrw(L.extraGuestFeeKrw != null && L.extraGuestFeeKrw > 0 ? String(L.extraGuestFeeKrw) : "");
     setWeekendSurchargePct(
       listing.weekendSurchargePct != null ? String(listing.weekendSurchargePct) : "0"

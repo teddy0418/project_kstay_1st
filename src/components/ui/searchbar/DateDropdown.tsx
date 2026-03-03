@@ -11,6 +11,7 @@ import { useCurrency } from "@/components/ui/CurrencyProvider";
 import { useExchangeRates } from "@/components/ui/ExchangeRatesProvider";
 import { useI18n } from "@/components/ui/LanguageProvider";
 import { nightsBetween, addDays } from "@/lib/format";
+import { totalGuestPriceKRW } from "@/lib/policy";
 
 const POPOVER_GAP = 8;
 const MOBILE_BREAKPOINT = 640;
@@ -38,9 +39,9 @@ function isDateInRanges(date: Date, ranges: Array<{ from: string; to: string }>)
   return ranges.some((r) => d >= r.from && d < r.to);
 }
 
-/** day 셀에 날짜 + 1박 요금(선택 통화, 전체 금액) 표시. components.DayButton 으로 전달 */
+/** day 셀에 날짜 + 1박 요금(선택 통화, 전체 금액) 표시. components.DayButton 으로 전달. 가격 조회는 로컬 날짜(YYYY-MM-DD) 사용 (DB/API와 동일한 날짜 기준). */
 function createDayButtonWithPrice(
-  getPriceKrwForYmdUtc: (ymdUtc: string) => number | null,
+  getPriceKrwForYmd: (ymd: string) => number | null,
   formatFromKRW: (amountKRW: number, currency: import("@/lib/currency").Currency) => string,
   currency: import("@/lib/currency").Currency
 ) {
@@ -55,9 +56,10 @@ function createDayButtonWithPrice(
           ? day
           : undefined;
     const dayNum = date ? date.getDate() : "";
-    const ymdUtc = date ? toYmdUtc(date) : "";
-    const priceKrw = ymdUtc ? getPriceKrwForYmdUtc(ymdUtc) : null;
-    const priceStr = priceKrw != null ? formatFromKRW(priceKrw, currency) : "";
+    const ymd = date ? toISO(date) : "";
+    const priceKrw = ymd ? getPriceKrwForYmd(ymd) : null;
+    const finalKrw = priceKrw != null ? totalGuestPriceKRW(priceKrw) : null;
+    const priceStr = finalKrw != null ? formatFromKRW(finalKrw, currency) : "";
     const isDisabled = modifiers?.disabled ?? modifiers?.outside;
     const isBooked = modifiers?.booked;
     const isBlocked = modifiers?.blocked;
@@ -164,10 +166,10 @@ export default function DateDropdown({
     return c;
   }, [bookedRanges.length, blockedRanges.length]);
 
-  const getPriceKrwForYmdUtc = useCallback(
-    (ymdUtc: string) => {
+  const getPriceKrwForYmd = useCallback(
+    (ymd: string) => {
       if (basePricePerNightKRW == null || basePricePerNightKRW <= 0) return null;
-      const v = datePrices[ymdUtc];
+      const v = datePrices[ymd];
       return typeof v === "number" && Number.isFinite(v) && v >= 0 ? v : basePricePerNightKRW;
     },
     [basePricePerNightKRW, datePrices]
@@ -175,8 +177,8 @@ export default function DateDropdown({
 
   const dayButtonComponent = useMemo(() => {
     if (basePricePerNightKRW == null || basePricePerNightKRW <= 0) return undefined;
-    return createDayButtonWithPrice(getPriceKrwForYmdUtc, formatFromKRW, currency);
-  }, [basePricePerNightKRW, getPriceKrwForYmdUtc, formatFromKRW, currency]);
+    return createDayButtonWithPrice(getPriceKrwForYmd, formatFromKRW, currency);
+  }, [basePricePerNightKRW, getPriceKrwForYmd, formatFromKRW, currency]);
 
   const startOfMonth = useCallback((d: Date) => new Date(Date.UTC(d.getUTCFullYear(), d.getUTCMonth(), 1)), []);
   const endOfMonth = useCallback(

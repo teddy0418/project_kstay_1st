@@ -226,20 +226,19 @@ export default function AdminListingReviewPage() {
             <p className="text-neutral-700">{data.amenities.join(", ")}</p>
           </div>
         )}
+        {(data.hostBio || data.hostBioKo) && (
+          <div className="mt-4">
+            <p className="text-xs font-medium text-neutral-500">숙소 설명</p>
+            <p className="mt-0.5 text-xs text-neutral-400">(상세페이지 호스트 소개란에 노출)</p>
+            <p className="mt-2 whitespace-pre-wrap text-sm text-neutral-700">{(data.hostBioKo || data.hostBio || data.hostBioJa || data.hostBioZh) ?? "-"}</p>
+          </div>
+        )}
         {(data.houseRulesMessage || data.checkInGuideMessage) && (
-          <div className="mt-4 space-y-2">
-            {data.houseRulesMessage && (
-              <div>
-                <p className="text-xs font-medium text-neutral-500">이용 규칙</p>
-                <p className="whitespace-pre-wrap text-sm text-neutral-700">{data.houseRulesMessage}</p>
-              </div>
-            )}
-            {data.checkInGuideMessage && (
-              <div>
-                <p className="text-xs font-medium text-neutral-500">체크인 안내</p>
-                <p className="whitespace-pre-wrap text-sm text-neutral-700">{data.checkInGuideMessage}</p>
-              </div>
-            )}
+          <div className="mt-4">
+            <p className="text-xs font-medium text-neutral-500">이용 규칙 및 체크인 안내</p>
+            <p className="mt-2 whitespace-pre-wrap text-sm text-neutral-700">
+              {data.houseRulesMessage || data.checkInGuideMessage || "-"}
+            </p>
           </div>
         )}
         {data.images.length > 0 && (
@@ -294,12 +293,6 @@ export default function AdminListingReviewPage() {
             </>
           )}
         </div>
-        {(data.hostBio || data.hostBioKo) && (
-          <div className="mt-4">
-            <p className="text-xs font-medium text-neutral-500">호스트 소개</p>
-            <p className="whitespace-pre-wrap text-sm text-neutral-700">{(data.hostBioKo || data.hostBio || data.hostBioJa || data.hostBioZh) ?? "-"}</p>
-          </div>
-        )}
       </section>
 
       {/* 제출 서류 */}

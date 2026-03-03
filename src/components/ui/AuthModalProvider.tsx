@@ -4,9 +4,9 @@ import React, { createContext, useContext, useEffect, useMemo, useRef, useState 
 import { X } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { useAuth, type UserRole } from "@/components/ui/AuthProvider";
-import { useComingSoon } from "@/hooks/useComingSoon";
 import { useOptionalToast } from "@/components/ui/ToastProvider";
 import { useI18n } from "@/components/ui/LanguageProvider";
+import { GoogleLogo, LineLogo, FacebookLogo, KakaoLogo } from "@/components/ui/SocialLoginIcons";
 
 type OpenOpts = {
   next?: string;
@@ -61,8 +61,7 @@ function AuthModal({
   nextPath?: string;
 }) {
   const router = useRouter();
-  const { signInWithGoogle, signInWithKakao, signInWithLine, isAuthed } = useAuth();
-  const comingSoon = useComingSoon();
+  const { signInWithGoogle, signInWithKakao, signInWithLine, signInWithFacebook, isAuthed } = useAuth();
   const toastApi = useOptionalToast();
   const { t } = useI18n();
   const panelRef = useRef<HTMLDivElement | null>(null);
@@ -120,8 +119,9 @@ function AuthModal({
   };
 
   const onGoogle = () => runSignIn(() => signInWithGoogle(callbackUrl));
-  const onKakao = () => runSignIn(() => signInWithKakao(callbackUrl));
   const onLine = () => runSignIn(() => signInWithLine(callbackUrl));
+  const onFacebook = () => runSignIn(() => signInWithFacebook(callbackUrl));
+  const onKakao = () => runSignIn(() => signInWithKakao(callbackUrl));
 
   return (
     <div className="fixed inset-0 z-[200]">
@@ -157,35 +157,40 @@ function AuthModal({
                 type="button"
                 onClick={onGoogle}
                 disabled={isSubmitting}
-                className="w-full rounded-2xl bg-neutral-900 px-5 py-4 text-white text-sm font-semibold hover:opacity-95 transition disabled:opacity-60"
+                className="w-full rounded-2xl bg-neutral-900 px-5 py-4 text-white text-sm font-semibold hover:opacity-95 transition disabled:opacity-60 inline-flex items-center justify-center gap-3"
               >
+                <GoogleLogo />
                 {isSubmitting ? t("signing_in") : t("continue_google")}
-              </button>
-
-              <button
-                type="button"
-                onClick={onKakao}
-                disabled={isSubmitting}
-                className="w-full rounded-2xl bg-[#FEE500] text-[#191919] px-5 py-4 text-sm font-semibold hover:opacity-95 transition disabled:opacity-60"
-              >
-                {isSubmitting ? t("signing_in") : t("continue_kakao")}
               </button>
 
               <button
                 type="button"
                 onClick={onLine}
                 disabled={isSubmitting}
-                className="w-full rounded-2xl bg-[#06C755] text-white px-5 py-4 text-sm font-semibold hover:opacity-95 transition disabled:opacity-60"
+                className="w-full rounded-2xl bg-[#06C755] text-white px-5 py-4 text-sm font-semibold hover:opacity-95 transition disabled:opacity-60 inline-flex items-center justify-center gap-3"
               >
+                <LineLogo className="text-white" />
                 {isSubmitting ? t("signing_in") : t("continue_line")}
               </button>
 
               <button
                 type="button"
-                onClick={() => comingSoon({ message: t("email_login_soon") })}
-                className="w-full rounded-2xl border border-neutral-200 bg-white px-5 py-4 text-sm font-semibold hover:bg-neutral-50 transition"
+                onClick={onFacebook}
+                disabled={isSubmitting}
+                className="w-full rounded-2xl bg-[#1877F2] text-white px-5 py-4 text-sm font-semibold hover:opacity-95 transition disabled:opacity-60 inline-flex items-center justify-center gap-3"
               >
-                {t("continue_email")}
+                <FacebookLogo className="text-white" />
+                {isSubmitting ? t("signing_in") : t("continue_facebook")}
+              </button>
+
+              <button
+                type="button"
+                onClick={onKakao}
+                disabled={isSubmitting}
+                className="w-full rounded-2xl bg-[#FEE500] text-[#191919] px-5 py-4 text-sm font-semibold hover:opacity-95 transition disabled:opacity-60 inline-flex items-center justify-center gap-3"
+              >
+                <KakaoLogo className="text-[#191919]" />
+                {isSubmitting ? t("signing_in") : t("continue_kakao")}
               </button>
             </div>
 

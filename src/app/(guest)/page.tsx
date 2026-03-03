@@ -12,7 +12,6 @@ const SECTION_PAGE_SIZE = 10;
 const COPY = {
   en: {
     title: "Top Recommended Stays",
-    subtitle: "KSTAY offers the most competitive rates by minimizing intermediary fees compared to other platforms.",
     popularHanok: "Popular Hanok",
     popularHanokSub: "Traditional Korean stays",
     thisWeekHot: "KSTAY Black",
@@ -20,7 +19,6 @@ const COPY = {
   },
   ko: {
     title: "추천 숙소",
-    subtitle: "KSTAY는 중개 수수료를 최소화하여 다른 플랫폼 대비 더 경쟁력 있는 요금을 제공합니다.",
     popularHanok: "인기 한옥",
     popularHanokSub: "전통 한옥 숙소",
     thisWeekHot: "KSTAY Black",
@@ -28,7 +26,6 @@ const COPY = {
   },
   ja: {
     title: "おすすめ宿泊先",
-    subtitle: "KSTAYは仲介手数料を最小化し、他プラットフォームより競争力のある料金を提供します。",
     popularHanok: "人気韓屋",
     popularHanokSub: "韓国伝統の宿",
     thisWeekHot: "KSTAY Black",
@@ -36,7 +33,6 @@ const COPY = {
   },
   zh: {
     title: "推荐住宿",
-    subtitle: "KSTAY 通过尽量减少中间费用，提供更有竞争力的价格。",
     popularHanok: "人气韩屋",
     popularHanokSub: "传统韩屋住宿",
     thisWeekHot: "KSTAY Black",
@@ -58,10 +54,9 @@ export default async function Page() {
       <PopularDestinations />
 
       <Container className="py-10">
-        <div className="flex flex-wrap items-end justify-between gap-4 border-l-4 border-blue-500 pl-4">
+        <div className="flex flex-wrap items-end justify-between gap-4 border-l-4 border-neutral-900 pl-4">
           <div className="min-w-0">
-            <h2 className="text-base font-semibold tracking-tight text-blue-800 md:text-xl">{c.title}</h2>
-            <p className="mt-1 text-xs text-neutral-600 md:text-sm">{c.subtitle}</p>
+            <h2 className="text-base font-semibold tracking-tight text-neutral-900 md:text-xl">{c.title}</h2>
           </div>
         </div>
 

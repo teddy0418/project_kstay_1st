@@ -55,21 +55,35 @@ export default function WizardGuidePage() {
   const [checkInTime, setCheckInTime] = useState("15:00");
   const [checkOutTime, setCheckOutTime] = useState("11:00");
   const [description, setDescription] = useState("");
-  const [checkInGuide, setCheckInGuide] = useState("");
-  const [houseRules, setHouseRules] = useState("");
+  const [confirmMessage, setConfirmMessage] = useState("");
 
   useEffect(() => {
     if (!listing) return;
-    setListingName(pickTitle(listing) || "");
-    setPropertyType(normalizePropertyType((listing as { propertyType?: string | null }).propertyType));
-    setMaxGuests((listing as { maxGuests?: number | null }).maxGuests ?? 2);
-    setCheckInTime(listing.checkInTime ?? "15:00");
-    setCheckOutTime(listing.checkOutTime ?? "11:00");
-    const bioKo = (listing as { hostBioKo?: string | null }).hostBioKo ?? "";
-    const bio = listing.hostBio ?? "";
-    setDescription(bioKo.trim() || bio.trim());
-    setCheckInGuide((listing as { checkInGuideMessage?: string | null }).checkInGuideMessage ?? "");
-    setHouseRules((listing as { houseRulesMessage?: string | null }).houseRulesMessage ?? "");
+    const title = pickTitle(listing);
+    const bioKo = ((listing as { hostBioKo?: string | null }).hostBioKo ?? "").trim();
+    const bio = (listing.hostBio ?? "").trim();
+    const guide = ((listing as { checkInGuideMessage?: string | null }).checkInGuideMessage ?? "").trim();
+    const rules = ((listing as { houseRulesMessage?: string | null }).houseRulesMessage ?? "").trim();
+    const combined = [guide, rules].filter(Boolean).join("\n\n");
+    const isDefaultDraft =
+      (title === "신규 숙소" || title === "") && !bioKo && !bio && !guide && !rules;
+    if (isDefaultDraft) {
+      setListingName("");
+      setPropertyType("");
+      setMaxGuests(2);
+      setCheckInTime("15:00");
+      setCheckOutTime("11:00");
+      setDescription("");
+      setConfirmMessage("");
+    } else {
+      setListingName(title || "");
+      setPropertyType(normalizePropertyType((listing as { propertyType?: string | null }).propertyType));
+      setMaxGuests((listing as { maxGuests?: number | null }).maxGuests ?? 2);
+      setCheckInTime(listing.checkInTime ?? "15:00");
+      setCheckOutTime(listing.checkOutTime ?? "11:00");
+      setDescription(bioKo || bio);
+      setConfirmMessage(combined);
+    }
   }, [listing]);
 
   const save = useCallback(async () => {
@@ -87,15 +101,15 @@ export default function WizardGuidePage() {
         checkOutTime: checkOutTime || undefined,
         hostBio: desc,
         hostBioKo: desc,
-        checkInGuideMessage: checkInGuide.trim() || null,
-        houseRulesMessage: houseRules.trim() || null,
+        checkInGuideMessage: confirmMessage.trim() || null,
+        houseRulesMessage: confirmMessage.trim() || null,
       });
       setDirty(false);
       toast("저장됨");
     } finally {
       setSaving(false);
     }
-  }, [listing, isLocked, patch, listingName, propertyType, maxGuests, checkInTime, checkOutTime, description, checkInGuide, houseRules, setDirty, setSaving, toast]);
+  }, [listing, isLocked, patch, listingName, propertyType, maxGuests, checkInTime, checkOutTime, description, confirmMessage, setDirty, setSaving, toast]);
 
   useEffect(() => {
     performSaveRef.current = save;
@@ -147,8 +161,8 @@ export default function WizardGuidePage() {
           checkOutTime: checkOutTime || undefined,
           hostBio: desc,
           hostBioKo: desc,
-          checkInGuideMessage: checkInGuide.trim() || null,
-          houseRulesMessage: houseRules.trim() || null,
+          checkInGuideMessage: confirmMessage.trim() || null,
+          houseRulesMessage: confirmMessage.trim() || null,
         });
         setDirty(false);
         setSaving(false);
@@ -160,7 +174,7 @@ export default function WizardGuidePage() {
     } else {
       router.push(target);
     }
-  }, [listing, dirty, canGoNext, listingName, propertyType, maxGuests, checkInTime, checkOutTime, description, checkInGuide, houseRules, patch, setDirty, setSaving, router, toast]);
+  }, [listing, dirty, canGoNext, listingName, propertyType, maxGuests, checkInTime, checkOutTime, description, confirmMessage, patch, setDirty, setSaving, router, toast]);
 
   const handleChange = useCallback(() => setDirty(true), [setDirty]);
 
@@ -228,44 +242,31 @@ export default function WizardGuidePage() {
 
         {/* 숙소 설명 (상세페이지) */}
         <section>
-          <h3 className="text-sm font-semibold text-neutral-700">숙소 설명 <span className="text-red-600">(필수)</span></h3>
+          <h3 className="text-sm font-semibold text-neutral-700">숙소 설명</h3>
           <p className="mt-0.5 text-xs text-neutral-500">상세페이지에 보여지는 메인 설명입니다. 20자 이상 입력해 주세요.</p>
           <textarea
             value={description}
             onChange={(e) => { setDescription(e.target.value); setDirty(true); }}
             placeholder="숙소의 특징, 분위기, 주변 교통·관광지, 편의시설 등을 소개해 주세요."
-            rows={5}
+            rows={10}
             className="mt-2 w-full rounded-xl border border-neutral-200 px-4 py-3 text-sm placeholder:text-neutral-400 focus:outline-none focus:ring-2 focus:ring-neutral-400 disabled:bg-neutral-50"
             disabled={isLocked}
           />
           <p className="mt-1 text-xs text-neutral-400">{description.trim().length}자</p>
         </section>
 
-        {/* 체크인 안내 · 이용 규칙 */}
-        <section className="space-y-4">
+        {/* 예약 확정 후 전달 안내 (체크인 안내 + 이용 규칙 통합) */}
+        <section>
           <h3 className="text-sm font-semibold text-neutral-700">예약 확정 후 전달 안내</h3>
-          <div>
-            <label className="block text-sm font-medium text-neutral-700">체크인 안내</label>
-            <textarea
-              value={checkInGuide}
-              onChange={(e) => { setCheckInGuide(e.target.value); setDirty(true); }}
-              placeholder="예: 현관 비밀번호, 키 보관함 위치, 주차 안내 등"
-              rows={3}
-              className="mt-2 w-full rounded-xl border border-neutral-200 px-4 py-3 text-sm placeholder:text-neutral-400 focus:outline-none focus:ring-2 focus:ring-neutral-400 disabled:bg-neutral-50"
-              disabled={isLocked}
-            />
-          </div>
-          <div>
-            <label className="block text-sm font-medium text-neutral-700">이용 규칙·기타</label>
-            <textarea
-              value={houseRules}
-              onChange={(e) => { setHouseRules(e.target.value); setDirty(true); }}
-              placeholder="예: 퇴실 시 정리 방법, 쓰레기 배출, 소음 안내 등"
-              rows={3}
-              className="mt-2 w-full rounded-xl border border-neutral-200 px-4 py-3 text-sm placeholder:text-neutral-400 focus:outline-none focus:ring-2 focus:ring-neutral-400 disabled:bg-neutral-50"
-              disabled={isLocked}
-            />
-          </div>
+          <p className="mt-0.5 text-xs text-neutral-500">체크인 방법, 이용 규칙 등을 예약 확정 후 게스트에게 전달합니다.</p>
+          <textarea
+            value={confirmMessage}
+            onChange={(e) => { setConfirmMessage(e.target.value); setDirty(true); }}
+            placeholder="예: 현관 비밀번호, 키 보관함 위치, 주차 안내, 퇴실 시 정리 방법, 쓰레기 배출, 소음 안내 등"
+            rows={5}
+            className="mt-2 w-full rounded-xl border border-neutral-200 px-4 py-3 text-sm placeholder:text-neutral-400 focus:outline-none focus:ring-2 focus:ring-neutral-400 disabled:bg-neutral-50"
+            disabled={isLocked}
+          />
         </section>
       </div>
 

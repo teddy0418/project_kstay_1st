@@ -96,14 +96,6 @@ export async function createPendingHostListing(input: CreateHostListingInput) {
       hostBioKo: input.hostBioKo,
       hostBioJa: input.hostBioJa,
       hostBioZh: input.hostBioZh,
-      images: {
-        create: [
-          {
-            url: "https://images.unsplash.com/photo-1522708323590-d24dbb6b0267?auto=format&fit=crop&w=1600&q=80",
-            sortOrder: 0,
-          },
-        ],
-      },
     },
     select: { id: true, status: true },
   });

@@ -74,6 +74,7 @@ export default function BookingWidget({
   const [disabledRanges, setDisabledRanges] = useState<Array<{ from: string; to: string }>>([]);
   const [bookedRanges, setBookedRanges] = useState<Array<{ from: string; to: string }>>([]);
   const [blockedRanges, setBlockedRanges] = useState<Array<{ from: string; to: string }>>([]);
+  const [datePrices, setDatePrices] = useState<Record<string, number>>({});
 
   useEffect(() => {
     if (!listingId) return;
@@ -108,6 +109,29 @@ export default function BookingWidget({
   const checkInISO = toISO(effectiveRange.from);
   const checkOutISO = toISO(effectiveRange.to);
 
+  useEffect(() => {
+    if (!listingId || !range?.from) return;
+    const from = checkInISO;
+    const lastNight = addDays(effectiveRange.from, Math.max(0, nights - 1));
+    const to = toISO(lastNight);
+    fetch(
+      `/api/listings/${encodeURIComponent(listingId)}/date-prices?from=${from}&to=${to}`,
+      { cache: "no-store" }
+    )
+      .then((r) => r.json())
+      .then((res) => {
+        const pricesArr: Array<{ date: string; priceKrw: number }> = res?.data?.prices ?? [];
+        const next: Record<string, number> = {};
+        for (const p of pricesArr) {
+          if (p?.date && typeof p.priceKrw === "number" && Number.isFinite(p.priceKrw) && p.priceKrw >= 0) {
+            next[String(p.date).slice(0, 10)] = p.priceKrw;
+          }
+        }
+        setDatePrices(next);
+      })
+      .catch(() => setDatePrices({}));
+  }, [listingId, checkInISO, effectiveRange.from, nights]);
+
   const overlapsDisabled = useMemo(() => {
     if (disabledRanges.length === 0) return false;
     return disabledRanges.some((r) => checkInISO < r.to && checkOutISO > r.from);
@@ -117,8 +141,17 @@ export default function BookingWidget({
     nonRefundableSpecialEnabled && isNonRefundableSpecial
       ? Math.round(basePricePerNightKRW * (1 - NON_REFUNDABLE_DISCOUNT_RATE))
       : basePricePerNightKRW;
-  const nightlyAllInKRW = totalGuestPriceKRW(basePerNightKRW);
-  const totalKRW = nightlyAllInKRW * nights;
+  const totalKRW = useMemo(() => {
+    let sum = 0;
+    for (let i = 0; i < nights; i++) {
+      const d = addDays(effectiveRange.from, i);
+      const ymd = toISO(d);
+      const baseKrw = datePrices[ymd] ?? basePerNightKRW;
+      sum += totalGuestPriceKRW(baseKrw);
+    }
+    return sum;
+  }, [nights, effectiveRange.from, datePrices, basePerNightKRW]);
+  const nightlyAllInKRW = nights > 0 ? totalKRW / nights : totalGuestPriceKRW(basePerNightKRW);
   const totalDual = { main: formatFromKRW(totalKRW, currency), approxKRW: formatKRW(totalKRW) };
   const nightlyDual = { main: formatFromKRW(nightlyAllInKRW, currency), approxKRW: formatKRW(nightlyAllInKRW) };
   const cancelText = freeCancelUntilKST(effectiveRange.from);

@@ -23,9 +23,9 @@ const DEFAULT_LANG: Lang = "en";
 
 const OPTIONS: Option[] = [
   { code: "en", label: "English", nativeLabel: "English", locale: "en-US" },
-  { code: "ko", label: "Korean", nativeLabel: "한국어", locale: "ko-KR" },
   { code: "ja", label: "Japanese", nativeLabel: "日本語", locale: "ja-JP" },
   { code: "zh", label: "Chinese", nativeLabel: "中文", locale: "zh-CN" },
+  { code: "ko", label: "Korean", nativeLabel: "한국어", locale: "ko-KR" },
 ];
 
 type Dict = Record<string, string>;

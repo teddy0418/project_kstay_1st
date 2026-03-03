@@ -21,7 +21,7 @@ export default async function HostListingsNewEntryPage() {
     city: "Seoul",
     area: "Jongno",
     address: "주소를 입력해 주세요",
-    basePriceKrw: 100000,
+    basePriceKrw: 0,
     checkInTime: "15:00",
     checkOutTime: "11:00",
     hostBio: null,

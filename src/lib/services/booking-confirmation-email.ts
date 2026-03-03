@@ -30,16 +30,32 @@ export async function sendBookingConfirmedEmailIfNeeded(bookingId: string) {
   const detail = listing.detailedAddress?.trim();
   const fullAddress = detail ? `${baseAddr} ${detail}`.trim() : baseAddr;
 
+  const totalKrw = Number(booking.totalKrw) || 0;
+  const accommodationKrw =
+    booking.accommodationKrw != null && Number.isFinite(booking.accommodationKrw)
+      ? Number(booking.accommodationKrw)
+      : Math.round(totalKrw / 1.132);
+  const guestServiceFeeKrw =
+    booking.guestServiceFeeKrw != null && Number.isFinite(booking.guestServiceFeeKrw)
+      ? Number(booking.guestServiceFeeKrw)
+      : totalKrw - accommodationKrw;
+  const nights = Number(booking.nights) || 1;
+  const formatKrw = (n: number) => `₩${n.toLocaleString("ko-KR")}`;
+
   await sendEmailWithResend({
     to: booking.guestEmail,
-    subject: "KSTAY booking confirmed",
+    subject: "KSTAY 예약 확정 / Booking confirmed",
     react: React.createElement(BookingConfirmedEmail, {
       bookingToken: booking.publicToken,
       listingTitle: listing.title,
       checkIn: formatDateEn(booking.checkIn),
       checkOut: formatDateEn(booking.checkOut),
+      nights,
       guestsText: `${booking.guestsAdults} adults, ${booking.guestsChildren} children, ${booking.guestsInfants} infants, ${booking.guestsPets} pets`,
-      totalText: `${formatUsdFromCents(booking.totalUsd)} / ₩${booking.totalKrw.toLocaleString()}`,
+      accommodationKrwFormatted: formatKrw(accommodationKrw),
+      guestServiceFeeKrwFormatted: formatKrw(guestServiceFeeKrw),
+      totalKrwFormatted: formatKrw(totalKrw),
+      totalUsdFormatted: formatUsdFromCents(booking.totalUsd),
       cancellationDeadlineKst: formatCancellationDeadlineKst(booking.cancellationDeadlineKst),
       manageUrl: `${process.env.NEXT_PUBLIC_SITE_URL || process.env.AUTH_URL || "http://localhost:3001"}/profile`,
       checkInTime: listing.checkInTime ?? undefined,

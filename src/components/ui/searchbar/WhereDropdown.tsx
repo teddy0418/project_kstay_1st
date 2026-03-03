@@ -52,7 +52,7 @@ export default function WhereDropdown({
 
         <div className="mt-4">
           <div className="text-xs font-semibold text-neutral-500">{t("popular")}</div>
-          <div className="mt-2 grid gap-2 sm:grid-cols-2">
+          <div className="mt-2 grid grid-cols-2 gap-2">
             {filtered.map((c) => {
               const active = value === c.value;
               return (

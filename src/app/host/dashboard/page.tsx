@@ -61,13 +61,20 @@ export default async function HostDashboardPage(props: PageProps) {
         <div className="mt-1 text-xs text-neutral-500 md:text-sm">KSTAY 파트너스 운영을 한눈에 확인하세요</div>
       </div>
 
-      <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 md:grid-cols-5">
-        {summary.map((s) => (
-          <div key={s.label} className="rounded-2xl border border-neutral-200 bg-white shadow-sm p-4 min-w-0">
+      {/* 모바일(아이폰 SE 포함): 2열 + 정산예정액 가로 한 줄 / md 이상: 5열 */}
+      <div className="grid grid-cols-2 gap-2 sm:gap-3 md:grid-cols-5">
+        {summary.slice(0, 4).map((s) => (
+          <div key={s.label} className="rounded-2xl border border-neutral-200 bg-white shadow-sm p-3 sm:p-4 min-w-0">
             <div className="text-xs text-neutral-500">{s.label}</div>
-            <div className={"mt-2 text-xl font-extrabold truncate " + (s.danger ? "text-red-600" : "text-neutral-900")}>{s.value}</div>
+            <div className={"mt-1 sm:mt-2 text-lg sm:text-xl font-extrabold truncate " + (s.danger ? "text-red-600" : "text-neutral-900")}>{s.value}</div>
           </div>
         ))}
+        <div className="col-span-2 min-w-0 md:col-span-1">
+          <div className="rounded-2xl border border-neutral-200 bg-white shadow-sm p-3 sm:p-4 min-w-0">
+            <div className="text-xs text-neutral-500">{summary[4].label}</div>
+            <div className={"mt-1 sm:mt-2 text-lg sm:text-xl font-extrabold truncate " + (summary[4].danger ? "text-red-600" : "text-neutral-900")}>{summary[4].value}</div>
+          </div>
+        </div>
       </div>
 
       <div className="grid grid-cols-1 lg:grid-cols-10 gap-4">
@@ -140,9 +147,6 @@ export default async function HostDashboardPage(props: PageProps) {
           <div className="mt-3 sm:mt-4 grid gap-2 sm:gap-3">
             <Link href="/host/account" className="rounded-xl sm:rounded-2xl border border-neutral-200 bg-white px-3 py-2.5 sm:px-4 sm:py-3 text-xs sm:text-sm font-semibold hover:bg-neutral-50 transition text-center block">
               정산 계좌 설정
-            </Link>
-            <Link href="/coming-soon" className="rounded-xl sm:rounded-2xl border border-red-300 bg-white px-3 py-2.5 sm:px-4 sm:py-3 text-xs sm:text-sm font-semibold text-red-600 hover:bg-red-50 transition text-center block">
-              전체 판매 중지
             </Link>
             <Link href="/" className="rounded-xl sm:rounded-2xl border border-neutral-200 bg-white px-3 py-2.5 sm:px-4 sm:py-3 text-xs sm:text-sm font-semibold hover:bg-neutral-50 transition text-center block">숙소 미리보기 (게스트 페이지)</Link>
             <Link href="/coming-soon" className="rounded-xl sm:rounded-2xl border border-neutral-200 bg-white px-3 py-2.5 sm:px-4 sm:py-3 text-xs sm:text-sm font-semibold hover:bg-neutral-50 transition text-center block">

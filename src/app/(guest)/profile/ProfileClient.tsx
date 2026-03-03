@@ -132,9 +132,11 @@ export default function ProfileClient({ initialTrips }: ProfileClientProps) {
   const [reviewModal, setReviewModal] = useState<{ bookingId: string; listingTitle: string } | null>(null);
   const [myReviews, setMyReviews] = useState<Array<{ id: string; rating: number; body: string; createdAt: string; listing: { id: string; title?: string; titleKo?: string } | null }>>([]);
   const [myReviewsLoading, setMyReviewsLoading] = useState(true);
-  const INITIAL_SHOW = 3;
+  const INITIAL_SHOW = 2;
+  const RECENT_INITIAL_SHOW = 4;
   const [tripsExpanded, setTripsExpanded] = useState(false);
   const [reviewsExpanded, setReviewsExpanded] = useState(false);
+  const [recentExpanded, setRecentExpanded] = useState(false);
 
   const fetchTrips = () => {
     if (!loggedIn) return;
@@ -238,14 +240,14 @@ export default function ProfileClient({ initialTrips }: ProfileClientProps) {
 
   if (!loggedIn) {
     return (
-      <Container className="py-10">
-        <h1 className="text-2xl font-semibold tracking-tight">{t("profile_settings")}</h1>
+      <Container className="py-6 sm:py-10">
+        <h1 className="text-xl font-semibold tracking-tight sm:text-2xl">{t("profile_settings")}</h1>
         <p className="mt-2 text-sm text-neutral-600">{t("sign_in_to_manage")}</p>
 
         <button
           type="button"
           onClick={() => openAuthModal({ next: "/profile", role: "GUEST" })}
-          className="mt-5 rounded-xl bg-neutral-900 px-5 py-3 text-sm font-semibold text-white hover:opacity-95 transition"
+          className="mt-4 min-h-[44px] rounded-xl bg-neutral-900 px-5 py-3 text-sm font-semibold text-white hover:opacity-95 transition sm:mt-5"
         >
           {t("login_signup")}
         </button>
@@ -271,11 +273,11 @@ export default function ProfileClient({ initialTrips }: ProfileClientProps) {
   };
 
   return (
-    <Container className="py-10">
-      <h1 className="text-2xl font-semibold tracking-tight">{t("profile_settings")}</h1>
+    <Container className="w-full max-w-full min-w-0 py-6 sm:py-10">
+      <h1 className="text-xl font-semibold tracking-tight sm:text-2xl">{t("profile_settings")}</h1>
 
-      <div className="mt-6 grid gap-6 lg:grid-cols-[380px,1fr]">
-        <div className="rounded-2xl border border-neutral-200 bg-white p-6 shadow-sm">
+      <div className="mt-4 grid w-full max-w-full grid-cols-1 gap-4 sm:mt-6 sm:gap-6 lg:grid-cols-[minmax(0,380px),1fr]">
+        <div className="min-w-0 rounded-2xl border border-neutral-200 bg-white p-4 shadow-sm sm:p-6">
           <div className="flex items-center gap-4">
             <div className="relative block h-16 w-16 shrink-0 rounded-full border border-neutral-200 bg-neutral-100 overflow-hidden grid place-items-center">
               {profilePhotoUrl ? (
@@ -288,28 +290,15 @@ export default function ProfileClient({ initialTrips }: ProfileClientProps) {
             <div className="min-w-0">
               <div className="text-sm text-neutral-500">{role?.toUpperCase()}</div>
               <div className="text-lg font-semibold truncate">{displayName || c.guest}</div>
-              {(user?.provider || user?.email) && (
-                <div className="mt-1 text-xs text-neutral-500 truncate">
-                  {user.provider && (
-                    <span>
-                      {t("logged_in_with")}{" "}
-                      {user.provider === "google"
-                        ? t("provider_google")
-                        : user.provider === "kakao"
-                          ? t("provider_kakao")
-                          : user.provider === "line"
-                            ? t("provider_line")
-                            : user.provider}
-                      {user.email ? " · " : ""}
-                    </span>
-                  )}
-                  {user.email && <span>{user.email}</span>}
+              {user?.email && (
+                <div className="mt-1 break-all text-xs text-neutral-500">
+                  {user.email}
                 </div>
               )}
             </div>
           </div>
 
-          <div className="mt-6 grid gap-4">
+          <div className="mt-4 grid gap-4 sm:mt-6">
             <div className="rounded-xl border border-neutral-200 px-3 py-2">
               <label className="text-xs font-semibold text-neutral-500">{t("display_name")}</label>
               <input
@@ -334,7 +323,7 @@ export default function ProfileClient({ initialTrips }: ProfileClientProps) {
             <button
               type="button"
               onClick={onSave}
-              className="rounded-xl bg-neutral-900 px-4 py-3 text-sm font-semibold text-white hover:opacity-95 transition"
+              className="min-h-[44px] rounded-xl bg-neutral-900 px-4 py-3 text-sm font-semibold text-white hover:opacity-95 transition"
             >
               {t("save_changes")}
             </button>
@@ -343,18 +332,18 @@ export default function ProfileClient({ initialTrips }: ProfileClientProps) {
           </div>
         </div>
 
-        <div className="grid gap-6">
-          <section className="rounded-2xl border border-neutral-200 bg-white p-6 shadow-sm">
-            <h2 className="text-lg font-semibold">{t("your_trips")}</h2>
+        <div className="min-w-0 grid gap-4 sm:gap-6">
+          <section className="min-w-0 rounded-2xl border border-neutral-200 bg-white p-4 shadow-sm sm:p-6">
+            <h2 className="text-base font-semibold sm:text-lg">{t("your_trips")}</h2>
             {tripsLoading ? (
               <p className="mt-2 text-sm text-neutral-500">{t("loading")}</p>
             ) : trips.length === 0 ? (
               <p className="mt-2 text-sm text-neutral-600">{t("empty_trips")}</p>
             ) : (
               <>
-                <div className="mt-5 grid gap-x-6 gap-y-10 sm:grid-cols-2 lg:grid-cols-2 xl:grid-cols-3">
+                <div className="mt-4 grid min-w-0 grid-cols-1 gap-x-4 gap-y-6 sm:mt-5 sm:grid-cols-2 sm:gap-x-6 sm:gap-y-10 lg:grid-cols-2 xl:grid-cols-3">
                   {(tripsExpanded ? trips : trips.slice(0, INITIAL_SHOW)).map((trip) => (
-                  <div key={`${trip.booking.id}-${trip.listing.id}`}>
+                  <div key={`${trip.booking.id}-${trip.listing.id}`} className="min-w-0">
                     <div className="mb-2 flex items-center justify-between gap-2">
                       <p className="text-xs text-neutral-500">
                         {trip.booking.checkIn} → {trip.booking.checkOut} · {trip.booking.nights}{" "}
@@ -381,14 +370,26 @@ export default function ProfileClient({ initialTrips }: ProfileClientProps) {
                   </div>
                   ))}
                 </div>
-                {trips.length > INITIAL_SHOW && !tripsExpanded && (
-                  <button
-                    type="button"
-                    onClick={() => setTripsExpanded(true)}
-                    className="mt-4 text-sm font-medium text-neutral-600 hover:text-neutral-900 underline"
-                  >
-                    {t("load_more")} ({trips.length - INITIAL_SHOW})
-                  </button>
+                {trips.length > INITIAL_SHOW && (
+                  <div className="mt-4 flex items-center gap-3">
+                    {!tripsExpanded ? (
+                      <button
+                        type="button"
+                        onClick={() => setTripsExpanded(true)}
+                        className="min-h-[44px] py-2 text-sm font-medium text-neutral-600 hover:text-neutral-900 underline sm:min-h-0 sm:py-0"
+                      >
+                        {t("load_more")} ({trips.length - INITIAL_SHOW})
+                      </button>
+                    ) : (
+                      <button
+                        type="button"
+                        onClick={() => setTripsExpanded(false)}
+                        className="min-h-[44px] py-2 text-sm font-medium text-neutral-600 hover:text-neutral-900 underline sm:min-h-0 sm:py-0"
+                      >
+                        {t("close")}
+                      </button>
+                    )}
+                  </div>
                 )}
               </>
             )}
@@ -404,17 +405,17 @@ export default function ProfileClient({ initialTrips }: ProfileClientProps) {
             )}
           </section>
 
-          <section className="rounded-2xl border border-neutral-200 bg-white p-6 shadow-sm">
-            <h2 className="text-lg font-semibold">{t("your_reviews")}</h2>
+          <section className="min-w-0 rounded-2xl border border-neutral-200 bg-white p-4 shadow-sm sm:p-6">
+            <h2 className="text-base font-semibold sm:text-lg">{t("your_reviews")}</h2>
             {myReviewsLoading ? (
               <p className="mt-2 text-sm text-neutral-500">{t("loading")}</p>
             ) : myReviews.length === 0 ? (
               <p className="mt-2 text-sm text-neutral-600">{c.reviewSoon}</p>
             ) : (
               <>
-                <ul className="mt-5 space-y-4">
+                <ul className="mt-4 space-y-3 sm:mt-5 sm:space-y-4">
                   {(reviewsExpanded ? myReviews : myReviews.slice(0, INITIAL_SHOW)).map((r) => (
-                  <li key={r.id} className="rounded-xl border border-neutral-200 p-4">
+                  <li key={r.id} className="rounded-xl border border-neutral-200 p-3 sm:p-4">
                     <div className="flex items-center justify-between gap-2">
                       <Link
                         href={`/listings/${r.listing?.id}`}
@@ -433,31 +434,68 @@ export default function ProfileClient({ initialTrips }: ProfileClientProps) {
                   </li>
                   ))}
                 </ul>
-                {myReviews.length > INITIAL_SHOW && !reviewsExpanded && (
-                  <button
-                    type="button"
-                    onClick={() => setReviewsExpanded(true)}
-                    className="mt-4 text-sm font-medium text-neutral-600 hover:text-neutral-900 underline"
-                  >
-                    {t("load_more")} ({myReviews.length - INITIAL_SHOW})
-                  </button>
+                {myReviews.length > INITIAL_SHOW && (
+                  <div className="mt-4 flex items-center gap-3">
+                    {!reviewsExpanded ? (
+                      <button
+                        type="button"
+                        onClick={() => setReviewsExpanded(true)}
+                        className="min-h-[44px] py-2 text-sm font-medium text-neutral-600 hover:text-neutral-900 underline sm:min-h-0 sm:py-0"
+                      >
+                        {t("load_more")} ({myReviews.length - INITIAL_SHOW})
+                      </button>
+                    ) : (
+                      <button
+                        type="button"
+                        onClick={() => setReviewsExpanded(false)}
+                        className="min-h-[44px] py-2 text-sm font-medium text-neutral-600 hover:text-neutral-900 underline sm:min-h-0 sm:py-0"
+                      >
+                        {t("close")}
+                      </button>
+                    )}
+                  </div>
                 )}
               </>
             )}
           </section>
 
-          <section className="rounded-2xl border border-neutral-200 bg-white p-6 shadow-sm">
-            <h2 className="text-lg font-semibold">{t("recently_viewed")}</h2>
+          <section className="min-w-0 rounded-2xl border border-neutral-200 bg-white p-4 shadow-sm sm:p-6">
+            <h2 className="text-base font-semibold sm:text-lg">{t("recently_viewed")}</h2>
             {recentListingsLoading ? (
               <p className="mt-2 text-sm text-neutral-500">{t("loading")}</p>
             ) : recentListings.length === 0 ? (
               <p className="mt-2 text-sm text-neutral-600">{t("empty_recently_viewed")}</p>
             ) : (
-              <div className="mt-5 grid gap-x-6 gap-y-10 sm:grid-cols-2 lg:grid-cols-2 xl:grid-cols-3">
-                {recentListings.map((l) => (
-                  <ListingCard key={l.id} listing={l} />
-                ))}
-              </div>
+              <>
+                <div className="mt-4 grid min-w-0 grid-cols-1 gap-x-4 gap-y-6 sm:mt-5 sm:gap-x-6 sm:gap-y-10 sm:grid-cols-2 lg:grid-cols-2 xl:grid-cols-3">
+                  {(recentExpanded ? recentListings : recentListings.slice(0, RECENT_INITIAL_SHOW)).map((l) => (
+                    <div key={l.id} className="min-w-0">
+                      <ListingCard listing={l} />
+                    </div>
+                  ))}
+                </div>
+                {recentListings.length > RECENT_INITIAL_SHOW && (
+                  <div className="mt-4 flex items-center gap-3">
+                    {!recentExpanded ? (
+                      <button
+                        type="button"
+                        onClick={() => setRecentExpanded(true)}
+                        className="min-h-[44px] py-2 text-sm font-medium text-neutral-600 hover:text-neutral-900 underline sm:min-h-0 sm:py-0"
+                      >
+                        {t("load_more")} ({recentListings.length - RECENT_INITIAL_SHOW})
+                      </button>
+                    ) : (
+                      <button
+                        type="button"
+                        onClick={() => setRecentExpanded(false)}
+                        className="min-h-[44px] py-2 text-sm font-medium text-neutral-600 hover:text-neutral-900 underline sm:min-h-0 sm:py-0"
+                      >
+                        {t("close")}
+                      </button>
+                    )}
+                  </div>
+                )}
+              </>
             )}
           </section>
         </div>

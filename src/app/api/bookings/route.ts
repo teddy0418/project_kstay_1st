@@ -154,10 +154,14 @@ export async function POST(req: Request) {
     }
 
     const sessionUser = await getServerSessionUser();
-    const guestEmail = (body.guestEmail ?? sessionUser?.email ?? "").trim();
+    if (!sessionUser) return apiError(401, "UNAUTHORIZED", "Login required to complete booking");
+
+    const guestEmail = (body.guestEmail ?? sessionUser.email ?? "").trim();
     if (!guestEmail) return apiError(400, "BAD_REQUEST", "guestEmail is required");
 
-    const guestName = (body.guestName ?? sessionUser?.name ?? "").trim() || null;
+    const guestName = (body.guestName ?? sessionUser.name ?? "").trim();
+    if (!guestName) return apiError(400, "BAD_REQUEST", "guestName is required");
+    const guestMessageToHost = (body.guestMessageToHost ?? "").trim() || null;
     const guestsAdults = Math.max(1, body.guestsAdults ?? 1);
     const guestsChildren = Math.max(0, body.guestsChildren ?? 0);
     const guestsInfants = Math.max(0, body.guestsInfants ?? 0);
@@ -191,9 +195,10 @@ export async function POST(req: Request) {
     const booking = await createPendingBookingWithPayment({
       publicToken,
       listingId: listing.id,
-      guestUserId: sessionUser?.id ?? null,
+      guestUserId: sessionUser.id,
       guestEmail,
       guestName,
+      guestMessageToHost,
       checkIn: checkInDate,
       checkOut: checkOutDate,
       nights,
@@ -275,6 +280,8 @@ export async function POST(req: Request) {
     return apiOk(payload, 201);
   } catch (error) {
     console.error("[api/bookings] failed to create booking", error);
-    return apiError(500, "INTERNAL_ERROR", "Failed to create booking");
+    const message =
+      error instanceof Error && error.message ? error.message : "Failed to create booking";
+    return apiError(500, "INTERNAL_ERROR", message);
   }
 }

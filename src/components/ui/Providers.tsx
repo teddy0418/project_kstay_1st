@@ -13,6 +13,7 @@ import { ToastProvider } from "@/components/ui/ToastProvider";
 import AuthProvider from "@/components/ui/AuthProvider";
 import AuthModalProvider from "@/components/ui/AuthModalProvider";
 import WishlistProvider from "@/components/ui/WishlistProvider";
+import OnboardingGate from "@/components/ui/OnboardingGate";
 
 export default function Providers({
   children,
@@ -28,6 +29,7 @@ export default function Providers({
       <SessionProvider refetchInterval={0} refetchOnWindowFocus={false}>
         <AuthProvider>
           <AuthModalProvider>
+            <OnboardingGate>
             <WishlistProvider>
               <CurrencyProvider initialCurrency={initialCurrency}>
                 <ExchangeRatesProvider>
@@ -39,6 +41,7 @@ export default function Providers({
                 </ExchangeRatesProvider>
               </CurrencyProvider>
             </WishlistProvider>
+            </OnboardingGate>
           </AuthModalProvider>
         </AuthProvider>
       </SessionProvider>

@@ -13,6 +13,7 @@ type AuthCtx = {
   signInWithGoogle: (nextPath?: string) => Promise<unknown>;
   signInWithKakao: (nextPath?: string) => Promise<unknown>;
   signInWithLine: (nextPath?: string) => Promise<unknown>;
+  signInWithFacebook: (nextPath?: string) => Promise<unknown>;
   signOut: (callbackUrl?: string) => Promise<void>;
 };
 
@@ -50,6 +51,11 @@ export default function AuthProvider({
     return nextAuthSignIn("line", { callbackUrl });
   };
 
+  const signInWithFacebook = async (nextPath?: string) => {
+    const callbackUrl = nextPath && nextPath.startsWith("/") ? nextPath : "/";
+    return nextAuthSignIn("facebook", { callbackUrl });
+  };
+
   const signOut = async (callbackUrl = "/") => {
     await nextAuthSignOut({ callbackUrl, redirect: false });
   };
@@ -62,6 +68,7 @@ export default function AuthProvider({
       signInWithGoogle,
       signInWithKakao,
       signInWithLine,
+      signInWithFacebook,
       signOut,
     };
   }, [user, status]);

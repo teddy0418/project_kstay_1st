@@ -20,8 +20,10 @@ export default function ApprovedListingEditForm({
 }: Props) {
   const router = useRouter();
   const { toast } = useToast();
-  const [checkInGuideMessage, setCheckInGuideMessage] = useState(initialCheckInGuideMessage);
-  const [houseRulesMessage, setHouseRulesMessage] = useState(initialHouseRulesMessage);
+  const initialConfirm = [initialCheckInGuideMessage.trim(), initialHouseRulesMessage.trim()]
+    .filter(Boolean)
+    .join("\n\n");
+  const [confirmMessage, setConfirmMessage] = useState(initialConfirm);
   const [detailedAddress, setDetailedAddress] = useState(initialDetailedAddress);
   const [saving, setSaving] = useState(false);
 
@@ -29,9 +31,10 @@ export default function ApprovedListingEditForm({
     e.preventDefault();
     setSaving(true);
     try {
+      const value = confirmMessage.trim() || null;
       await apiClient.patch(`/api/host/listings/${listingId}`, {
-        checkInGuideMessage: checkInGuideMessage.trim() || null,
-        houseRulesMessage: houseRulesMessage.trim() || null,
+        checkInGuideMessage: value,
+        houseRulesMessage: value,
         detailedAddress: detailedAddress.trim() || null,
       });
       toast("저장되었습니다.");
@@ -46,22 +49,13 @@ export default function ApprovedListingEditForm({
   return (
     <form onSubmit={handleSubmit} className="space-y-6">
       <div>
-        <label className="block text-sm font-medium text-neutral-700">체크인 안내</label>
+        <label className="block text-sm font-medium text-neutral-700">예약 확정 후 전달 안내</label>
+        <p className="mt-0.5 text-xs text-neutral-500">체크인 방법, 이용 규칙 등을 예약 확정 후 게스트에게 전달합니다.</p>
         <textarea
-          value={checkInGuideMessage}
-          onChange={(e) => setCheckInGuideMessage(e.target.value)}
-          placeholder="예: 현관 비밀번호, 키 보관함 위치, 주차 안내 등"
-          rows={4}
-          className="mt-2 w-full rounded-xl border border-neutral-200 px-4 py-3 text-sm placeholder:text-neutral-400 focus:outline-none focus:ring-2 focus:ring-neutral-400"
-        />
-      </div>
-      <div>
-        <label className="block text-sm font-medium text-neutral-700">이용 규칙·기타</label>
-        <textarea
-          value={houseRulesMessage}
-          onChange={(e) => setHouseRulesMessage(e.target.value)}
-          placeholder="예: 퇴실 시 정리 방법, 쓰레기 배출, 소음 안내 등"
-          rows={4}
+          value={confirmMessage}
+          onChange={(e) => setConfirmMessage(e.target.value)}
+          placeholder="예: 현관 비밀번호, 키 보관함 위치, 주차 안내, 퇴실 시 정리 방법, 쓰레기 배출, 소음 안내 등"
+          rows={6}
           className="mt-2 w-full rounded-xl border border-neutral-200 px-4 py-3 text-sm placeholder:text-neutral-400 focus:outline-none focus:ring-2 focus:ring-neutral-400"
         />
       </div>

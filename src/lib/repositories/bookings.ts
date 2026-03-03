@@ -15,6 +15,7 @@ type CreateBookingInput = {
   guestUserId: string | null;
   guestEmail: string;
   guestName: string | null;
+  guestMessageToHost?: string | null;
   checkIn: Date;
   checkOut: Date;
   nights: number;
@@ -64,6 +65,7 @@ export async function createPendingBookingWithPayment(input: CreateBookingInput)
       guestUserId: input.guestUserId,
       guestEmail: input.guestEmail,
       guestName: input.guestName,
+      guestMessageToHost: input.guestMessageToHost ?? null,
       checkIn: input.checkIn,
       checkOut: input.checkOut,
       nights: input.nights,

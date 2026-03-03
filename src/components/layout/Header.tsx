@@ -83,8 +83,8 @@ export default function Header() {
   return (
     <header className="sticky top-0 z-[90] border-b border-neutral-200 bg-white/85 backdrop-blur supports-[backdrop-filter]:bg-white/60">
       <Container className="flex flex-wrap h-[76px] items-center justify-between gap-3">
-        <Link href="/" className="flex items-center gap-2 shrink-0">
-          <div className="h-10 w-10 rounded-xl bg-brand text-brand-foreground grid place-items-center font-semibold">
+        <Link href="/" className="flex items-center gap-2 shrink-0" aria-label="KSTAY Home">
+          <div className="h-10 w-10 shrink-0 rounded-xl bg-[#E9B10D] text-white grid place-items-center font-semibold text-lg">
             K
           </div>
           <div className="hidden sm:block leading-tight">

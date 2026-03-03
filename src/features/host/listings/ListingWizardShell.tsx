@@ -110,7 +110,7 @@ export default function ListingWizardShell({
       <div className="mt-4 flex flex-wrap items-center gap-3">
         {isLocked && (
           <p className="rounded-xl border border-amber-200 bg-amber-50 px-3 py-2 text-xs text-amber-800">
-            상태가 DRAFT가 아니라 수정이 잠겨 있습니다.
+            상태가 초안이 아니라 수정이 잠겨 있습니다.
           </p>
         )}
         {!isLocked && (

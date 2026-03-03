@@ -7,7 +7,7 @@ import GuestI18nWrapper from "./GuestI18nWrapper";
 export default function GuestLayout({ children }: { children: React.ReactNode }) {
   return (
     <GuestI18nWrapper>
-      <div className="min-w-0 overflow-x-hidden">
+      <div className="min-w-0 overflow-x-hidden pb-20 md:pb-0">
         <Header />
         <div className="relative z-40">
           <FloatingSearchWrapper />

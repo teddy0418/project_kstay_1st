@@ -5,9 +5,20 @@ import { createPortal } from "react-dom";
 import { useRouter } from "next/navigation";
 import { apiClient, ApiClientError } from "@/lib/api/client";
 import { useAuth } from "@/components/ui/AuthProvider";
+import { useAuthModal } from "@/components/ui/AuthModalProvider";
 import { useCurrency } from "@/components/ui/CurrencyProvider";
 import { useI18n } from "@/components/ui/LanguageProvider";
 import { requestPortonePayment, type PortonePayParams } from "@/lib/portone/requestPayment";
+import {
+  CardBrandLogos,
+  PayPalLogo,
+  LinePayLogo,
+  AlipayHKLogo,
+  PromptPayLogo,
+  KakaoPayLogo,
+} from "@/components/ui/PaymentLogos";
+
+type UiPaymentId = "KAKAOPAY" | "CARD" | "LINEPAY" | "ALIPAYHK" | "PROMPTPAY" | "PAYPAL";
 
 type Props = {
   listingId: string;
@@ -34,16 +45,27 @@ type CreateBookingResponse = {
 
 export default function CheckoutPaymentCard(props: Props) {
   const router = useRouter();
-  const { user } = useAuth();
+  const { user, isAuthed } = useAuth();
+  const { open: openAuthModal } = useAuthModal();
   const { currency } = useCurrency();
-  const { lang } = useI18n();
+  const { t, lang } = useI18n();
+
+  const checkoutNextUrl = useMemo(
+    () =>
+      `/checkout?listingId=${encodeURIComponent(props.listingId)}&start=${encodeURIComponent(props.checkIn)}&end=${encodeURIComponent(props.checkOut)}&guests=${props.guests}${props.isNonRefundableSpecial ? "&special=1" : ""}`,
+    [props.listingId, props.checkIn, props.checkOut, props.guests, props.isNonRefundableSpecial]
+  );
+
   const c =
     lang === "ko"
       ? {
           payment: "결제",
           desc: "MVP에서는 모의 결제 흐름이며, 추후 PortOne 웹훅 검증으로 대체됩니다.",
-          email: "게스트 이메일",
-          name: "게스트 이름 (선택)",
+          email: "게스트 이메일 (필수)",
+          emailHint: "예약 확정·인보이스 메일을 받을 주소",
+          name: "게스트 이름 (필수)",
+          messageToHost: "호스트에게 보낼 메시지 (선택)",
+          messageToHostPh: "예: 체크인 시간 문의, 특별 요청 등",
           emailPh: "you@example.com",
           namePh: "게스트 이름",
           processing: "처리 중...",
@@ -57,8 +79,11 @@ export default function CheckoutPaymentCard(props: Props) {
         ? {
             payment: "支払い",
             desc: "MVP ではモック決済で、後で PortOne webhook 検証に置き換え可能です。",
-            email: "ゲストメール",
-            name: "ゲスト名（任意）",
+            email: "ゲストメール（必須）",
+            emailHint: "予約確認・請求書メールの送信先",
+            name: "ゲスト名（必須）",
+            messageToHost: "ホストへのメッセージ（任意）",
+            messageToHostPh: "例: チェックイン時間の問い合わせ、ご要望など",
             emailPh: "you@example.com",
             namePh: "ゲスト名",
             processing: "処理中...",
@@ -72,8 +97,11 @@ export default function CheckoutPaymentCard(props: Props) {
           ? {
               payment: "支付",
               desc: "MVP 阶段使用模拟支付，后续可替换为 PortOne webhook 校验。",
-              email: "客人邮箱",
-              name: "客人姓名（可选）",
+              email: "客人邮箱（必填）",
+              emailHint: "接收预订确认及发票邮件的地址",
+              name: "客人姓名（必填）",
+              messageToHost: "给房东的留言（选填）",
+              messageToHostPh: "例：入住时间咨询、特殊需求等",
               emailPh: "you@example.com",
               namePh: "客人姓名",
               processing: "处理中...",
@@ -86,8 +114,11 @@ export default function CheckoutPaymentCard(props: Props) {
           : {
               payment: "Payment",
               desc: "In MVP, payment confirmation is mocked and can be replaced by PortOne webhook later.",
-              email: "Guest email",
-              name: "Guest name (optional)",
+              email: "Guest email (required)",
+              emailHint: "Address for booking confirmation and invoice",
+              name: "Guest name (required)",
+              messageToHost: "Message to host (optional)",
+              messageToHostPh: "e.g. check-in time, special requests",
               emailPh: "you@example.com",
               namePh: "Guest name",
               processing: "Processing...",
@@ -100,13 +131,105 @@ export default function CheckoutPaymentCard(props: Props) {
 
   const isMock = (process.env.NEXT_PUBLIC_PAYMENT_PROVIDER || "MOCK").toUpperCase() === "MOCK";
   const [guestName, setGuestName] = useState(user?.name ?? "");
-  const [guestEmail, setGuestEmail] = useState(() => user?.email ?? "test@example.com");
-  const [paymentMethod, setPaymentMethod] = useState<"KAKAOPAY" | "PAYPAL" | "EXIMBAY">("KAKAOPAY");
+  const [guestMessageToHost, setGuestMessageToHost] = useState("");
+  const [guestEmail, setGuestEmail] = useState(() => user?.email ?? "");
+  const [uiPayment, setUiPayment] = useState<UiPaymentId>("CARD");
   const [paying, setPaying] = useState(false);
   const [payModalOpen, setPayModalOpen] = useState(false);
   const [payParams, setPayParams] = useState<PortonePayParams | null>(null);
   const [payModalError, setPayModalError] = useState<string | null>(null);
   const emailReadonly = Boolean(user?.email);
+
+  const paymentOptions: Array<{
+    id: UiPaymentId;
+    base: "KAKAOPAY" | "PAYPAL" | "EXIMBAY";
+    label: string;
+    sub: string;
+    showCardBrands?: boolean;
+  }> =
+    lang === "ko"
+      ? [
+          {
+            id: "CARD",
+            base: "EXIMBAY",
+            label: "신용/체크카드 (해외)",
+            sub: "Visa, Mastercard, Amex",
+            showCardBrands: true,
+          },
+          {
+            id: "LINEPAY",
+            base: "EXIMBAY",
+            label: "LINE Pay",
+            sub: "일부 국가에서만 지원",
+          },
+          {
+            id: "ALIPAYHK",
+            base: "EXIMBAY",
+            label: "AlipayHK",
+            sub: "홍콩 전자지갑",
+          },
+          {
+            id: "PROMPTPAY",
+            base: "EXIMBAY",
+            label: "PromptPay",
+            sub: "태국 QR 결제",
+          },
+          {
+            id: "PAYPAL",
+            base: "PAYPAL",
+            label: "PayPal",
+            sub: "글로벌 전자지갑",
+          },
+          {
+            id: "KAKAOPAY",
+            base: "KAKAOPAY",
+            label: "카카오페이",
+            sub: "국내 간편결제",
+          },
+        ]
+      : [
+          {
+            id: "CARD",
+            base: "EXIMBAY",
+            label: "International cards",
+            sub: "Visa, Mastercard, Amex",
+            showCardBrands: true,
+          },
+          {
+            id: "LINEPAY",
+            base: "EXIMBAY",
+            label: "LINE Pay",
+            sub: "Selected countries",
+          },
+          {
+            id: "ALIPAYHK",
+            base: "EXIMBAY",
+            label: "AlipayHK",
+            sub: "Hong Kong wallet",
+          },
+          {
+            id: "PROMPTPAY",
+            base: "EXIMBAY",
+            label: "PromptPay",
+            sub: "Thailand QR payment",
+          },
+          {
+            id: "PAYPAL",
+            base: "PAYPAL",
+            label: "PayPal",
+            sub: "Global wallet",
+          },
+          {
+            id: "KAKAOPAY",
+            base: "KAKAOPAY",
+            label: "KakaoPay",
+            sub: "Korea only",
+          },
+        ];
+
+  const selectedOption =
+    paymentOptions.find((opt) => opt.id === uiPayment) ?? paymentOptions[0];
+  const paymentMethod = selectedOption.base;
 
   const onOpenPaymentWindow = useCallback(async () => {
     if (!payParams || paying) return;
@@ -128,17 +251,31 @@ export default function CheckoutPaymentCard(props: Props) {
   }, [user?.email]);
 
   const canPay = useMemo(() => {
-    return props.listingId.length > 0 && props.checkIn.length > 0 && props.checkOut.length > 0 && guestEmail.includes("@");
-  }, [props.listingId, props.checkIn, props.checkOut, guestEmail]);
+    return (
+      props.listingId.length > 0 &&
+      props.checkIn.length > 0 &&
+      props.checkOut.length > 0 &&
+      guestEmail.includes("@") &&
+      guestName.trim().length >= 1
+    );
+  }, [props.listingId, props.checkIn, props.checkOut, guestEmail, guestName]);
 
   const onPayNow = async () => {
     if (paying) return;
     if (!canPay) {
-      alert(
+      const msg =
         !guestEmail.includes("@")
-          ? (lang === "ko" ? "이메일을 입력해 주세요." : "Please enter your email.")
-          : (lang === "ko" ? "일정을 선택한 뒤 예약하기로 체크아웃에 진입해 주세요." : "Select dates and use Reserve to reach checkout.")
-      );
+          ? lang === "ko"
+            ? "이메일을 입력해 주세요."
+            : "Please enter your email."
+          : guestName.trim().length < 1
+            ? lang === "ko"
+              ? "게스트 이름을 입력해 주세요."
+              : "Please enter guest name."
+            : lang === "ko"
+              ? "일정을 선택한 뒤 예약하기로 체크아웃에 진입해 주세요."
+              : "Select dates and use Reserve to reach checkout.";
+      alert(msg);
       return;
     }
     setPaying(true);
@@ -149,7 +286,8 @@ export default function CheckoutPaymentCard(props: Props) {
         checkIn: props.checkIn,
         checkOut: props.checkOut,
         guestEmail,
-        guestName: guestName.trim() || undefined,
+        guestName: guestName.trim(),
+        guestMessageToHost: guestMessageToHost.trim() || undefined,
         guestsAdults: Math.max(1, props.guests),
         guestsChildren: 0,
         guestsInfants: 0,
@@ -210,6 +348,21 @@ export default function CheckoutPaymentCard(props: Props) {
     }
   };
 
+  if (!isAuthed) {
+    return (
+      <section className="rounded-2xl border border-neutral-200 bg-white p-6 shadow-sm">
+        <p className="text-sm text-neutral-600">{t("login_required_checkout")}</p>
+        <button
+          type="button"
+          onClick={() => openAuthModal({ next: checkoutNextUrl, role: "GUEST" })}
+          className="mt-4 w-full rounded-xl bg-neutral-900 px-4 py-3 text-sm font-semibold text-white hover:opacity-95 transition"
+        >
+          {t("login_signup")}
+        </button>
+      </section>
+    );
+  }
+
   return (
     <aside className="relative h-fit rounded-2xl border border-neutral-200 p-6 shadow-soft">
       {paying && (
@@ -232,19 +385,31 @@ export default function CheckoutPaymentCard(props: Props) {
               </span>
             )}
           </label>
-          <div className="mt-2 flex flex-wrap gap-2">
-            {(["KAKAOPAY", "PAYPAL", "EXIMBAY"] as const).map((m) => (
+
+          <div className="mt-3 space-y-2">
+            {paymentOptions.map((opt) => (
               <button
-                key={m}
+                key={opt.id}
                 type="button"
-                onClick={() => setPaymentMethod(m)}
-                className={`rounded-lg px-3 py-2 text-sm font-medium transition ${
-                  paymentMethod === m
-                    ? "bg-neutral-900 text-white"
-                    : "bg-neutral-100 text-neutral-700 hover:bg-neutral-200"
+                onClick={() => setUiPayment(opt.id)}
+                className={`flex w-full items-center justify-between gap-3 rounded-lg border px-3 py-2.5 text-left text-sm transition ${
+                  uiPayment === opt.id
+                    ? "border-neutral-900 bg-neutral-50"
+                    : "border-neutral-200 bg-white hover:bg-neutral-50"
                 }`}
               >
-                {m === "KAKAOPAY" ? "카카오페이" : m === "PAYPAL" ? "PayPal" : "Eximbay"}
+                <div className="flex min-w-0 flex-1 flex-col items-start gap-0.5">
+                  <span className="font-medium">{opt.label}</span>
+                  <span className="text-[11px] text-neutral-500">{opt.sub}</span>
+                </div>
+                <div className="shrink-0">
+                  {opt.id === "CARD" && <CardBrandLogos />}
+                  {opt.id === "PAYPAL" && <PayPalLogo />}
+                  {opt.id === "LINEPAY" && <LinePayLogo />}
+                  {opt.id === "ALIPAYHK" && <AlipayHKLogo />}
+                  {opt.id === "PROMPTPAY" && <PromptPayLogo />}
+                  {opt.id === "KAKAOPAY" && <KakaoPayLogo />}
+                </div>
               </button>
             ))}
           </div>
@@ -257,7 +422,9 @@ export default function CheckoutPaymentCard(props: Props) {
             readOnly={emailReadonly}
             className="mt-1 w-full text-sm outline-none read-only:text-neutral-500"
             placeholder={c.emailPh}
+            aria-describedby="checkout-email-hint"
           />
+          <p id="checkout-email-hint" className="mt-0.5 text-[11px] text-neutral-400">{c.emailHint}</p>
         </div>
         <div className="rounded-xl border border-neutral-200 px-3 py-2">
           <label className="text-xs font-semibold text-neutral-500">{c.name}</label>
@@ -266,6 +433,16 @@ export default function CheckoutPaymentCard(props: Props) {
             onChange={(e) => setGuestName(e.target.value)}
             className="mt-1 w-full text-sm outline-none"
             placeholder={c.namePh}
+          />
+        </div>
+        <div className="rounded-xl border border-neutral-200 px-3 py-2">
+          <label className="text-xs font-semibold text-neutral-500">{c.messageToHost}</label>
+          <textarea
+            value={guestMessageToHost}
+            onChange={(e) => setGuestMessageToHost(e.target.value)}
+            placeholder={c.messageToHostPh}
+            rows={3}
+            className="mt-1 w-full resize-y text-sm outline-none placeholder:text-neutral-400"
           />
         </div>
       </div>
@@ -278,9 +455,13 @@ export default function CheckoutPaymentCard(props: Props) {
             ? lang === "ko"
               ? "이메일을 입력해 주세요."
               : "Please enter your email."
-            : lang === "ko"
-              ? "일정을 선택한 뒤 예약하기로 체크아웃에 진입해 주세요."
-              : "Select dates and use Reserve to reach checkout."}
+            : guestName.trim().length < 1
+              ? lang === "ko"
+                ? "게스트 이름을 입력해 주세요."
+                : "Please enter guest name."
+              : lang === "ko"
+                ? "일정을 선택한 뒤 예약하기로 체크아웃에 진입해 주세요."
+                : "Select dates and use Reserve to reach checkout."}
         </p>
       )}
       <button

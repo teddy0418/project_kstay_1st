@@ -115,9 +115,11 @@ export default function WizardReviewPage() {
           </p>
         </div>
         <div className="rounded-2xl border border-neutral-200 p-4">
-          <h3 className="text-sm font-medium text-neutral-500">사진 및 서류</h3>
-          <p className="mt-1 font-medium">사진 {listing.images?.length ?? 0}장</p>
-          <p className="mt-3 text-xs text-neutral-500 mb-3">
+          <div className="flex flex-wrap items-baseline gap-2">
+            <h3 className="text-sm font-medium text-neutral-500">사진 및 서류</h3>
+            <span className="text-xs text-amber-700">서류 미지참 시 승인이 반려될 수 있습니다.</span>
+          </div>
+          <p className="mt-1 text-xs text-neutral-500 mb-3">
             아래 서류를 업로드할 수 있습니다. 이미지 또는 PDF (각 10MB 이하)
           </p>
           <div className="space-y-3">

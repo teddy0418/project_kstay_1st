@@ -2,6 +2,7 @@ import type { NextAuthOptions } from "next-auth";
 import GoogleProvider from "next-auth/providers/google";
 import KakaoProvider from "next-auth/providers/kakao";
 import LineProvider from "next-auth/providers/line";
+import FacebookProvider from "next-auth/providers/facebook";
 import { prisma } from "@/lib/db";
 
 const DEFAULT_ADMIN_EMAILS = ["official.kstay@gmail.com"];
@@ -22,6 +23,22 @@ export const authOptions = {
       clientId: process.env.GOOGLE_CLIENT_ID || "",
       clientSecret: process.env.GOOGLE_CLIENT_SECRET || "",
     }),
+    ...(process.env.FACEBOOK_CLIENT_ID
+      ? [
+          FacebookProvider({
+            clientId: process.env.FACEBOOK_CLIENT_ID,
+            clientSecret: process.env.FACEBOOK_CLIENT_SECRET || "",
+            authorization: {
+              params: {
+                scope: "public_profile,email",
+                ...(process.env.FACEBOOK_LOGIN_CONFIG_ID && {
+                  config_id: process.env.FACEBOOK_LOGIN_CONFIG_ID,
+                }),
+              },
+            },
+          }),
+        ]
+      : []),
     ...(process.env.KAKAO_CLIENT_ID
       ? [
           KakaoProvider({
@@ -47,10 +64,11 @@ export const authOptions = {
   callbacks: {
     async signIn({ user, account }) {
       const provider = account?.provider;
-      if (provider !== "google" && provider !== "kakao" && provider !== "line") return false;
+      if (provider !== "google" && provider !== "kakao" && provider !== "line" && provider !== "facebook") return false;
 
       const rawEmail = user.email?.trim();
-      const fallbackPrefix = provider === "line" ? "line" : provider === "kakao" ? "kakao" : "oauth";
+      const fallbackPrefix =
+        provider === "line" ? "line" : provider === "kakao" ? "kakao" : provider === "facebook" ? "facebook" : "oauth";
       const normalizedEmail = rawEmail
         ? rawEmail.toLowerCase()
         : `${fallbackPrefix}_${account?.providerAccountId ?? user.id ?? "unknown"}@${provider}.user`;

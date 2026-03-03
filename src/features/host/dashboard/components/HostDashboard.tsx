@@ -2,8 +2,7 @@
 
 import Link from "next/link";
 import { useMemo, useState } from "react";
-import { Download, Eye, Power, XCircle } from "lucide-react";
-import { useComingSoon } from "@/hooks/useComingSoon";
+import { Download, Eye, XCircle } from "lucide-react";
 
 type WeekRow = {
   dateLabel: string;     // 예: 2/16(일)
@@ -100,7 +99,6 @@ function StatCard({
 export default function HostDashboard() {
   const week = useMemo(() => buildWeek(), []);
   const [closed, setClosed] = useState<Record<string, boolean>>({});
-  const comingSoon = useComingSoon();
 
   const stats = useMemo(() => {
     const today = todayISO();
@@ -144,14 +142,16 @@ export default function HostDashboard() {
 
   return (
     <div className="space-y-8">
-      {/* 1) 최상단 요약 카드 5개 */}
+      {/* 1) 최상단 요약 카드 5개 — 모바일: 2x2 + 정산예정액 가로 한 줄 / 데스크톱: 5열 */}
       <section>
-        <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-5">
+        <div className="grid grid-cols-2 gap-3 lg:grid-cols-5">
           <StatCard title="오늘 입실" value={String(stats.todayCheckIn)} suffix="건" />
           <StatCard title="오늘 퇴실" value={String(stats.todayCheckOut)} suffix="건" />
           <StatCard title="새 메시지" value={String(stats.newMessages)} suffix="개" />
           <StatCard title="신규 취소" value={String(stats.newCancels)} suffix="건" tone={stats.newCancels > 0 ? "danger" : "normal"} />
-          <StatCard title="정산 예정액" value={formatKRW(stats.pendingSettlement)} suffix="원" />
+          <div className="col-span-2 lg:col-span-1">
+            <StatCard title="정산 예정액" value={formatKRW(stats.pendingSettlement)} suffix="원" />
+          </div>
         </div>
       </section>
 
@@ -213,15 +213,6 @@ export default function HostDashboard() {
           <div className="mt-1 text-sm text-neutral-500">자주 쓰는 기능을 빠르게 실행합니다.</div>
 
           <div className="mt-5 grid gap-3">
-            <button
-              type="button"
-              onClick={() => comingSoon({ message: "MVP: 전체 판매 중지 기능은 DB 연동 후 활성화됩니다." })}
-              className="inline-flex items-center justify-center gap-2 rounded-xl border border-red-300 bg-white px-4 py-3 text-sm font-semibold text-red-700 hover:bg-red-50 transition"
-            >
-              <Power className="h-4 w-4" />
-              전체 판매 중지
-            </button>
-
             <Link
               href="/"
               className="inline-flex items-center justify-center gap-2 rounded-xl border border-neutral-200 bg-white px-4 py-3 text-sm font-semibold hover:bg-neutral-50 transition"
