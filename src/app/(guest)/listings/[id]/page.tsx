@@ -1,3 +1,4 @@
+import type { Metadata } from "next";
 import Container from "@/components/layout/Container";
 import { getPublicListingById, getPublicListings } from "@/lib/repositories/listings";
 import { findReviewsByListingId } from "@/lib/repositories/reviews";
@@ -12,6 +13,46 @@ import Link from "next/link";
 import Image from "next/image";
 import { ChevronRight, MapPin, Star, Sparkles, CheckCircle2, Key, MessageCircle, Tag, ShieldCheck } from "lucide-react";
 import AmenitiesList from "@/features/listings/components/AmenitiesList";
+
+const LISTING_DETAIL_ERROR_COPY: Record<
+  "en" | "ko" | "ja" | "zh",
+  { loadError: string; back: string }
+> = {
+  ko: {
+    loadError: "이 숙소를 불러올 수 없습니다. 잠시 후 다시 시도해 주세요.",
+    back: "홈으로 돌아가기",
+  },
+  en: {
+    loadError: "We couldn't load this listing. Please try again in a moment.",
+    back: "Back to Home",
+  },
+  ja: {
+    loadError: "この宿泊先を読み込めませんでした。しばらくしてからもう一度お試しください。",
+    back: "ホームに戻る",
+  },
+  zh: {
+    loadError: "无法加载该房源，请稍后再试。",
+    back: "返回首页",
+  },
+};
+
+export async function generateMetadata({
+  params,
+}: {
+  params: Promise<{ id: string }>;
+}): Promise<Metadata> {
+  const { id: rawParam } = await params;
+  const id = rawParam ? decodeURIComponent(String(rawParam)) : "";
+  const listing = id ? await getPublicListingById(id) : null;
+  if (!listing) return { title: "KSTAY" };
+  const title = `${listing.title} | KSTAY`;
+  const description = [listing.location, listing.address].filter(Boolean).join(" · ") || undefined;
+  return {
+    title,
+    ...(description && { description }),
+    openGraph: { title, ...(description && { description }) },
+  };
+}
 
 function normalizeId(v: unknown) {
   if (v == null) return "";
@@ -77,6 +118,10 @@ type DbReview = {
   userImage?: string | null;
   rating: number;
   body: string;
+  bodyEn?: string | null;
+  bodyKo?: string | null;
+  bodyJa?: string | null;
+  bodyZh?: string | null;
   createdAt: string;
   cleanliness?: number | null;
   accuracy?: number | null;
@@ -85,6 +130,11 @@ type DbReview = {
   location?: number | null;
   value?: number | null;
 };
+
+function getReviewBodyForLang(r: DbReview, lang: "en" | "ko" | "ja" | "zh"): string {
+  const byLang = lang === "ko" ? r.bodyKo : lang === "ja" ? r.bodyJa : lang === "zh" ? r.bodyZh : r.bodyEn;
+  return (byLang?.trim() || r.body) ?? "";
+}
 
 function avatarLetterFromId(id: string): string {
   let n = 0;
@@ -362,7 +412,7 @@ function ReviewsSection({
               day: "numeric",
             }),
             stars: r.rating,
-            body: r.body,
+            body: getReviewBodyForLang(r, lang),
           };
         })
       : t.reviewsData.map((r) => ({ ...r, image: null as string | null, letter: r.name.slice(0, 1) }));
@@ -586,6 +636,7 @@ export default async function ListingDetailPage({
               kstBase: "All policy times are based on Korea Standard Time (KST).",
               govCertified: "Government-Certified",
             };
+  try {
   const { id: rawParam } = await params;
   const raw = rawParam ?? "";
   const id = decodeURIComponent(raw);
@@ -729,7 +780,7 @@ export default async function ListingDetailPage({
           <div className="mt-3 overflow-hidden rounded-xl border border-neutral-200 bg-neutral-100">
             {mapSrc ? (
               <iframe
-                title="map-preview"
+                title={tx.mapPreview}
                 src={mapSrc}
                 className="h-[88px] w-full"
                 loading="lazy"
@@ -787,6 +838,10 @@ export default async function ListingDetailPage({
             userImage: r.user?.profilePhotoUrl?.trim() || null,
             rating: r.rating,
             body: r.body,
+            bodyEn: r.bodyEn ?? undefined,
+            bodyKo: r.bodyKo ?? undefined,
+            bodyJa: r.bodyJa ?? undefined,
+            bodyZh: r.bodyZh ?? undefined,
             createdAt: r.createdAt.toISOString(),
             cleanliness: r.cleanliness ?? undefined,
             accuracy: r.accuracy ?? undefined,
@@ -836,4 +891,19 @@ export default async function ListingDetailPage({
       </div>
     </Container>
   );
+  } catch (e) {
+    console.error("[listings/[id]]", e);
+    const c = LISTING_DETAIL_ERROR_COPY[lang];
+    return (
+      <Container className="py-10">
+        <h1 className="text-xl font-semibold tracking-tight">{c.loadError}</h1>
+        <Link
+          href="/"
+          className="mt-4 inline-flex rounded-xl border border-neutral-200 px-4 py-2 text-sm font-semibold hover:bg-neutral-50"
+        >
+          {c.back}
+        </Link>
+      </Container>
+    );
+  }
 }

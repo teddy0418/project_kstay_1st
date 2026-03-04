@@ -59,9 +59,13 @@ model User {
   hostProfile HostProfile?
   listings    Listing[]      @relation("HostListings")
   bookings    Booking[]      @relation("GuestBookings")
-  wishlist       WishlistItem[]
-  reviews        Review[]
-  hostSettlements HostSettlement[]
+  wishlist           WishlistItem[]
+  reviews            Review[]
+  hostSettlements    HostSettlement[]
+  bookingMessagesSent BookingMessage[]
+  notifications      Notification[]
+  supportTickets     SupportTicket[]
+  supportMessagesSent SupportMessage[]
 }
 
 model HostProfile {
@@ -277,7 +281,96 @@ model Booking {
   @@index([status, createdAt])
   @@index([listingId, status])
   @@index([guestUserId, status])
+  bookingMessages BookingMessage[]
+
   @@index([listingId, status, checkIn, checkOut])
+}
+
+enum MessageSenderRole {
+  GUEST
+  HOST
+}
+
+/// 예약 건별 게시판형 메시지 (티켓). 실시간 채팅이 아닌 질문-답변. body는 원문, 번역 캐시는 나중에 bodyEn/bodyKo 등 추가 가능.
+model BookingMessage {
+  id           String            @id @default(cuid())
+  bookingId    String
+  senderUserId String
+  senderRole   MessageSenderRole
+  body         String            @db.Text
+  createdAt    DateTime          @default(now())
+
+  booking Booking @relation(fields: [bookingId], references: [id], onDelete: Cascade)
+  sender  User    @relation(fields: [senderUserId], references: [id], onDelete: Cascade)
+
+  @@index([bookingId, createdAt])
+  @@index([senderUserId])
+}
+
+enum NotificationType {
+  HOST_REPLIED
+  SUPPORT_REPLIED
+}
+
+/// 호스트가 답변하면 게스트에게, 고객센터가 답변하면 문의자에게 생성. readAt 있으면 읽음 처리.
+model Notification {
+  id                 String           @id @default(cuid())
+  userId             String
+  type               NotificationType
+  bookingId          String?
+  messageId          String?
+  supportTicketId    String?
+  supportMessageId  String?
+  readAt             DateTime?
+  createdAt          DateTime         @default(now())
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId, readAt])
+  @@index([supportTicketId])
+}
+
+enum SupportTicketStatus {
+  OPEN
+  PENDING
+  CLOSED
+}
+
+enum SupportMessageSenderRole {
+  USER
+  SUPPORT
+}
+
+/// 게스트/호스트 ↔ 고객센터 게시판형 문의 (티켓). 실시간 채팅 아님.
+model SupportTicket {
+  id        String              @id @default(cuid())
+  userId    String
+  subject   String              @db.Text
+  status    SupportTicketStatus @default(OPEN)
+  createdAt DateTime            @default(now())
+  updatedAt DateTime            @updatedAt
+
+  user     User             @relation(fields: [userId], references: [id], onDelete: Cascade)
+  messages SupportMessage[]
+
+  @@index([userId])
+  @@index([status, updatedAt])
+}
+
+/// 고객센터 티켓 내 메시지. body 원문만 저장, 번역 필드는 나중에 추가 가능.
+model SupportMessage {
+  id         String                  @id @default(cuid())
+  ticketId   String
+  senderUserId String
+  senderRole SupportMessageSenderRole
+  body       String                  @db.Text
+  createdAt  DateTime               @default(now())
+
+  ticket SupportTicket @relation(fields: [ticketId], references: [id], onDelete: Cascade)
+  sender User          @relation(fields: [senderUserId], references: [id], onDelete: Cascade)
+
+  @@index([ticketId, createdAt])
+  @@index([senderUserId])
 }
 
 model Review {
@@ -287,6 +380,11 @@ model Review {
   listingId  String
   rating     Int      // 1..5 overall (평균 또는 기존 단일 별점)
   body       String   @db.Text
+  /// 선택 언어별 번역 캐시 (Google Translate 등으로 채움). 없으면 body 사용
+  bodyEn     String?  @db.Text
+  bodyKo     String?  @db.Text
+  bodyJa     String?  @db.Text
+  bodyZh     String?  @db.Text
   // 6개 카테고리 별점 (1..5). 있으면 상세 페이지에서 평균 표시
   cleanliness   Int?
   accuracy      Int?

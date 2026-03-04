@@ -1,5 +1,6 @@
 import { randomBytes } from "crypto";
 import { prisma } from "@/lib/db";
+import { translateText, type TargetLang } from "@/lib/translation";
 
 const CATEGORY_KEYS = ["cleanliness", "accuracy", "checkIn", "communication", "location", "value"] as const;
 
@@ -35,6 +36,11 @@ export async function createReview(params: {
     select: { id: true, title: true, titleKo: true },
   });
 
+  // 번역 캐시: 백그라운드로 en/ko/ja/zh 번역 후 DB 업데이트 (API 키 있을 때만)
+  if (body.length >= 10) {
+    fillReviewBodyI18n(id, body).catch((e) => console.error("[createReview] fillReviewBodyI18n", e));
+  }
+
   return {
     id,
     bookingId: params.bookingId,
@@ -51,6 +57,26 @@ export async function createReview(params: {
     createdAt: new Date(),
     listing: listing ?? undefined,
   };
+}
+
+/** 리뷰 본문을 en/ko/ja/zh로 번역해 DB에 캐시. API 키 없으면 스킵 */
+export async function fillReviewBodyI18n(reviewId: string, body: string): Promise<void> {
+  const targets: TargetLang[] = ["en", "ko", "ja", "zh"];
+  const updates: Record<string, string> = {};
+  for (const lang of targets) {
+    const translated = await translateText(body, lang);
+    if (translated && translated !== body) {
+      if (lang === "en") updates.bodyEn = translated;
+      else if (lang === "ko") updates.bodyKo = translated;
+      else if (lang === "ja") updates.bodyJa = translated;
+      else if (lang === "zh") updates.bodyZh = translated;
+    }
+  }
+  if (Object.keys(updates).length === 0) return;
+  await prisma.review.update({
+    where: { id: reviewId },
+    data: updates as { bodyEn?: string; bodyKo?: string; bodyJa?: string; bodyZh?: string },
+  });
 }
 
 export async function findReviewByBookingId(bookingId: string) {

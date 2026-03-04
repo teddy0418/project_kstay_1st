@@ -197,7 +197,22 @@ export async function getKstayBlackListings(): Promise<Listing[]> {
   }
 }
 
-const SECTION_PAGE_SIZE = 10;
+const SECTION_PAGE_SIZE = 8;
+
+/** 인기숙소(추천) 섹션에서 제외할 listing id (KSTAY Black 전부 + Seocho Business Stay) */
+const RECOMMENDED_EXCLUDE_IDS = [
+  "seed-black-1",
+  "seed-black-2",
+  "seed-black-3",
+  "seed-black-4",
+  "seed-black-5",
+  "seed-black-6",
+  "seed-black-7",
+  "seed-black-8",
+  "seed-black-9",
+  "seed-black-10",
+  "seed-rec-10", // Seocho Business Stay
+];
 
 export type SectionType = "recommended" | "hanok" | "kstay-black";
 
@@ -229,10 +244,13 @@ export async function getPublicListingsBySection(
     }
 
     const isHanok = section === "hanok";
-    const baseWhere = {
-      status: "APPROVED" as const,
-      ...(isHanok ? { propertyType: "hanok" } : {}),
-    };
+    const baseWhere = isHanok
+      ? { status: "APPROVED" as const, propertyType: "hanok" as const }
+      : {
+          status: "APPROVED" as const,
+          OR: [{ propertyType: null }, { propertyType: { not: "hanok" } }],
+          id: { notIn: RECOMMENDED_EXCLUDE_IDS },
+        };
 
     const orderBy = [{ createdAt: "desc" as const }, { id: "desc" as const }];
     const selectWithCreatedAt = { ...publicListingSelect, createdAt: true };

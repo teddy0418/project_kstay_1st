@@ -1,0 +1,102 @@
+"use client";
+
+import { useEffect, useState } from "react";
+import Link from "next/link";
+import Image from "next/image";
+import Container from "@/components/layout/Container";
+import { useI18n } from "@/components/ui/LanguageProvider";
+import { apiClient } from "@/lib/api/client";
+
+type Lang = "en" | "ko" | "ja" | "zh";
+type BoardPost = {
+  id: string;
+  cover: string;
+  title: Record<Lang, string>;
+  excerpt: Record<Lang, string>;
+  content: Record<Lang, string>;
+};
+
+function firstNonEmpty(obj: Record<Lang, string>, preferred: Lang): string {
+  const order: Lang[] = [preferred, "en", "ko", "ja", "zh"];
+  for (const l of order) {
+    const v = obj[l]?.trim();
+    if (v) return v;
+  }
+  return "";
+}
+
+export default function BoardPageClient() {
+  const { lang, t } = useI18n();
+  const [posts, setPosts] = useState<BoardPost[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState(false);
+
+  useEffect(() => {
+    setError(false);
+    apiClient
+      .get<BoardPost[]>("/api/board")
+      .then((rows) => setPosts(Array.isArray(rows) ? rows : []))
+      .catch(() => {
+        setPosts([]);
+        setError(true);
+      })
+      .finally(() => setLoading(false));
+  }, []);
+
+  if (loading) {
+    return (
+      <Container className="py-10">
+        <p className="text-neutral-500">{t("loading")}</p>
+      </Container>
+    );
+  }
+
+  if (error) {
+    return (
+      <Container className="py-10">
+        <h1 className="text-xl font-semibold tracking-tight md:text-2xl">{t("board_headline")}</h1>
+        <p className="mt-2 text-xs text-neutral-600 md:text-sm">{t("board_subtitle")}</p>
+        <div className="mt-8 rounded-2xl border border-neutral-200 bg-neutral-50 px-6 py-8 text-center text-sm text-neutral-600">
+          {t("board_list_error")}
+        </div>
+      </Container>
+    );
+  }
+
+  return (
+    <Container className="py-10">
+      <h1 className="text-xl font-semibold tracking-tight md:text-2xl">{t("board_headline")}</h1>
+      <p className="mt-2 text-xs text-neutral-600 md:text-sm">{t("board_subtitle")}</p>
+
+      <div className="mt-8 grid grid-cols-1 gap-6 md:grid-cols-2">
+        {posts.length === 0 ? (
+          <p className="col-span-full text-center text-neutral-500 py-8">{t("board_empty")}</p>
+        ) : (
+          posts.map((p) => (
+            <Link
+              key={p.id}
+              href={`/board/${p.id}`}
+              className="group block rounded-2xl border border-neutral-200 bg-white overflow-hidden shadow-sm hover:shadow-md transition min-w-0"
+            >
+              <div className="relative h-[180px] w-full overflow-hidden bg-neutral-100">
+                <Image
+                  src={p.cover}
+                  alt={firstNonEmpty(p.title, lang)}
+                  className="h-full w-full object-cover"
+                  width={1200}
+                  height={480}
+                  sizes="(max-width: 768px) 100vw, 50vw"
+                />
+              </div>
+              <div className="p-5">
+                <div className="mt-1 text-lg font-semibold leading-snug">{firstNonEmpty(p.title, lang)}</div>
+                <div className="mt-2 text-sm text-neutral-600 leading-6 line-clamp-2">{firstNonEmpty(p.excerpt, lang)}</div>
+                <div className="mt-4 text-sm font-semibold text-neutral-900">{t("read_more")} →</div>
+              </div>
+            </Link>
+          ))
+        )}
+      </div>
+    </Container>
+  );
+}

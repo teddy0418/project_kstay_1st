@@ -82,9 +82,9 @@ export default function Header() {
 
   return (
     <header className="sticky top-0 z-[90] border-b border-neutral-200 bg-white/85 backdrop-blur supports-[backdrop-filter]:bg-white/60">
-      <Container className="flex flex-wrap h-[76px] items-center justify-between gap-3">
-        <Link href="/" className="flex items-center gap-2 shrink-0" aria-label="KSTAY Home">
-          <div className="h-10 w-10 shrink-0 rounded-xl bg-[#E9B10D] text-white grid place-items-center font-semibold text-lg">
+      <Container className="relative flex h-[76px] items-center justify-between gap-3 md:flex-wrap">
+        <Link href="/" className="flex items-center gap-2 shrink-0 z-10 md:z-auto" aria-label="KSTAY Home">
+          <div className="h-10 w-10 shrink-0 rounded-xl bg-white border border-neutral-200 text-[#D4AF37] grid place-items-center font-semibold text-lg">
             K
           </div>
           <div className="hidden sm:block leading-tight">
@@ -93,7 +93,8 @@ export default function Header() {
           </div>
         </Link>
 
-        <div className="flex flex-1 justify-center min-w-0">
+        {/* 모바일: 화면 정중앙 고정 / 데스크톱: flex-1로 중앙 영역 */}
+        <div className="absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 z-10 md:static md:translate-x-0 md:translate-y-0 md:z-auto md:flex-1 md:flex md:justify-center min-w-0">
           <div className="relative grid grid-cols-2 rounded-full border border-neutral-200 bg-white p-1 shadow-soft w-full max-w-[280px] min-w-0">
             <span
               className={cn(
@@ -128,8 +129,11 @@ export default function Header() {
           </div>
         </div>
 
-        <div className="flex items-center gap-2 shrink-0">
-          <AccountIndicator />
+        <div className="flex items-center gap-2 shrink-0 z-10 md:z-auto">
+          {/* 모바일에서는 하단 BottomNav에 프로필이 있으므로 상단 프로필은 md 이상에서만 노출 */}
+          <div className="hidden md:block">
+            <AccountIndicator />
+          </div>
           <div className="relative" ref={langRef}>
             <button
               type="button"

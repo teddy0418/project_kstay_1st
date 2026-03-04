@@ -163,21 +163,23 @@ async function main() {
   }
 
   // 메인 섹션 예시 숙소: 추천 10 + 인기한옥 10 + KSTAY Black 10 (추천/Black은 숙소 사진, 인기한옥만 한옥 사진)
+  // 추천 숙소 (인기숙소): Unsplash 고정 URL (로드 실패 방지)
   const recImages = [
-    "https://images.unsplash.com/photo-1522708323590-d24dbb6b0267?auto=format&fit=crop&w=1600&q=80",
-    "https://images.unsplash.com/photo-1505693416388-ac5ce068fe85?auto=format&fit=crop&w=1600&q=80",
-    "https://images.unsplash.com/photo-1560448204-e02f11c3d0e2?auto=format&fit=crop&w=1600&q=80",
-    "https://images.unsplash.com/photo-1493809842364-78817add7ffb?auto=format&fit=crop&w=1600&q=80",
-    "https://images.unsplash.com/photo-1484154214242-ffab274afa4e?auto=format&fit=crop&w=1600&q=80",
-    "https://images.unsplash.com/photo-1502672260266-1c1ef2d93688?auto=format&fit=crop&w=1600&q=80",
-    "https://images.unsplash.com/photo-1499916078039-922301b0eb9b?auto=format&fit=crop&w=1600&q=80",
-    "https://images.unsplash.com/photo-1507089947368-19c1da9775ae?auto=format&fit=crop&w=1600&q=80",
-    "https://images.unsplash.com/photo-1522771739844-6a9f6d5f14af?auto=format&fit=crop&w=1600&q=80",
-    "https://images.unsplash.com/photo-1536376072261-38c75010e6c9?auto=format&fit=crop&w=1600&q=80",
+    "https://images.unsplash.com/photo-1591825729269-caeb344f6df2?w=500&auto=format&fit=crop&q=60&ixlib=rb-4.1.0&ixid=M3wxMjA3fDB8MHxzZWFyY2h8M3x8YWlyYm5ifGVufDB8fDB8fHww",
+    "https://images.unsplash.com/photo-1684182309189-a1384f3d7d4c?w=500&auto=format&fit=crop&q=60&ixlib=rb-4.1.0&ixid=M3wxMjA3fDB8MHxzZWFyY2h8N3x8YWlyYm5ifGVufDB8fDB8fHww",
+    "https://images.unsplash.com/photo-1553444836-bc6c8d340ba7?w=500&auto=format&fit=crop&q=60&ixlib=rb-4.1.0&ixid=M3wxMjA3fDB8MHxzZWFyY2h8MTB8fGFpcmJuYnxlbnwwfHwwfHx8MA%3D%3D",
+    "https://plus.unsplash.com/premium_photo-1686090448422-de8536066f64?w=500&auto=format&fit=crop&q=60&ixlib=rb-4.1.0&ixid=M3wxMjA3fDB8MHxzZWFyY2h8MTN8fGFpcmJuYnxlbnwwfHwwfHx8MA%3D%3D",
+    "https://images.unsplash.com/photo-1679939153963-ff44f5deeba2?w=500&auto=format&fit=crop&q=60&ixlib=rb-4.1.0&ixid=M3wxMjA3fDB8MHxzZWFyY2h8MTV8fGFpcmJuYnxlbnwwfHwwfHx8MA%3D%3D",
+    "https://images.unsplash.com/photo-1620332372374-f108c53d2e03?w=500&auto=format&fit=crop&q=60&ixlib=rb-4.1.0&ixid=M3wxMjA3fDB8MHxzZWFyY2h8MjN8fGFpcmJuYnxlbnwwfHwwfHx8MA%3D%3D",
+    "https://images.unsplash.com/photo-1715985160053-d339e8b6eb94?w=500&auto=format&fit=crop&q=60&ixlib=rb-4.1.0&ixid=M3wxMjA3fDB8MHxzZWFyY2h8MjR8fGFpcmJuYnxlbnwwfHwwfHx8MA%3D%3D",
+    "https://images.unsplash.com/photo-1659720879195-d5a108231648?w=500&auto=format&fit=crop&q=60&ixlib=rb-4.1.0&ixid=M3wxMjA3fDB8MHxzZWFyY2h8MzR8fGFpcmJuYnxlbnwwfHwwfHx8MA%3D%3D",
+    "https://images.unsplash.com/photo-1718717621302-a359be21a111?w=500&auto=format&fit=crop&q=60&ixlib=rb-4.1.0&ixid=M3wxMjA3fDB8MHxzZWFyY2h8NTJ8fGFpcmJuYnxlbnwwfHwwfHx8MA%3D%3D",
+    "https://images.unsplash.com/photo-1718717621302-a359be21a111?w=500&auto=format&fit=crop&q=60&ixlib=rb-4.1.0&ixid=M3wxMjA3fDB8MHxzZWFyY2h8NTJ8fGFpcmJuYnxlbnwwfHwwfHx8MA%3D%3D",
   ];
+  // KSTAY Black: 프리미엄/펜트하우스 느낌 Unsplash
   const blackImages = [
     "https://images.unsplash.com/photo-1613490493576-7fde63acd811?auto=format&fit=crop&w=1600&q=80",
-    "https://images.unsplash.com/photo-1600607687644-aac4c3eac7f4?auto=format&fit=crop&w=1600&q=80",
+    "https://images.unsplash.com/photo-1600596542815-ffad4c1539a9?auto=format&fit=crop&w=1600&q=80", // Rooftop Penthouse
     "https://images.unsplash.com/photo-1600585154526-990dced4db0d?auto=format&fit=crop&w=1600&q=80",
     "https://images.unsplash.com/photo-1600566752355-35792bedcfea?auto=format&fit=crop&w=1600&q=80",
     "https://images.unsplash.com/photo-1600047509358-9dc75507daeb?auto=format&fit=crop&w=1600&q=80",
@@ -187,19 +189,18 @@ async function main() {
     "https://images.unsplash.com/photo-1600210492486-724fe5c67fb0?auto=format&fit=crop&w=1600&q=80",
     "https://images.unsplash.com/photo-1600047509807-ba8f99d2cdde?auto=format&fit=crop&w=1600&q=80",
   ];
-  // 인기한옥: 한옥 사진만 (Wikimedia Commons 무료·안정 + Unsplash 보조)
-  const w = "https://upload.wikimedia.org/wikipedia/commons";
+  // 인기한옥: Unsplash만 사용 (Wikimedia는 Next/브라우저에서 로드 실패 가능)
   const hanokImages = [
-    `${w}/thumb/a/a6/Traditional_hanok_house_with_wooden_doors_along_a_steeply_sloping_street_in_Bukchon_Hanok_Village_Seoul.jpg/800px-Traditional_hanok_house_with_wooden_doors_along_a_steeply_sloping_street_in_Bukchon_Hanok_Village_Seoul.jpg`,
-    `${w}/thumb/7/77/Korea-Hanok-01.jpg/800px-Korea-Hanok-01.jpg`,
-    `${w}/thumb/5/52/Eunpyeong_Hanok_Village_20220725_006.jpg/800px-Eunpyeong_Hanok_Village_20220725_006.jpg`,
-    `${w}/thumb/3/35/Jeonju_Hanok_Village_-_July_2018_%2812%29.jpg/800px-Jeonju_Hanok_Village_-_July_2018_%2812%29.jpg`,
-    `${w}/thumb/f/f9/Bukchon_Hanok_Village_%EB%B6%81%EC%B4%8C_%ED%95%9C%EC%98%A5%EB%A7%88%EC%9D%84_October_1_2020_1.jpg/800px-Bukchon_Hanok_Village_%EB%B6%81%EC%B4%8C_%ED%95%9C%EC%98%A5%EB%A7%88%EC%9D%84_October_1_2020_1.jpg`,
-    `${w}/thumb/a/a6/Traditional_hanok_house_with_wooden_doors_along_a_steeply_sloping_street_in_Bukchon_Hanok_Village_Seoul.jpg/1280px-Traditional_hanok_house_with_wooden_doors_along_a_steeply_sloping_street_in_Bukchon_Hanok_Village_Seoul.jpg`,
-    `${w}/thumb/7/77/Korea-Hanok-01.jpg/1280px-Korea-Hanok-01.jpg`,
-    `${w}/thumb/5/52/Eunpyeong_Hanok_Village_20220725_006.jpg/1280px-Eunpyeong_Hanok_Village_20220725_006.jpg`,
-    `${w}/thumb/3/35/Jeonju_Hanok_Village_-_July_2018_%2812%29.jpg/1280px-Jeonju_Hanok_Village_-_July_2018_%2812%29.jpg`,
-    `${w}/thumb/f/f9/Bukchon_Hanok_Village_%EB%B6%81%EC%B4%8C_%ED%95%9C%EC%98%A5%EB%A7%88%EC%9D%84_October_1_2020_1.jpg/1280px-Bukchon_Hanok_Village_%EB%B6%81%EC%B4%8C_%ED%95%9C%EC%98%A5%EB%A7%88%EC%9D%84_October_1_2020_1.jpg`,
+    "https://images.unsplash.com/photo-1657461821555-492764a6940a?w=500&auto=format&fit=crop&q=60&ixlib=rb-4.1.0&ixid=M3wxMjA3fDB8MHxzZWFyY2h8NHx8aGFub2t8ZW58MHx8MHx8fDA%3D",
+    "https://images.unsplash.com/photo-1601721826401-c5e789be0be6?w=500&auto=format&fit=crop&q=60&ixlib=rb-4.1.0&ixid=M3wxMjA3fDB8MHxzZWFyY2h8Nnx8aGFub2t8ZW58MHx8MHx8fDA%3D",
+    "https://images.unsplash.com/photo-1653230674619-2c92936be020?w=500&auto=format&fit=crop&q=60&ixlib=rb-4.1.0&ixid=M3wxMjA3fDB8MHxzZWFyY2h8MTF8fGhhbm9rfGVufDB8fDB8fHww",
+    "https://images.unsplash.com/photo-1618237600880-fb9d72e98393?w=500&auto=format&fit=crop&q=60&ixlib=rb-4.1.0&ixid=M3wxMjA3fDB8MHxzZWFyY2h8MTJ8fGhhbm9rfGVufDB8fDB8fHww",
+    "https://images.unsplash.com/photo-1616627042766-2190228f1881?w=500&auto=format&fit=crop&q=60&ixlib=rb-4.1.0&ixid=M3wxMjA3fDB8MHxzZWFyY2h8MTR8fGhhbm9rfGVufDB8MHx8MHx8fDA%3D",
+    "https://images.unsplash.com/photo-1650476524542-c5cc53306700?w=500&auto=format&fit=crop&q=60&ixlib=rb-4.1.0&ixid=M3wxMjA3fDB8MHxzZWFyY2h8Mjd8fGhhbm9rfGVufDB8fDB8fHww",
+    "https://images.unsplash.com/photo-1591452249377-f12a034106de?w=500&auto=format&fit=crop&q=60&ixlib=rb-4.1.0&ixid=M3wxMjA3fDB8MHxzZWFyY2h8Mjh8fGhhbm9rfGVufDB8fDB8fHww",
+    "https://images.unsplash.com/photo-1657461821016-62c047f663de?w=500&auto=format&fit=crop&q=60&ixlib=rb-4.1.0&ixid=M3wxMjA3fDB8MHxzZWFyY2h8Mzl8fGhhbm9rfGVufDB8fDB8fHww",
+    "https://images.unsplash.com/photo-1707925547790-bb6e3c4933fb?w=500&auto=format&fit=crop&q=60&ixlib=rb-4.1.0&ixid=M3wxMjA3fDB8MHxzZWFyY2h8NDZ8fGhhbm9rfGVufDB8fDB8fHww",
+    "https://images.unsplash.com/photo-1628579064393-28cd8ebec686?w=500&auto=format&fit=crop&q=60&ixlib=rb-4.1.0&ixid=M3wxMjA3fDB8MHxzZWFyY2h8NTB8fGhhbm9rfGVufDB8fDB8fHww",
   ];
   const recTitles = [
     "Cozy Hongdae Studio",
@@ -304,7 +305,7 @@ async function main() {
           basePriceKrw: 200000 + i * 30000,
           status: "APPROVED",
           approvedAt: new Date(),
-          propertyType: i === 9 ? "hanok" : "house_villa",
+          propertyType: "house_villa",
           kstayBlackSortOrder: i,
         },
       });
@@ -312,6 +313,8 @@ async function main() {
     } else {
       const img = await prisma.listingImage.findFirst({ where: { listingId: id }, orderBy: { sortOrder: "asc" } });
       if (img) await prisma.listingImage.update({ where: { id: img.id }, data: { url: blackImages[i] } });
+      // 인기한옥에서 제외: KSTAY Black | Premium Hanok(i===9)은 한옥이 아닌 house_villa로 유지
+      if (i === 9) await prisma.listing.update({ where: { id }, data: { propertyType: "house_villa" } });
     }
   }
   console.log("Seed: 추천/인기한옥/KSTAY Black 예시 숙소 확인 완료");

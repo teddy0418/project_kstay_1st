@@ -114,9 +114,13 @@ export default function ProfileClient({ initialTrips }: ProfileClientProps) {
   useEffect(() => {
     if (!loggedIn) return;
     apiClient
-      .get<{ displayName?: string; profilePhotoUrl?: string }>("/api/user/profile")
+      .get<{ name?: string; displayName?: string; profilePhotoUrl?: string }>("/api/user/profile")
       .then((data) => {
-        if (data?.displayName != null) setDisplayName(String(data.displayName || ""));
+        const serverDisplay =
+          (data?.displayName != null && String(data.displayName || "").trim()) ||
+          (data?.name != null && String(data.name || "").trim()) ||
+          "";
+        if (serverDisplay) setDisplayName(serverDisplay);
         if (data?.profilePhotoUrl != null && data.profilePhotoUrl) setProfilePhotoUrl(String(data.profilePhotoUrl));
         else setProfilePhotoUrl(null);
       })
@@ -344,27 +348,35 @@ export default function ProfileClient({ initialTrips }: ProfileClientProps) {
                 <div className="mt-4 grid min-w-0 grid-cols-1 gap-x-4 gap-y-6 sm:mt-5 sm:grid-cols-2 sm:gap-x-6 sm:gap-y-10 lg:grid-cols-2 xl:grid-cols-3">
                   {(tripsExpanded ? trips : trips.slice(0, INITIAL_SHOW)).map((trip) => (
                   <div key={`${trip.booking.id}-${trip.listing.id}`} className="min-w-0">
-                    <div className="mb-2 flex items-center justify-between gap-2">
+                    <div className="mb-2 flex flex-wrap items-center justify-between gap-x-2 gap-y-1">
                       <p className="text-xs text-neutral-500">
                         {trip.booking.checkIn} → {trip.booking.checkOut} · {trip.booking.nights}{" "}
                         {trip.booking.nights === 1 ? t("night") : t("nights")}
                       </p>
-                      {trip.booking.reviewed ? (
-                        <span className="text-xs text-neutral-500">{t("review_done")}</span>
-                      ) : (
-                        <button
-                          type="button"
-                          onClick={() =>
-                            setReviewModal({
-                              bookingId: trip.booking.id,
-                              listingTitle: trip.listing.title || trip.listing.id,
-                            })
-                          }
+                      <div className="flex items-center gap-2">
+                        <Link
+                          href={`/messages/booking/${trip.booking.id}`}
                           className="text-xs font-medium text-neutral-700 underline hover:text-neutral-900"
                         >
-                          {t("write_review")}
-                        </button>
-                      )}
+                          {t("messages_with_host")}
+                        </Link>
+                        {trip.booking.reviewed ? (
+                          <span className="text-xs text-neutral-500">{t("review_done")}</span>
+                        ) : (
+                          <button
+                            type="button"
+                            onClick={() =>
+                              setReviewModal({
+                                bookingId: trip.booking.id,
+                                listingTitle: trip.listing.title || trip.listing.id,
+                              })
+                            }
+                            className="text-xs font-medium text-neutral-700 underline hover:text-neutral-900"
+                          >
+                            {t("write_review")}
+                          </button>
+                        )}
+                      </div>
                     </div>
                     <ListingCard listing={trip.listing} />
                   </div>

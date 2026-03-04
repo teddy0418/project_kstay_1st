@@ -1,23 +1,14 @@
 "use client";
 
-import { useMemo } from "react";
 import LanguageProvider, { type Lang } from "@/components/ui/LanguageProvider";
 
-const LANG_ATTR_TO_LANG: Record<string, Lang> = {
-  en: "en",
-  ko: "ko",
-  ja: "ja",
-  zh: "zh",
-};
-
-function getInitialLang(): Lang {
-  if (typeof document === "undefined") return "en";
-  const attr = document.documentElement.getAttribute("lang") || "";
-  return LANG_ATTR_TO_LANG[attr] ?? "en";
-}
-
-/** (guest) 세그먼트가 RSC 경계에서 Provider 트리가 끊기지 않도록 감쌈 */
-export default function GuestI18nWrapper({ children }: { children: React.ReactNode }) {
-  const initialLang = useMemo(() => getInitialLang(), []);
+/** (guest) 세그먼트가 RSC 경계에서 Provider 트리가 끊기지 않도록 감쌈. initialLang은 서버에서 쿠키/헤더로 결정해 전달하여 서버·클라이언트 첫 렌더를 맞춤(하이드레이션 오류 방지). */
+export default function GuestI18nWrapper({
+  children,
+  initialLang,
+}: {
+  children: React.ReactNode;
+  initialLang?: Lang;
+}) {
   return <LanguageProvider initialLang={initialLang}>{children}</LanguageProvider>;
 }

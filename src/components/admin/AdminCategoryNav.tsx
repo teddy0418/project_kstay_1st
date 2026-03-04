@@ -9,6 +9,7 @@ const ITEMS = [
   { label: "KSTAY Black", href: "/admin/kstay-black" },
   { label: "게시판 관리", href: "/admin/board" },
   { label: "호스트 공지", href: "/admin/host-announcements" },
+  { label: "고객센터", href: "/admin/support" },
   { label: "예약 관리", href: "/admin/bookings" },
   { label: "정산", href: "/admin/settlements" },
   { label: "테스트 리뷰", href: "/admin/test-review" },

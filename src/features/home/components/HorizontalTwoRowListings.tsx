@@ -7,8 +7,8 @@ import { useI18n } from "@/components/ui/LanguageProvider";
 import { cn } from "@/lib/utils";
 import type { Listing } from "@/types";
 
-const BATCH_SIZE = 10;
-const CARDS_PER_ROW = 5;
+const BATCH_SIZE = 8;
+const CARDS_PER_ROW = 4;
 
 export type SectionType = "recommended" | "hanok" | "kstay-black";
 
@@ -34,7 +34,7 @@ const SECTION_ACCENT: Record<
 };
 
 type Props = {
-  /** 섹션 타입이 있으면 더보기 시 API로 10개씩 추가 로드 */
+  /** 섹션 타입이 있으면 더보기 시 API로 8개씩 추가 로드 */
   section?: SectionType;
   /** 비우면 제목 없음 (추천 숙소 바로 아래 카드용) */
   title?: string;
@@ -189,7 +189,7 @@ export default function HorizontalTwoRowListings({
             "absolute left-2 md:-left-3 top-1/2 -translate-y-1/2 z-10 h-10 w-10 md:h-11 md:w-11 inline-flex items-center justify-center rounded-full bg-white/95 shadow-md hover:shadow-lg transition",
             !canLeft && "opacity-30 cursor-default"
           )}
-          aria-label="Scroll left"
+          aria-label={t("scroll_left")}
         >
           <ChevronLeft className="h-5 w-5" />
         </button>
@@ -201,7 +201,7 @@ export default function HorizontalTwoRowListings({
             "absolute right-2 md:-right-3 top-1/2 -translate-y-1/2 z-10 h-10 w-10 md:h-11 md:w-11 inline-flex items-center justify-center rounded-full bg-white/95 shadow-md hover:shadow-lg transition",
             !canRight && "opacity-30 cursor-default"
           )}
-          aria-label="Scroll right"
+          aria-label={t("scroll_right")}
         >
           <ChevronRight className="h-5 w-5" />
         </button>

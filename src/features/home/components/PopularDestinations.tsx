@@ -98,7 +98,7 @@ export default function PopularDestinations() {
               "absolute left-2 sm:-left-3 top-1/2 -translate-y-1/2 z-10 h-10 w-10 sm:h-11 sm:w-11 inline-flex items-center justify-center rounded-full bg-white/95 shadow-md hover:shadow-lg transition",
               !canLeft && "opacity-30 cursor-default"
             )}
-            aria-label="Scroll left"
+            aria-label={t("scroll_left")}
           >
             <ChevronLeft className="h-5 w-5" />
           </button>
@@ -110,7 +110,7 @@ export default function PopularDestinations() {
               "absolute right-2 sm:-right-3 top-1/2 -translate-y-1/2 z-10 h-10 w-10 sm:h-11 sm:w-11 inline-flex items-center justify-center rounded-full bg-white/95 shadow-md hover:shadow-lg transition",
               !canRight && "opacity-30 cursor-default"
             )}
-            aria-label="Scroll right"
+            aria-label={t("scroll_right")}
           >
             <ChevronRight className="h-5 w-5" />
           </button>

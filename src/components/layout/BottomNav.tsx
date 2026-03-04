@@ -4,17 +4,19 @@ import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { Home, Heart, MapPin, MessageCircle, UserCircle2 } from "lucide-react";
 import { cn } from "@/lib/utils";
+import { useI18n } from "@/components/ui/LanguageProvider";
 
 const items = [
-  { href: "/", label: "Home", icon: Home },
-  { href: "/wishlist", label: "Wishlist", icon: Heart },
-  { href: "/board", label: "Board", icon: MapPin },
-  { href: "/messages", label: "Message", icon: MessageCircle },
-  { href: "/profile", label: "Profile", icon: UserCircle2 },
-];
+  { href: "/", labelKey: "home", icon: Home },
+  { href: "/wishlist", labelKey: "wishlist", icon: Heart },
+  { href: "/board", labelKey: "board", icon: MapPin },
+  { href: "/messages", labelKey: "messages", icon: MessageCircle },
+  { href: "/profile", labelKey: "profile", icon: UserCircle2 },
+] as const;
 
 export default function BottomNav() {
   const pathname = usePathname();
+  const { t } = useI18n();
 
   return (
     <nav className="md:hidden fixed bottom-0 left-0 right-0 z-[70] border-t border-neutral-200 bg-white/90 backdrop-blur supports-[backdrop-filter]:bg-white/70 pb-[env(safe-area-inset-bottom)]">
@@ -33,7 +35,7 @@ export default function BottomNav() {
               )}
             >
               <Icon className="h-5 w-5" />
-              {it.label}
+              {t(it.labelKey)}
             </Link>
           );
         })}

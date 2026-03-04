@@ -8,7 +8,7 @@ import { useI18n } from "@/components/ui/LanguageProvider";
 import { apiClient, ApiClientError } from "@/lib/api/client";
 
 const NATIONALITIES = [
-  { value: "", labelKey: "onboarding_nationality" },
+  { value: "", label: "" },
   { value: "KR", label: "대한민국" },
   { value: "JP", label: "日本" },
   { value: "CN", label: "中国" },
@@ -18,7 +18,20 @@ const NATIONALITIES = [
   { value: "SG", label: "Singapore" },
   { value: "TH", label: "Thailand" },
   { value: "OTHER", label: "기타" },
-];
+] as const;
+
+const NATIONALITY_TO_DIAL_CODE: Record<string, string> = {
+  KR: "+82",
+  JP: "+81",
+  CN: "+86",
+  US: "+1",
+  TW: "+886",
+  HK: "+852",
+  SG: "+65",
+  TH: "+66",
+  OTHER: "",
+  "": "",
+};
 
 type Props = {
   open: boolean;
@@ -36,7 +49,8 @@ export default function OnboardingModal({ open, onClose, onComplete, initialData
   const { t, lang } = useI18n();
   const [entered, setEntered] = useState(false);
   const [name, setName] = useState(initialData.name ?? "");
-  const [phone, setPhone] = useState(initialData.phone ?? "");
+  const [countryCode, setCountryCode] = useState<string>("");
+  const [phoneLocal, setPhoneLocal] = useState("");
   const [nationality, setNationality] = useState(initialData.nationality ?? "");
   const [privacyConsent, setPrivacyConsent] = useState(false);
   const [submitting, setSubmitting] = useState(false);
@@ -45,8 +59,24 @@ export default function OnboardingModal({ open, onClose, onComplete, initialData
   useEffect(() => {
     if (!open) return;
     setName(initialData.name ?? "");
-    setPhone(initialData.phone ?? "");
-    setNationality(initialData.nationality ?? "");
+    // 국가 코드/전화번호 분리 초기화
+    const nat = initialData.nationality ?? "";
+    let dialFromNat = NATIONALITY_TO_DIAL_CODE[nat] ?? "";
+    let localPhone = "";
+    const rawPhone = initialData.phone ?? "";
+    if (rawPhone && rawPhone.trim().startsWith("+")) {
+      const trimmed = rawPhone.trim();
+      const match = trimmed.match(/^\+[\d]+/);
+      const dial = match ? match[0] : "";
+      const rest = match ? trimmed.slice(dial.length).trim() : trimmed;
+      dialFromNat = dial || dialFromNat;
+      localPhone = rest;
+    } else if (rawPhone) {
+      localPhone = rawPhone.trim();
+    }
+    setCountryCode(dialFromNat);
+    setPhoneLocal(localPhone);
+    setNationality(nat);
     setPrivacyConsent(false);
     setError(null);
     setEntered(false);
@@ -72,7 +102,8 @@ export default function OnboardingModal({ open, onClose, onComplete, initialData
       setError(t("onboarding_name_required"));
       return;
     }
-    if (requireContact && !phone.trim()) {
+    const cleanedLocal = phoneLocal.replace(/\D/g, "");
+    if (requireContact && !cleanedLocal) {
       setError(t("onboarding_contact_required"));
       return;
     }
@@ -84,10 +115,16 @@ export default function OnboardingModal({ open, onClose, onComplete, initialData
     setSubmitting(true);
     setError(null);
     try {
+      const fullPhone =
+        cleanedLocal && (countryCode || "").trim()
+          ? `${(countryCode || "").trim()}${cleanedLocal}`
+          : cleanedLocal
+            ? cleanedLocal
+            : null;
       await apiClient.patch("/api/user/profile", {
         completeOnboarding: true,
         name: name.trim() || undefined,
-        phone: phone.trim() || null,
+        phone: fullPhone,
         nationality: nationality.trim() || null,
         privacyConsent: true,
       });
@@ -170,13 +207,31 @@ export default function OnboardingModal({ open, onClose, onComplete, initialData
               <label className="block text-xs font-semibold text-neutral-500">{t("onboarding_contact")}</label>
               <div className="mt-1 text-sm text-neutral-500">{initialData.email || "—"}</div>
               <p className="mt-0.5 text-[11px] text-neutral-400">{t("onboarding_email")}</p>
-              <input
-                type="tel"
-                value={phone}
-                onChange={(e) => setPhone(e.target.value)}
-                placeholder={t("onboarding_phone")}
-                className="mt-2 w-full rounded-xl border border-neutral-200 px-3 py-2.5 text-sm outline-none focus:border-neutral-400"
-              />
+              <div className="mt-2 flex gap-2">
+                <select
+                  value={countryCode}
+                  onChange={(e) => setCountryCode(e.target.value)}
+                  className="w-28 rounded-xl border border-neutral-200 px-2 py-2.5 text-sm outline-none focus:border-neutral-400 bg-white"
+                >
+                  <option value="">{lang === "ko" ? "국가번호" : lang === "ja" ? "国番号" : lang === "zh" ? "国家区号" : "Code"}</option>
+                  <option value="+82">+82 (KR)</option>
+                  <option value="+81">+81 (JP)</option>
+                  <option value="+86">+86 (CN)</option>
+                  <option value="+1">+1 (US)</option>
+                  <option value="+886">+886 (TW)</option>
+                  <option value="+852">+852 (HK)</option>
+                  <option value="+65">+65 (SG)</option>
+                  <option value="+66">+66 (TH)</option>
+                  <option value="">{lang === "ko" ? "기타" : lang === "ja" ? "その他" : lang === "zh" ? "其他" : "Other"}</option>
+                </select>
+                <input
+                  type="tel"
+                  value={phoneLocal}
+                  onChange={(e) => setPhoneLocal(e.target.value)}
+                  placeholder={t("onboarding_phone")}
+                  className="flex-1 rounded-xl border border-neutral-200 px-3 py-2.5 text-sm outline-none focus:border-neutral-400"
+                />
+              </div>
             </div>
 
             <div className="pt-2">

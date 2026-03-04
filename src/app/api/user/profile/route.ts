@@ -90,7 +90,14 @@ export async function PATCH(req: Request) {
   if (profilePhotoUrl !== undefined) updates.profilePhotoUrl = profilePhotoUrl && profilePhotoUrl.trim() ? profilePhotoUrl.trim() : null;
   if (completeOnboarding === true && privacyConsent === true) {
     updates.profileCompletedAt = new Date();
-    if (name !== undefined && name?.trim()) updates.name = name.trim();
+    const trimmedName = name?.trim();
+    if (name !== undefined && trimmedName) {
+      updates.name = trimmedName;
+      // 표시 이름(displayName)이 아직 따로 설정되지 않은 경우, 온보딩 이름을 표시 이름으로도 사용
+      if (displayName === undefined) {
+        updates.displayName = trimmedName;
+      }
+    }
     if (phone !== undefined) updates.phone = phone && phone.trim() ? phone.trim() : null;
     if (nationality !== undefined) updates.nationality = nationality && nationality.trim() ? nationality.trim() : null;
   }
