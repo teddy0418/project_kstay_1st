@@ -236,7 +236,7 @@ export async function POST(req: Request) {
         paymentMethod === "PAYPAL"
           ? process.env.PORTONE_CHANNEL_KEY_PAYPAL
           : paymentMethod === "EXIMBAY"
-            ? process.env.PORTONE_CHANNEL_KEY_EXIMBAY
+            ? process.env.PORTONE_CHANNEL_KEY_PAYMENTWALL ?? process.env.PORTONE_CHANNEL_KEY_EXIMBAY
             : process.env.PORTONE_CHANNEL_KEY_KAKAOPAY ?? ""
       ).trim() || String(process.env.PORTONE_CHANNEL_KEY ?? "").trim();
 
