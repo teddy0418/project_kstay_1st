@@ -265,6 +265,24 @@ export async function POST(req: Request) {
         }
       }
 
+      // PayPal은 KRW 미지원 — USD로 결제 요청
+      if (paymentMethod === "PAYPAL" && bookingCurrency === "KRW") {
+        try {
+          const rates = await getExchangeRates();
+          const usdRate = rates["USD"];
+          if (usdRate != null && usdRate > 0) {
+            totalAmount = Math.max(1, Math.round(totalKrw * usdRate));
+            bookingCurrency = "USD";
+          } else {
+            totalAmount = Math.max(1, Math.round(totalKrw / 1300));
+            bookingCurrency = "USD";
+          }
+        } catch {
+          totalAmount = Math.max(1, Math.round(totalKrw / 1300));
+          bookingCurrency = "USD";
+        }
+      }
+
       payload.portone = {
         storeId,
         channelKey,
