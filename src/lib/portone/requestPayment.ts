@@ -45,8 +45,9 @@ function resolvePayMethodAndOptions(paymentMethod: "KAKAOPAY" | "PAYPAL" | "EXIM
 export async function requestPortonePayment(params: PortonePayParams): Promise<void> {
   const { payMethod, ...methodOptions } = resolvePayMethodAndOptions(params.paymentMethod);
   const payCurrency = mapToPortoneCurrency(params.currency);
+  const isPaymentwall = params.paymentMethod === "EXIMBAY";
 
-  await portoneRequestPayment({
+  const basePayload = {
     storeId: params.storeId,
     channelKey: params.channelKey,
     paymentId: params.paymentId,
@@ -55,11 +56,21 @@ export async function requestPortonePayment(params: PortonePayParams): Promise<v
     currency: payCurrency,
     payMethod,
     ...methodOptions,
+    redirectUrl: params.redirectUrl,
+  };
+
+  // Paymentwall 채널은 customer, forceRedirect 미지원 — 최소 파라미터만 전달
+  if (isPaymentwall) {
+    await portoneRequestPayment(basePayload);
+    return;
+  }
+
+  await portoneRequestPayment({
+    ...basePayload,
     customer: {
       fullName: params.guestName || "Guest",
       email: params.guestEmail,
     },
-    redirectUrl: params.redirectUrl,
     forceRedirect: params.forceRedirect,
   });
 }
