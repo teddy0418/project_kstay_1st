@@ -32,6 +32,9 @@ function mapToPortoneCurrency(code: string) {
   }
 }
 
+/** Paymentwall 채널 전용 payMethod (SDK enum에 없음) */
+const PAYMENTWALL_CREDIT_CARD = "PAYMENTWALL_CREDIT_CARD" as const;
+
 function resolvePayMethodAndOptions(paymentMethod: "KAKAOPAY" | "PAYPAL" | "EXIMBAY") {
   if (paymentMethod === "KAKAOPAY") {
     return { payMethod: PaymentPayMethod.EASY_PAY, easyPay: { easyPayProvider: EasyPayProvider.KAKAOPAY } };
@@ -39,7 +42,8 @@ function resolvePayMethodAndOptions(paymentMethod: "KAKAOPAY" | "PAYPAL" | "EXIM
   if (paymentMethod === "PAYPAL") {
     return { payMethod: PaymentPayMethod.PAYPAL, paypal: {} };
   }
-  return { payMethod: PaymentPayMethod.CARD };
+  // EXIMBAY = Paymentwall 채널: 카드는 PAYMENTWALL_CREDIT_CARD 사용
+  return { payMethod: PAYMENTWALL_CREDIT_CARD };
 }
 
 export async function requestPortonePayment(params: PortonePayParams): Promise<void> {
@@ -59,9 +63,16 @@ export async function requestPortonePayment(params: PortonePayParams): Promise<v
     redirectUrl: params.redirectUrl,
   };
 
-  // Paymentwall 채널은 customer, forceRedirect 미지원 — 최소 파라미터만 전달
+  // Paymentwall: buyer_name/buyer_email 필수(문서), forceRedirect 미지원 — customer만 포함
+  // payMethod "PAYMENTWALL_CREDIT_CARD"는 SDK 타입에 없어 단언 사용
   if (isPaymentwall) {
-    await portoneRequestPayment(basePayload);
+    await portoneRequestPayment({
+      ...basePayload,
+      customer: {
+        fullName: params.guestName || "Guest",
+        email: params.guestEmail,
+      },
+    } as Parameters<typeof portoneRequestPayment>[0]);
     return;
   }
 
@@ -72,5 +83,5 @@ export async function requestPortonePayment(params: PortonePayParams): Promise<v
       email: params.guestEmail,
     },
     forceRedirect: params.forceRedirect,
-  });
+  } as Parameters<typeof portoneRequestPayment>[0]);
 }

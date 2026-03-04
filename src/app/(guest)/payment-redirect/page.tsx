@@ -62,6 +62,16 @@ export default function PaymentRedirectPage() {
     if (isFailure) {
       void (async () => {
         try {
+          // 결제 실패/취소 시 예약을 즉시 취소해 날짜를 다시 열어 둔다.
+          try {
+            await apiClient.post(`/api/bookings/public/${encodeURIComponent(paymentId)}/payment-failed`, {
+              code,
+              message,
+            });
+          } catch {
+            // 예약 취소 실패는 UX로만 처리 (다음 배치 만료 스크립트에 맡김)
+          }
+
           const booking = await apiClient.get<BookingLookup>(
             `/api/bookings/public/${encodeURIComponent(paymentId)}`
           );
