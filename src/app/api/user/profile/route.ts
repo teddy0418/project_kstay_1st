@@ -23,6 +23,7 @@ export async function GET() {
   let phone: string | undefined;
   let nationality: string | undefined;
   let profileCompletedAt: Date | undefined;
+  let createdAt: Date | undefined;
   try {
     const dbUser = await prisma.user.findUnique({
       where: { id: userId },
@@ -36,6 +37,7 @@ export async function GET() {
         phone: true,
         nationality: true,
         profileCompletedAt: true,
+        createdAt: true,
       },
     });
     if (!dbUser) return apiError(404, "NOT_FOUND", "User not found");
@@ -47,15 +49,17 @@ export async function GET() {
     phone = dbUser.phone ?? undefined;
     nationality = dbUser.nationality ?? undefined;
     profileCompletedAt = dbUser.profileCompletedAt ?? undefined;
+    createdAt = dbUser.createdAt ?? undefined;
   } catch {
     const dbUser = await prisma.user.findUnique({
       where: { id: userId },
-      select: { id: true, name: true, image: true, profileCompletedAt: true },
+      select: { id: true, name: true, image: true, profileCompletedAt: true, createdAt: true },
     });
     if (!dbUser) return apiError(404, "NOT_FOUND", "User not found");
     name = dbUser.name ?? undefined;
     image = dbUser.image ?? undefined;
     profileCompletedAt = dbUser.profileCompletedAt ?? undefined;
+    createdAt = dbUser.createdAt ?? undefined;
   }
 
   return apiOk({
@@ -67,6 +71,7 @@ export async function GET() {
     phone,
     nationality,
     profileCompletedAt: profileCompletedAt?.toISOString() ?? null,
+    createdAt: createdAt?.toISOString() ?? null,
   });
 }
 
@@ -77,7 +82,7 @@ export async function PATCH(req: Request) {
 
   const parsed = await parseJsonBody(req, updateProfileSchema);
   if (!parsed.ok) return parsed.response;
-  const { displayName, profilePhotoUrl, completeOnboarding, name, phone, nationality, privacyConsent } = parsed.data;
+  const { displayName, profilePhotoUrl, completeOnboarding, name, email, phone, nationality, privacyConsent } = parsed.data;
 
   let userId = user.id;
   if (user.email) {
@@ -93,11 +98,9 @@ export async function PATCH(req: Request) {
     const trimmedName = name?.trim();
     if (name !== undefined && trimmedName) {
       updates.name = trimmedName;
-      // 표시 이름(displayName)이 아직 따로 설정되지 않은 경우, 온보딩 이름을 표시 이름으로도 사용
-      if (displayName === undefined) {
-        updates.displayName = trimmedName;
-      }
+      if (displayName === undefined) updates.displayName = trimmedName;
     }
+    if (email !== undefined && email.trim()) updates.email = email.trim().toLowerCase();
     if (phone !== undefined) updates.phone = phone && phone.trim() ? phone.trim() : null;
     if (nationality !== undefined) updates.nationality = nationality && nationality.trim() ? nationality.trim() : null;
   }

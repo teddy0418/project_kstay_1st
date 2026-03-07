@@ -2,10 +2,12 @@ import { getOrCreateServerUser } from "@/lib/auth/server";
 import { apiError, apiOk } from "@/lib/api/response";
 import { parseJsonBody } from "@/lib/api/validation";
 import { updateHostListingSchema } from "@/lib/validation/schemas";
+import { isAllowedIcalUrl } from "@/lib/ical";
 import {
   deleteHostListing,
   findHostListingForEdit,
   findHostListingOwnership,
+  listingHasAnyConfirmedBooking,
   updateHostListing,
 } from "@/lib/repositories/host-listings";
 
@@ -13,12 +15,17 @@ export async function GET(_req: Request, ctx: { params: Promise<{ id: string }> 
   try {
     const user = await getOrCreateServerUser();
     if (!user) return apiError(401, "UNAUTHORIZED", "Login required");
-    if (user.role !== "HOST" && user.role !== "ADMIN") {
-      return apiError(403, "FORBIDDEN", "Host role required");
-    }
 
     const { id } = await ctx.params;
     if (!id) return apiError(400, "BAD_REQUEST", "listing id is required");
+
+    const ownership = await findHostListingOwnership(id);
+    const isOwner = ownership?.hostId === user.id;
+    const isDraftOwnedByGuest = user.role === "GUEST" && isOwner && ownership?.status === "DRAFT";
+
+    if (user.role !== "HOST" && user.role !== "ADMIN" && !isDraftOwnedByGuest) {
+      return apiError(403, "FORBIDDEN", "Host role required");
+    }
 
     const listing = await findHostListingForEdit(
       id,
@@ -37,15 +44,16 @@ export async function PATCH(req: Request, ctx: { params: Promise<{ id: string }>
   try {
     const user = await getOrCreateServerUser();
     if (!user) return apiError(401, "UNAUTHORIZED", "Login required");
-    if (user.role !== "HOST" && user.role !== "ADMIN") {
-      return apiError(403, "FORBIDDEN", "Host role required");
-    }
 
     const { id } = await ctx.params;
     if (!id) return apiError(400, "BAD_REQUEST", "listing id is required");
 
     const current = await findHostListingOwnership(id);
     if (!current) return apiError(404, "NOT_FOUND", "Listing not found");
+    const isDraftOwnedByGuest = user.role === "GUEST" && current.hostId === user.id && current.status === "DRAFT";
+    if (user.role !== "HOST" && user.role !== "ADMIN" && !isDraftOwnedByGuest) {
+      return apiError(403, "FORBIDDEN", "Host role required");
+    }
     if (user.role !== "ADMIN" && current.hostId !== user.id) {
       return apiError(403, "FORBIDDEN", "You cannot modify this listing");
     }
@@ -83,6 +91,28 @@ export async function PATCH(req: Request, ctx: { params: Promise<{ id: string }>
       payload.checkInGuideMessage = body.checkInGuideMessage;
       payload.houseRulesMessage = body.houseRulesMessage;
       payload.detailedAddress = body.detailedAddress;
+      if (body.title !== undefined) payload.title = body.title;
+      if (body.titleKo !== undefined) payload.titleKo = body.titleKo;
+      if (body.titleJa !== undefined) payload.titleJa = body.titleJa;
+      if (body.titleZh !== undefined) payload.titleZh = body.titleZh;
+      if (body.hostBio !== undefined) payload.hostBio = body.hostBio;
+      if (body.hostBioKo !== undefined) payload.hostBioKo = body.hostBioKo;
+      if (body.checkInTime !== undefined) payload.checkInTime = body.checkInTime;
+      if (body.checkOutTime !== undefined) payload.checkOutTime = body.checkOutTime;
+      if (body.amenities !== undefined) payload.amenities = body.amenities;
+      const hasConfirmed = await listingHasAnyConfirmedBooking(id);
+      if (!hasConfirmed) {
+        if (body.city !== undefined) payload.city = body.city;
+        if (body.area !== undefined) payload.area = body.area;
+        if (body.address !== undefined) payload.address = body.address;
+        if (body.lat !== undefined) payload.lat = body.lat;
+        if (body.lng !== undefined) payload.lng = body.lng;
+        if (body.roadAddress !== undefined) payload.roadAddress = body.roadAddress;
+        if (body.country !== undefined) payload.country = body.country;
+        if (body.stateProvince !== undefined) payload.stateProvince = body.stateProvince;
+        if (body.cityDistrict !== undefined) payload.cityDistrict = body.cityDistrict;
+        if (body.zipCode !== undefined) payload.zipCode = body.zipCode;
+      }
     } else {
       const bioChanged = body.hostBio !== undefined || body.hostBioKo !== undefined;
       Object.assign(payload, {
@@ -124,6 +154,14 @@ export async function PATCH(req: Request, ctx: { params: Promise<{ id: string }>
       });
     }
 
+    if (body.icalUrl !== undefined) {
+      const val = body.icalUrl?.trim() || null;
+      if (val && !isAllowedIcalUrl(val)) {
+        return apiError(400, "BAD_REQUEST", "iCal URL은 https로 시작하는 주소만 사용할 수 있습니다.");
+      }
+      payload.icalUrl = val;
+    }
+
     const updated = await updateHostListing(payload);
 
     return apiOk(updated);
@@ -138,15 +176,16 @@ export async function DELETE(_req: Request, ctx: { params: Promise<{ id: string 
   try {
     const user = await getOrCreateServerUser();
     if (!user) return apiError(401, "UNAUTHORIZED", "Login required");
-    if (user.role !== "HOST" && user.role !== "ADMIN") {
-      return apiError(403, "FORBIDDEN", "Host role required");
-    }
 
     const { id } = await ctx.params;
     if (!id) return apiError(400, "BAD_REQUEST", "listing id is required");
 
     const current = await findHostListingOwnership(id);
     if (!current) return apiError(404, "NOT_FOUND", "Listing not found");
+    const isDraftOwnedByGuest = user.role === "GUEST" && current.hostId === user.id && current.status === "DRAFT";
+    if (user.role !== "HOST" && user.role !== "ADMIN" && !isDraftOwnedByGuest) {
+      return apiError(403, "FORBIDDEN", "Host role required");
+    }
     if (user.role !== "ADMIN" && current.hostId !== user.id) {
       return apiError(403, "FORBIDDEN", "You cannot delete this listing");
     }

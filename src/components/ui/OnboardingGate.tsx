@@ -23,9 +23,7 @@ export default function OnboardingGate({ children }: { children: React.ReactNode
     try {
       const data = await apiClient.get<ProfileData>("/api/user/profile");
       setProfile(data);
-      if (!data?.profileCompletedAt) {
-        setShowModal(true);
-      }
+      // 소셜 로그인 후 온보딩 없이 바로 이용. 예약자 정보는 체크아웃에서 수집·계정 반영
     } catch {
       setProfile(null);
     } finally {

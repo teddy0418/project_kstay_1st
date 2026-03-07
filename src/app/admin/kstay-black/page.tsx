@@ -81,11 +81,11 @@ export default function AdminKstayBlackPage() {
   const canAddList = approvedList.filter((x) => !blackIds.has(x.id));
 
   return (
-    <div className="grid gap-8">
+    <div className="grid gap-6">
       <div>
-        <h1 className="text-2xl font-extrabold tracking-tight">KSTAY Black 선정</h1>
+        <h1 className="text-2xl font-extrabold tracking-tight">KSTAY Black</h1>
         <p className="mt-1 text-sm text-neutral-500">
-          메인 페이지 &quot;KSTAY Black&quot; 섹션에 노출할 숙소를 선정합니다. 승인된 숙소만 선정할 수 있으며, 선정 순서대로 노출됩니다.
+          메인 &quot;KSTAY Black&quot; 섹션에 노출할 숙소를 선정·순서 지정합니다. 승인된 숙소만 추가할 수 있습니다.
         </p>
       </div>
 

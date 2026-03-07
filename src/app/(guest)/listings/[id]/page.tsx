@@ -8,7 +8,8 @@ import DetailActions from "@/features/listings/components/DetailActions";
 import MapModal from "@/features/listings/components/MapModal";
 import BookingWidget from "@/features/listings/components/BookingWidget";
 import { getServerLang } from "@/lib/i18n/server";
-import { formatDateEn, addDays, parseISODate } from "@/lib/format";
+import { langToLocale } from "@/lib/i18n/detect";
+import { formatDate, addDays, parseISODate, formatNumber } from "@/lib/format";
 import Link from "next/link";
 import Image from "next/image";
 import { ChevronRight, MapPin, Star, Sparkles, CheckCircle2, Key, MessageCircle, Tag, ShieldCheck } from "lucide-react";
@@ -59,18 +60,19 @@ function normalizeId(v: unknown) {
   return String(v);
 }
 
-function freeCancelUntilKST(checkInISO?: string) {
+function freeCancelUntilKST(locale: string, checkInISO?: string) {
   if (!checkInISO) return null;
   const checkIn = parseISODate(checkInISO);
   const deadline = addDays(checkIn, -5);
-  return `${formatDateEn(deadline)} 23:59 (KST)`;
+  return `${formatDate(locale, deadline)} 23:59 (KST)`;
 }
 
 function localizeHostBio(
-  listing: { id: string; hostBio: string; hostBioI18n?: { ko?: string; ja?: string; zh?: string } },
+  listing: { id: string; hostBio: string; hostBioI18n?: { en?: string; ko?: string; ja?: string; zh?: string } },
   fallbackBio: string,
   lang: "en" | "ko" | "ja" | "zh"
 ) {
+  if (lang === "en" && listing.hostBioI18n?.en) return listing.hostBioI18n.en;
   if (lang === "ko" && listing.hostBioI18n?.ko) return listing.hostBioI18n.ko;
   if (lang === "ja" && listing.hostBioI18n?.ja) return listing.hostBioI18n.ja;
   if (lang === "zh" && listing.hostBioI18n?.zh) return listing.hostBioI18n.zh;
@@ -145,11 +147,13 @@ function ReviewsSection({
   rating,
   count,
   lang,
+  locale,
   dbReviews,
 }: {
   rating: number;
   count: number;
   lang: "en" | "ko" | "ja" | "zh";
+  locale: string;
   dbReviews?: DbReview[];
 }) {
   const t =
@@ -394,28 +398,19 @@ function ReviewsSection({
   const reviews =
     dbReviews && dbReviews.length > 0
       ? dbReviews.map((r) => {
-          const image = r.userImage ?? null;
-          const noPhoto = !image;
           const name = r.userName ?? "Guest";
-          const letter = noPhoto
-            ? (name.trim().slice(0, 1).toUpperCase() || avatarLetterFromId(r.userId ?? r.id))
-            : null;
+          const letter = name.trim().slice(0, 1).toUpperCase() || avatarLetterFromId(r.userId ?? r.id);
           return {
             id: r.id,
             name,
-            image,
             letter,
             meta: "",
-            date: new Date(r.createdAt).toLocaleDateString(lang === "ko" ? "ko-KR" : lang === "ja" ? "ja-JP" : "en-US", {
-              year: "numeric",
-              month: "short",
-              day: "numeric",
-            }),
+            date: formatDate(locale, r.createdAt, { year: "numeric", month: "short", day: "numeric" }),
             stars: r.rating,
             body: getReviewBodyForLang(r, lang),
           };
         })
-      : t.reviewsData.map((r) => ({ ...r, image: null as string | null, letter: r.name.slice(0, 1) }));
+      : t.reviewsData.map((r) => ({ ...r, letter: r.name.slice(0, 1) }));
 
   return (
     <section id="reviews" className="mt-12">
@@ -423,7 +418,7 @@ function ReviewsSection({
         <Star className="h-5 w-5" />
         <span>{displayRating.toFixed(2)}</span>
         <span className="text-neutral-400">·</span>
-        <span>{count.toLocaleString()} {t.reviews}</span>
+        <span>{formatNumber(locale, count)} {t.reviews}</span>
       </div>
 
       <div className="mt-6 grid gap-6 lg:grid-cols-[200px_minmax(0,1fr)]">
@@ -480,12 +475,8 @@ function ReviewsSection({
         {reviews.map((r) => (
           <div key={r.id} className="rounded-2xl border border-neutral-200 p-5">
             <div className="flex items-start gap-3">
-              <div className="h-10 w-10 shrink-0 rounded-full bg-neutral-900 text-white grid place-items-center text-sm font-semibold overflow-hidden">
-                {r.image ? (
-                  <Image src={r.image} alt="" width={40} height={40} className="h-full w-full object-cover" unoptimized />
-                ) : (
-                  (r as { letter?: string }).letter ?? r.name.slice(0, 1)
-                )}
+              <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-neutral-900 text-sm font-semibold text-white">
+                {(r as { letter?: string }).letter ?? r.name.slice(0, 1)}
               </div>
               <div className="min-w-0">
                 <div className="text-sm font-semibold">{r.name}</div>
@@ -512,6 +503,7 @@ export default async function ListingDetailPage({
   searchParams?: Promise<{ [key: string]: string | string[] | undefined }>;
 }) {
   const lang = await getServerLang();
+  const locale = langToLocale(lang);
   const tx =
     lang === "ko"
       ? {
@@ -640,6 +632,7 @@ export default async function ListingDetailPage({
   const { id: rawParam } = await params;
   const raw = rawParam ?? "";
   const id = decodeURIComponent(raw);
+  const localeStr = langToLocale(lang);
 
   let listing = (await getPublicListingById(id)) ?? (await getPublicListingById(raw));
 
@@ -678,7 +671,7 @@ export default async function ListingDetailPage({
   const dbReviews = await findReviewsByListingId(listing.id);
   const reviewCount =
     dbReviews.length > 0 ? dbReviews.length : Number((listing as { reviewCount?: number }).reviewCount ?? 0) || 0;
-  const cancelUntil = freeCancelUntilKST(start);
+  const cancelUntil = freeCancelUntilKST(localeStr, start);
 
   const mapSrc =
     listing.lat && listing.lng
@@ -711,7 +704,7 @@ export default async function ListingDetailPage({
             </span>
             <span>·</span>
             <a href="#reviews" className="hover:underline">
-              {reviewCount.toLocaleString()} {tx.reviews}
+              {formatNumber(localeStr, reviewCount)} {tx.reviews}
             </a>
             <span>·</span>
             <span className="inline-flex items-center gap-1">
@@ -753,7 +746,7 @@ export default async function ListingDetailPage({
               <Star className="h-4 w-4" />
               {listing.rating.toFixed(2)}
             </span>
-            <div className="text-sm font-semibold">{reviewCount.toLocaleString()} {tx.reviews}</div>
+            <div className="text-sm font-semibold">{formatNumber(localeStr, reviewCount)} {tx.reviews}</div>
           </div>
           <p className="mt-3 text-sm text-neutral-600 leading-6">
             {tx.reviewsDesc}
@@ -798,23 +791,16 @@ export default async function ListingDetailPage({
         {/* Left */}
         <section className="min-w-0">
           {/* Host card */}
-          <div className="flex flex-wrap items-center gap-4 rounded-2xl border border-neutral-200 p-5">
-            <div className="relative h-12 w-12 shrink-0 overflow-hidden rounded-full bg-neutral-100">
-              <Image
-                src={listing.hostProfileImageUrl}
-                alt={listing.hostName}
-                className="h-full w-full object-cover"
-                fill
-                sizes="48px"
-              />
+          <div className="flex flex-wrap items-center gap-3 rounded-2xl border border-neutral-200 p-5 sm:gap-4">
+            <div className="flex h-12 w-12 shrink-0 items-center justify-center overflow-hidden rounded-full bg-neutral-200 text-lg font-semibold text-neutral-700">
+              {(listing.hostName?.trim().slice(0, 1).toUpperCase()) || "H"}
             </div>
-            <div className="min-w-0 flex-1">
-              <div className="text-sm font-semibold">{tx.hostedBy} {listing.hostName}</div>
-              <div className="mt-1 text-xs text-neutral-500">{tx.verifiedPartner}</div>
-            </div>
-            <div className="flex shrink-0 items-center gap-1.5 rounded-full bg-neutral-900 px-3 py-1 text-xs font-semibold text-white w-full sm:w-auto">
-              <ShieldCheck className="h-4 w-4 shrink-0 text-blue-400" aria-hidden />
-              {tx.govCertified}
+            <div className="min-w-0 flex-1 flex items-center justify-between gap-3">
+              <span className="text-base font-semibold text-neutral-900 sm:text-lg">{tx.hostedBy} {listing.hostName}</span>
+              <span className="inline-flex shrink-0 items-center gap-1 rounded-full bg-neutral-900 px-2 py-0.5 text-[10px] font-semibold text-white whitespace-nowrap sm:gap-1.5 sm:px-2.5 sm:py-1 sm:text-[11px]">
+                <ShieldCheck className="h-3 w-3 shrink-0 text-blue-400 sm:h-3.5 sm:w-3.5" aria-hidden />
+                {tx.govCertified}
+              </span>
             </div>
           </div>
 
@@ -831,7 +817,7 @@ export default async function ListingDetailPage({
 
           {/* Reviews */}
 
-          <ReviewsSection rating={listing.rating} count={reviewCount} lang={lang} dbReviews={dbReviews.map((r) => ({
+          <ReviewsSection rating={listing.rating} count={reviewCount} lang={lang} locale={localeStr} dbReviews={dbReviews.map((r) => ({
             id: r.id,
             userId: r.user?.id,
             userName: (r.user?.displayName?.trim() || r.user?.name) ?? "Guest",

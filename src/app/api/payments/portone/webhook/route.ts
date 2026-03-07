@@ -1,5 +1,9 @@
 import { Webhook } from "@portone/server-sdk";
 import {
+  createBookingFromCheckoutSession,
+  findCheckoutSessionByToken,
+} from "@/lib/repositories/checkout-session";
+import {
   applyFailedOrCancelledPaymentSync,
   applyInitiatedPaymentSync,
   applyPaidPaymentSync,
@@ -117,8 +121,26 @@ async function syncPaymentAndBookingFromPortOne(paymentId: string) {
   const portoneAmount = typeof parsed?.amount === "number" ? parsed.amount : null;
   const portoneCurrency = typeof parsed?.currency === "string" ? parsed.currency.toUpperCase() : "";
 
-  const booking = await findBookingForPaymentSync(paymentId);
-  if (!booking) return;
+  let booking = await findBookingForPaymentSync(paymentId);
+  if (!booking) {
+    const session = await findCheckoutSessionByToken(paymentId);
+    if (!session) return;
+    if (paymentStatus === "PAID") {
+      const p = session.payload as { totalKrw: number; totalUsd: number };
+      if (!verifyAmountMatchesSession(p, portoneAmount, portoneCurrency)) {
+        console.warn("[portone-webhook] amount mismatch for checkout session", { paymentId });
+        return;
+      }
+      const created = await createBookingFromCheckoutSession(paymentId, {
+        paymentId,
+        storeId,
+        pgTid,
+        paymentRawJson: paymentRawJson,
+      });
+      if (created) await sendBookingConfirmedEmailIfNeeded(created.id);
+    }
+    return;
+  }
 
   const targetPayment =
     booking.payments.find((p) => p.providerPaymentId === paymentId) ??
@@ -194,6 +216,17 @@ function verifyAmountMatches(
   if (portoneCurrency === "USD") {
     return portoneAmount === booking.totalUsd;
   }
+  return true;
+}
+
+function verifyAmountMatchesSession(
+  payload: { totalKrw: number; totalUsd: number },
+  portoneAmount: number | null,
+  portoneCurrency: string
+): boolean {
+  if (portoneAmount == null) return true;
+  if (portoneCurrency === "KRW") return portoneAmount === payload.totalKrw;
+  if (portoneCurrency === "USD") return portoneAmount === payload.totalUsd;
   return true;
 }
 

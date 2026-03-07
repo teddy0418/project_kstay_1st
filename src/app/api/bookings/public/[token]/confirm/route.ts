@@ -1,5 +1,9 @@
 import { apiError, apiOk } from "@/lib/api/response";
-import { confirmMockBookingById, findBookingForMockConfirm } from "@/lib/repositories/payment-processing";
+import {
+  createBookingFromCheckoutSession,
+  findCheckoutSessionByToken,
+} from "@/lib/repositories/checkout-session";
+import { findBookingForMockConfirm } from "@/lib/repositories/payment-processing";
 import { sendBookingConfirmedEmailIfNeeded } from "@/lib/services/booking-confirmation-email";
 
 export const runtime = "nodejs";
@@ -14,28 +18,33 @@ export async function POST(_: Request, ctx: { params: Promise<{ token: string }>
     const { token } = await ctx.params;
     if (!token) return apiError(400, "BAD_REQUEST", "Booking token is required");
 
-    const existing = await findBookingForMockConfirm(token);
-    if (!existing) return apiError(404, "NOT_FOUND", "Booking not found");
-
-    if (existing.status === "CONFIRMED") {
-      return apiOk({ token, status: existing.status });
-    }
-    if (existing.status !== "PENDING_PAYMENT") {
+    const existingBooking = await findBookingForMockConfirm(token);
+    if (existingBooking) {
+      if (existingBooking.status === "CONFIRMED") {
+        return apiOk({ token, status: existingBooking.status });
+      }
       return apiError(409, "CONFLICT", "Booking cannot be confirmed in current status");
     }
 
-    const confirmed = await confirmMockBookingById(existing.id);
+    const session = await findCheckoutSessionByToken(token);
+    if (!session) return apiError(404, "NOT_FOUND", "Checkout session not found or expired");
 
-    if (!existing.confirmationEmailSentAt && confirmed.guestEmail) {
-      try {
-        await sendBookingConfirmedEmailIfNeeded(confirmed.id);
-      } catch (e) {
-        console.error("[booking-confirm] email send failed", {
-          bookingId: confirmed.id,
-          token: confirmed.publicToken,
-          error: e instanceof Error ? e.message : String(e),
-        });
-      }
+    const confirmed = await createBookingFromCheckoutSession(token, {
+      paymentId: token,
+      storeId: null,
+      pgTid: null,
+      paymentRawJson: JSON.stringify({ status: "PAID", provider: "MOCK" }),
+    });
+    if (!confirmed) return apiError(500, "INTERNAL_ERROR", "Failed to create booking from session");
+
+    try {
+      await sendBookingConfirmedEmailIfNeeded(confirmed.id);
+    } catch (e) {
+      console.error("[booking-confirm] email send failed", {
+        bookingId: confirmed.id,
+        token: confirmed.publicToken,
+        error: e instanceof Error ? e.message : String(e),
+      });
     }
 
     return apiOk({ token: confirmed.publicToken, status: confirmed.status });

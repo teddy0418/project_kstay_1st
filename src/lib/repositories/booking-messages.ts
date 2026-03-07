@@ -129,6 +129,36 @@ export async function markNotificationRead(notificationId: string, userId: strin
   });
 }
 
+/** 호스트가 해당 예약 스레드를 열었을 때, 게스트 발신 메시지를 읽음 처리 */
+export async function markBookingMessagesReadByHost(bookingId: string, hostId: string): Promise<void> {
+  await prisma.bookingMessage.updateMany({
+    where: {
+      bookingId,
+      senderRole: "GUEST",
+      hostReadAt: null,
+      booking: { listing: { hostId } },
+    },
+    data: { hostReadAt: new Date() },
+  });
+}
+
+/** 호스트의 읽지 않은 메시지 수 (게스트가 보낸 메시지 중 hostReadAt이 null인 것). listingId 있으면 해당 숙소만 */
+export async function countUnreadMessagesForHost(
+  hostId: string,
+  listingId?: string | null
+): Promise<number> {
+  return prisma.bookingMessage.count({
+    where: {
+      senderRole: "GUEST",
+      hostReadAt: null,
+      booking: {
+        listing: { hostId },
+        ...(listingId ? { listingId } : {}),
+      },
+    },
+  });
+}
+
 /** 예약이 이 게스트 소유인지 */
 export async function isBookingGuest(bookingId: string, userId: string): Promise<boolean> {
   const b = await prisma.booking.findUnique({

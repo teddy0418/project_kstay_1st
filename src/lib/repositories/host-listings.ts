@@ -59,6 +59,7 @@ type UpdateHostListingInput = {
   extraGuestFeeKrw?: number | null;
   businessRegistrationDocUrl?: string | null;
   lodgingReportDocUrl?: string | null;
+  icalUrl?: string | null;
 };
 
 export async function createPendingHostListing(input: CreateHostListingInput) {
@@ -132,6 +133,7 @@ export async function findListingMinimalForWizardStep(id: string, hostId?: strin
   const row = await prisma.listing.findFirst({
     where,
     select: {
+      status: true,
       title: true,
       titleKo: true,
       address: true,
@@ -265,6 +267,14 @@ export async function countListingBookings(listingId: string): Promise<number> {
   return prisma.booking.count({ where: { listingId } });
 }
 
+/** 결제 완료된 예약이 한 건이라도 있으면 true. 승인 숙소 주소 수정 가능 여부 판단용(에어비앤비 정책: 첫 예약 전에만 주소 수정 가능) */
+export async function listingHasAnyConfirmedBooking(listingId: string): Promise<boolean> {
+  const count = await prisma.booking.count({
+    where: { listingId, status: "CONFIRMED" },
+  });
+  return count > 0;
+}
+
 /**
  * DRAFT 또는 REJECTED 상태이고 예약이 0건일 때만 삭제.
  * 이미지는 cascade로 함께 삭제되므로 먼저 deleteMany 후 Listing delete.
@@ -332,6 +342,7 @@ export async function updateHostListing(input: UpdateHostListingInput) {
   if (input.extraGuestFeeKrw !== undefined) data.extraGuestFeeKrw = input.extraGuestFeeKrw ?? null;
   if (input.businessRegistrationDocUrl !== undefined) data.businessRegistrationDocUrl = input.businessRegistrationDocUrl ?? null;
   if (input.lodgingReportDocUrl !== undefined) data.lodgingReportDocUrl = input.lodgingReportDocUrl ?? null;
+  if (input.icalUrl !== undefined) data.icalUrl = input.icalUrl && input.icalUrl.trim() ? input.icalUrl.trim() : null;
 
   return prisma.listing.update({
     where: { id: input.id },

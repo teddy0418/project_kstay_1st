@@ -8,10 +8,12 @@ export type BookingDetailData = {
   listingId: string;
   listingTitle: string;
   guestName: string | null;
+  guestNationality: string | null;
   checkIn: string;
   checkOut: string;
   nights: number;
   status: string;
+  cancelledBy: string | null;
   totalKrw: number;
   guestPayment: { accommodationKrw: number; guestServiceFee: number; totalKrw: number };
   hostPayout: { accommodationKrw: number; totalKrw: number };
@@ -26,6 +28,35 @@ type Props = {
 
 function formatKrw(n: number) {
   return `₩${n.toLocaleString()}`;
+}
+
+/** 국가 코드 → 한글 국가명 (없으면 원문 그대로) */
+const COUNTRY_NAME_KO: Record<string, string> = {
+  KR: "대한민국",
+  US: "미국",
+  JP: "일본",
+  CN: "중국",
+  TW: "대만",
+  HK: "홍콩",
+  SG: "싱가포르",
+  TH: "태국",
+  VN: "베트남",
+  GB: "영국",
+  DE: "독일",
+  FR: "프랑스",
+  AU: "호주",
+  CA: "캐나다",
+  MX: "멕시코",
+  RU: "러시아",
+  IN: "인도",
+  ID: "인도네시아",
+  MY: "말레이시아",
+  PH: "필리핀",
+};
+function formatCountryName(value: string | null | undefined): string {
+  if (value == null || value === "") return "—";
+  const trimmed = value.trim().toUpperCase();
+  return COUNTRY_NAME_KO[trimmed] ?? value;
 }
 
 export default function BookingDetailModal({ open, onClose, bookingId }: Props) {
@@ -55,7 +86,7 @@ export default function BookingDetailModal({ open, onClose, bookingId }: Props) 
           const d = body.data;
           const checkInStr = typeof d.checkIn === "string" ? d.checkIn.slice(0, 10) : "";
           const checkOutStr = typeof d.checkOut === "string" ? d.checkOut.slice(0, 10) : "";
-          setDetail({ ...d, checkIn: checkInStr, checkOut: checkOutStr });
+          setDetail({ ...d, checkIn: checkInStr, checkOut: checkOutStr, cancelledBy: d.cancelledBy ?? null });
         } else {
           const msg =
             body.error?.message ||
@@ -76,30 +107,63 @@ export default function BookingDetailModal({ open, onClose, bookingId }: Props) 
     <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
       <div className="absolute inset-0 bg-black/50" onClick={onClose} aria-hidden />
       <div className="relative max-h-[90vh] w-full max-w-lg overflow-y-auto rounded-2xl border border-neutral-200 bg-white shadow-xl">
-        <div className="sticky top-0 flex items-center justify-end border-b border-neutral-100 bg-white p-3">
-          <button
-            type="button"
-            onClick={onClose}
-            className="rounded-lg p-2 text-neutral-500 hover:bg-neutral-100 hover:text-neutral-900"
-            aria-label="닫기"
-          >
-            <X className="h-5 w-5" />
-          </button>
-        </div>
-
         <div className="p-6">
           {loading && !detail ? (
-            <div className="py-8 text-center text-neutral-500">불러오는 중...</div>
+            <div className="flex items-center justify-between py-8">
+              <span className="text-neutral-500">불러오는 중...</span>
+              <button type="button" onClick={onClose} className="rounded-lg p-2 text-neutral-500 hover:bg-neutral-100 hover:text-neutral-900" aria-label="닫기"><X className="h-5 w-5" /></button>
+            </div>
           ) : !detail ? (
-            <div className="py-8 text-center text-neutral-500">
-              {errorMessage ?? "예약 정보를 불러올 수 없습니다."}
+            <div className="flex items-start justify-between gap-3">
+              <p className="py-4 text-neutral-500">{errorMessage ?? "예약 정보를 불러올 수 없습니다."}</p>
+              <button type="button" onClick={onClose} className="shrink-0 rounded-lg p-2 text-neutral-500 hover:bg-neutral-100 hover:text-neutral-900" aria-label="닫기"><X className="h-5 w-5" /></button>
             </div>
           ) : (
             <>
               {detail && (
                 <>
-                  <h2 className="text-lg font-bold text-neutral-900">결제·정산 상세</h2>
-                  <p className="mt-1 text-sm text-neutral-500">{detail.listingTitle} · {detail.nights}박</p>
+                  <div className="flex items-start justify-between gap-3">
+                    <div className="min-w-0">
+                      <h2 className="text-lg font-bold text-neutral-900">예약 상세</h2>
+                      <p className="mt-1 text-sm text-neutral-500">{detail.listingTitle} · {detail.nights}박</p>
+                    </div>
+                    <button
+                      type="button"
+                      onClick={onClose}
+                      className="shrink-0 rounded-lg p-2 text-neutral-500 hover:bg-neutral-100 hover:text-neutral-900"
+                      aria-label="닫기"
+                    >
+                      <X className="h-5 w-5" />
+                    </button>
+                  </div>
+
+                  <section className="mt-6 rounded-xl border border-neutral-100 bg-neutral-50/50 p-4">
+                    <h3 className="text-sm font-bold text-neutral-900">예약 정보</h3>
+                    <dl className="mt-2 grid grid-cols-[auto_1fr] gap-x-3 gap-y-1.5 text-sm text-neutral-700">
+                      <dt className="text-neutral-500">게스트</dt>
+                      <dd className="font-medium">{detail.guestName ?? "—"}</dd>
+                      <dt className="text-neutral-500">국가</dt>
+                      <dd>{formatCountryName(detail.guestNationality)}</dd>
+                      <dt className="text-neutral-500">체크인</dt>
+                      <dd>{detail.checkIn}</dd>
+                      <dt className="text-neutral-500">체크아웃</dt>
+                      <dd>{detail.checkOut}</dd>
+                      <dt className="text-neutral-500">상태</dt>
+                      <dd>
+                        <span className={detail.status === "CONFIRMED" ? "text-emerald-600 font-semibold" : detail.status === "CANCELLED" ? "text-red-600 font-semibold" : "text-neutral-600"}>
+                          {detail.status === "CONFIRMED"
+                            ? "예약 확정"
+                            : detail.status === "CANCELLED"
+                              ? detail.cancelledBy === "GUEST"
+                                ? "게스트 측 취소"
+                                : detail.cancelledBy === "HOST"
+                                  ? "호스트 측 취소"
+                                  : "취소"
+                              : detail.status}
+                        </span>
+                      </dd>
+                    </dl>
+                  </section>
 
                   <section className="mt-6">
                     <h3 className="text-sm font-bold text-neutral-900">게스트가 결제한 금액</h3>

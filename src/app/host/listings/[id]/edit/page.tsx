@@ -15,6 +15,10 @@ export default async function HostListingEditPage({ params }: Props) {
   const listing = await findListingMinimalForWizardStep(id, user.id);
   if (!listing) redirect("/host/listings");
 
+  if ((listing as { status?: string }).status === "APPROVED") {
+    redirect(`/host/listings/${encodeURIComponent(id)}/approved-edit`);
+  }
+
   const step = getFirstIncompleteStep(listing as WizardListing);
   redirect(`/host/listings/new/${encodeURIComponent(id)}/${step}`);
 }

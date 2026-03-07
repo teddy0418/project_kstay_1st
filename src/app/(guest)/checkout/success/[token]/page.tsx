@@ -5,6 +5,7 @@ import { useCallback, useEffect, useMemo, useState } from "react";
 import { useParams, useSearchParams } from "next/navigation";
 import { apiClient, ApiClientError } from "@/lib/api/client";
 import { useI18n } from "@/components/ui/LanguageProvider";
+import { formatKRWWithLocale } from "@/lib/format";
 
 type PublicBooking = {
   token: string;
@@ -19,7 +20,7 @@ type PublicBooking = {
 };
 
 export default function CheckoutSuccessPage() {
-  const { lang } = useI18n();
+  const { lang, locale } = useI18n();
   const c =
     lang === "ko"
       ? {
@@ -237,7 +238,7 @@ export default function CheckoutSuccessPage() {
           <div><strong>{c.bookingToken}:</strong> {booking.token}</div>
           <div><strong>{c.dates}:</strong> {booking.checkInText} - {booking.checkOutText} ({booking.nights} {c.nights})</div>
           <div><strong>{c.guests}:</strong> {guestsText}</div>
-          <div><strong>{c.total}:</strong> {booking.totals.usdText} / ₩{booking.totals.krw.toLocaleString()}</div>
+          <div><strong>{c.total}:</strong> {booking.totals.usdText} / {formatKRWWithLocale(locale, booking.totals.krw)}</div>
           <div><strong>{c.cancellation}:</strong> {booking.cancellationDeadlineKst}</div>
         </div>
       </section>

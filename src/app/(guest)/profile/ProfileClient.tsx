@@ -1,13 +1,13 @@
 "use client";
 
 import { useEffect, useMemo, useState } from "react";
-import Image from "next/image";
 import Container from "@/components/layout/Container";
 import { useAuthModal } from "@/components/ui/AuthModalProvider";
 import { useAuth } from "@/components/ui/AuthProvider";
 import { useI18n } from "@/components/ui/LanguageProvider";
 import { useToast } from "@/components/ui/ToastProvider";
 import { apiClient } from "@/lib/api/client";
+import { formatDate } from "@/lib/format";
 import ListingCard from "@/features/listings/components/ListingCard";
 import type { Listing } from "@/types";
 import ReviewModal, { type ReviewFormData } from "@/components/ui/ReviewModal";
@@ -44,6 +44,10 @@ function writeProfile(p: LocalProfile) {
   } catch {}
 }
 
+function formatJoinedAt(iso: string, locale: string): string {
+  return formatDate(locale, iso, { year: "numeric", month: "short" });
+}
+
 function readRecent(): string[] {
   if (typeof window === "undefined") return [];
   try {
@@ -60,7 +64,7 @@ type ProfileClientProps = { initialTrips: TripItem[] };
 export default function ProfileClient({ initialTrips }: ProfileClientProps) {
   const { open: openAuthModal } = useAuthModal();
   const { user, isAuthed } = useAuth();
-  const { t, lang } = useI18n();
+  const { t, lang, locale } = useI18n();
   const { toast } = useToast();
 
   const loggedIn = isAuthed;
@@ -75,6 +79,7 @@ export default function ProfileClient({ initialTrips }: ProfileClientProps) {
           reviewSoon: "리뷰 작성 기능이 열리면 여기에 표시됩니다.",
           mvpNote:
             "MVP 안내: 지금은 이 정보가 브라우저(LocalStorage)에 저장됩니다. DB/구글 로그인 연결 단계에서 사용자 계정별 서버 저장으로 전환됩니다.",
+          memberSince: "가입",
         }
       : lang === "ja"
         ? {
@@ -85,6 +90,7 @@ export default function ProfileClient({ initialTrips }: ProfileClientProps) {
             reviewSoon: "レビュー機能が有効になると、ここに表示されます。",
             mvpNote:
               "MVP: 現在この情報はブラウザ(LocalStorage)に保存されます。後続のDB/Googleログイン連携でアカウント別のサーバー保存へ移行します。",
+            memberSince: "登録",
           }
         : lang === "zh"
           ? {
@@ -93,8 +99,9 @@ export default function ProfileClient({ initialTrips }: ProfileClientProps) {
               yourName: "请输入姓名",
               about: "向客人简单介绍一下自己",
               reviewSoon: "开启评价功能后会显示在这里。",
-              mvpNote:
-                "MVP 提示：当前这些信息仅保存在浏览器(LocalStorage)中。后续接入 DB/Google 登录后会改为账号级服务端存储。",
+            mvpNote:
+              "MVP 提示：当前这些信息仅保存在浏览器(LocalStorage)中。后续接入 DB/Google 登录后会改为账号级服务端存储。",
+            memberSince: "加入",
             }
           : {
               saved: "Saved.",
@@ -102,19 +109,22 @@ export default function ProfileClient({ initialTrips }: ProfileClientProps) {
               yourName: "Your name",
               about: "Tell guests a little about you",
               reviewSoon: "Reviews will appear here after we enable review writing.",
-              mvpNote:
-                "MVP note: this data is stored in browser LocalStorage for now. It will move to account-level server storage after DB/Google auth integration.",
+            mvpNote:
+              "MVP note: this data is stored in browser LocalStorage for now. It will move to account-level server storage after DB/Google auth integration.",
+            memberSince: "Member since",
             };
 
   const [displayName, setDisplayName] = useState(() => (typeof window !== "undefined" ? readProfile().displayName ?? "" : ""));
   const [bio, setBio] = useState(() => (typeof window !== "undefined" ? readProfile().bio ?? "" : ""));
 
-  // 로그인 시 서버 프로필(이름·프로필 사진) 불러오기
+  // 로그인 시 서버 프로필(이름·프로필 사진·이메일·가입일) 불러오기
   const [profilePhotoUrl, setProfilePhotoUrl] = useState<string | null>(null);
+  const [profileEmail, setProfileEmail] = useState<string | null>(null);
+  const [joinedAt, setJoinedAt] = useState<string | null>(null);
   useEffect(() => {
     if (!loggedIn) return;
     apiClient
-      .get<{ name?: string; displayName?: string; profilePhotoUrl?: string }>("/api/user/profile")
+      .get<{ name?: string; displayName?: string; profilePhotoUrl?: string; email?: string; createdAt?: string | null }>("/api/user/profile")
       .then((data) => {
         const serverDisplay =
           (data?.displayName != null && String(data.displayName || "").trim()) ||
@@ -123,6 +133,8 @@ export default function ProfileClient({ initialTrips }: ProfileClientProps) {
         if (serverDisplay) setDisplayName(serverDisplay);
         if (data?.profilePhotoUrl != null && data.profilePhotoUrl) setProfilePhotoUrl(String(data.profilePhotoUrl));
         else setProfilePhotoUrl(null);
+        setProfileEmail(data?.email ?? null);
+        setJoinedAt(data?.createdAt ?? null);
       })
       .catch(() => {});
   }, [loggedIn]);
@@ -283,20 +295,21 @@ export default function ProfileClient({ initialTrips }: ProfileClientProps) {
       <div className="mt-4 grid w-full max-w-full grid-cols-1 gap-4 sm:mt-6 sm:gap-6 lg:grid-cols-[minmax(0,380px),1fr]">
         <div className="min-w-0 rounded-2xl border border-neutral-200 bg-white p-4 shadow-sm sm:p-6">
           <div className="flex items-center gap-4">
-            <div className="relative block h-16 w-16 shrink-0 rounded-full border border-neutral-200 bg-neutral-100 overflow-hidden grid place-items-center">
-              {profilePhotoUrl ? (
-                <Image src={profilePhotoUrl} alt="" width={64} height={64} className="h-full w-full object-cover" unoptimized />
-              ) : (
-                <span className="text-lg font-semibold text-neutral-700">{initial}</span>
-              )}
+            <div className="flex h-16 w-16 shrink-0 items-center justify-center rounded-full border border-neutral-200 bg-neutral-100">
+              <span className="text-lg font-semibold text-neutral-700">{initial}</span>
             </div>
 
             <div className="min-w-0">
               <div className="text-sm text-neutral-500">{role?.toUpperCase()}</div>
               <div className="text-lg font-semibold truncate">{displayName || c.guest}</div>
-              {user?.email && (
+              {(profileEmail ?? user?.email) && (
                 <div className="mt-1 break-all text-xs text-neutral-500">
-                  {user.email}
+                  {profileEmail ?? user?.email}
+                </div>
+              )}
+              {joinedAt && (
+                <div className="mt-1 text-xs text-neutral-500">
+                  {c.memberSince} {formatJoinedAt(joinedAt, locale)}
                 </div>
               )}
             </div>
@@ -441,7 +454,7 @@ export default function ProfileClient({ initialTrips }: ProfileClientProps) {
                     </div>
                     <p className="mt-2 text-sm text-neutral-700 whitespace-pre-wrap">{r.body}</p>
                     <p className="mt-2 text-xs text-neutral-500">
-                      {new Date(r.createdAt).toLocaleDateString()}
+                      {formatDate(locale, r.createdAt)}
                     </p>
                   </li>
                   ))}

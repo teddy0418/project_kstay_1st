@@ -29,13 +29,19 @@ export async function GET(
   const messages = await getMessagesByTicketId(ticketId);
   if (isOwner) await markSupportNotificationsReadByTicketAndUser(ticketId, user.id);
 
+  /** 고객센터(관리자) 답장 시 노출 이름. 개인 구글 계정명 대신 브랜드명 사용 */
+  const supportDisplayName = process.env.SUPPORT_DISPLAY_NAME?.trim() || "KSTAY 고객센터";
+
   const list = messages.map((m) => ({
     id: m.id,
     body: m.body,
     senderRole: m.senderRole,
     senderUserId: m.senderUserId,
-    senderName: m.sender?.displayName?.trim() || m.sender?.name || "User",
-    senderProfilePhotoUrl: m.sender?.profilePhotoUrl ?? null,
+    senderName:
+      m.senderRole === "SUPPORT"
+        ? supportDisplayName
+        : (m.sender?.displayName?.trim() || m.sender?.name || "User"),
+    senderProfilePhotoUrl: m.senderRole === "SUPPORT" ? null : (m.sender?.profilePhotoUrl ?? null),
     createdAt: m.createdAt.toISOString(),
   }));
 

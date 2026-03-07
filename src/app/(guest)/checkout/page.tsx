@@ -4,7 +4,6 @@ import { diffNights, addDays } from "@/lib/format";
 import { calcGuestServiceFeeKRW, NON_REFUNDABLE_DISCOUNT_RATE } from "@/lib/policy";
 import { getPublicListingById } from "@/lib/repositories/listings";
 import CheckoutPaymentCard from "./CheckoutPaymentCard";
-import CheckoutPriceDisplay from "./CheckoutPriceDisplay";
 import { getServerLang } from "@/lib/i18n/server";
 
 const COPY = {
@@ -114,32 +113,24 @@ export default async function CheckoutPage({
       <h1 className="text-2xl font-semibold tracking-tight">{c.title}</h1>
       <p className="mt-2 text-sm text-neutral-600">{c.subtitle}</p>
 
-      <div className="mt-6 grid gap-6 lg:grid-cols-[1fr_380px]">
-        <section className="rounded-2xl border border-neutral-200 p-6">
-          <div className="text-sm font-semibold">{listing.title}</div>
-          <div className="mt-2 text-sm text-neutral-600">
-            {c.dates}: {start && end ? `${start} → ${end}` : c.selectDates} · {c.guests}: {guests}
-          </div>
-          {isNonRefundableSpecial && (
-            <div className="mt-3 sm:mt-4 rounded-xl border border-amber-200 bg-gradient-to-br from-amber-50 to-amber-50/50 px-3 py-3 sm:px-4 sm:py-3.5">
-              <div className="flex flex-wrap items-center gap-2">
-                <span className="font-bold text-amber-900 text-sm sm:text-base">
-                  {lang === "ko" ? "할인 특가 적용" : lang === "ja" ? "割引特価適用" : lang === "zh" ? "已享特价优惠" : "Discount rate applied"}
-                </span>
-                <span className="rounded-full bg-amber-200/80 px-2 py-0.5 text-[10px] sm:text-xs font-semibold text-amber-900">
-                  {lang === "ko" ? "10% 할인" : lang === "ja" ? "10%OFF" : lang === "zh" ? "9折" : "10% off"}
-                </span>
-              </div>
-              <p className="mt-1.5 text-[11px] sm:text-xs text-amber-700/90">
-                {lang === "ko" ? "예약 후 24시간 지나면 취소 시 환불 불가" : lang === "ja" ? "予約から24時間経過後のキャンセルは返金不可" : lang === "zh" ? "预订超过24小时后取消不可退款" : "No refund after 24 hours from booking"}
-              </p>
-            </div>
-          )}
-          <CheckoutPriceDisplay baseTotal={baseTotal} fee={fee} total={total} copy={c} />
-        </section>
-
-        <CheckoutPaymentCard listingId={listingId} checkIn={start} checkOut={end} guests={guests} isNonRefundableSpecial={isNonRefundableSpecial} />
-      </div>
+      <CheckoutPaymentCard
+        listingId={listingId}
+        checkIn={start}
+        checkOut={end}
+        guests={guests}
+        isNonRefundableSpecial={isNonRefundableSpecial}
+        summary={{
+          listingTitle: listing.title,
+          start,
+          end,
+          guests,
+          baseTotal,
+          fee,
+          total,
+          copy: c,
+          isNonRefundableSpecial,
+        }}
+      />
     </Container>
   );
 }

@@ -253,7 +253,7 @@ export async function cancelGuestBookingByToken(token: string): Promise<CancelGu
   await prisma.$transaction(async (tx: TransactionClient) => {
     await tx.booking.update({
       where: { id: booking.id },
-      data: { status: "CANCELLED" },
+      data: { status: "CANCELLED", cancelledBy: "GUEST" },
     });
     const paidPayment = booking.payments.find((p) => p.status === "PAID");
     if (paidPayment) {

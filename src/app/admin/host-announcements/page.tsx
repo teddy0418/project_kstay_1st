@@ -56,8 +56,8 @@ export default function AdminHostAnnouncementsPage() {
     <div className="grid gap-6">
       <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
         <div>
-          <h1 className="text-2xl font-extrabold tracking-tight">호스트 공지 (KSTAY 센터)</h1>
-          <p className="mt-1 text-sm text-neutral-500">호스트 대시보드 하단 KSTAY 센터에 노출되는 공지·팁·가이드를 등록·수정·삭제합니다. (한국어 전용)</p>
+          <h1 className="text-2xl font-extrabold tracking-tight">호스트 공지</h1>
+          <p className="mt-1 text-sm text-neutral-500">호스트 대시보드 KSTAY 센터에 노출되는 공지·가이드를 등록·수정·삭제합니다.</p>
         </div>
         <Link
           href="/admin/host-announcements/new"

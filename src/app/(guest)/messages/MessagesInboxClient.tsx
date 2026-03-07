@@ -55,16 +55,21 @@ function statusKey(status: string) {
   return "support_ticket_status_open";
 }
 
-function formatTimestamp(value: string | null) {
+function formatTimestamp(locale: string, value: string | null) {
   if (!value) return "";
   const d = new Date(value);
   if (Number.isNaN(d.getTime())) return "";
-  // 간단한 로컬 날짜/시간 표시
-  return d.toLocaleString();
+  return new Intl.DateTimeFormat(locale, {
+    year: "numeric",
+    month: "short",
+    day: "numeric",
+    hour: "numeric",
+    minute: "2-digit",
+  }).format(d);
 }
 
 export default function MessagesInboxClient() {
-  const { t } = useI18n();
+  const { t, locale } = useI18n();
   const { isAuthed } = useAuth();
   const [items, setItems] = useState<InboxItem[]>([]);
   const [loading, setLoading] = useState(true);
@@ -183,8 +188,8 @@ export default function MessagesInboxClient() {
                       </span>
                     </div>
                     <div className="mt-1 flex items-center gap-2 text-[11px] text-neutral-500">
-                      {formatTimestamp(it.lastMessageAt) && (
-                        <span className="truncate">{formatTimestamp(it.lastMessageAt)}</span>
+                      {formatTimestamp(locale, it.lastMessageAt) && (
+                        <span className="truncate">{formatTimestamp(locale, it.lastMessageAt)}</span>
                       )}
                       <span className="inline-block h-1 w-1 rounded-full bg-neutral-300" aria-hidden="true" />
                       <span className="truncate">{it.subtitle}</span>

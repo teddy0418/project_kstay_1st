@@ -26,6 +26,7 @@ const nextConfig: NextConfig = {
       { protocol: "https", hostname: "upload.wikimedia.org", pathname: "/**" },
       { protocol: "https", hostname: "lh3.googleusercontent.com", pathname: "/**" },
       { protocol: "https", hostname: "a0.muscache.com", pathname: "/**" },
+      { protocol: "https", hostname: "scontent-iad3-1.xx.fbcdn.net", pathname: "/**" },
     ],
   },
   // Reduce chance of "Unexpected end of JSON input" from loadManifest (empty/corrupt cache)

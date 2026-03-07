@@ -20,10 +20,6 @@ export default function HostSalesPage() {
           <div className="text-sm font-semibold">정산 관리</div>
           <div className="mt-1 text-xs text-neutral-500">화요일 정산 정책 기준으로 정산 현황을 확인합니다.</div>
         </Link>
-        <Link href="/" className="rounded-2xl border border-neutral-200 p-4 hover:bg-neutral-50 transition">
-          <div className="text-sm font-semibold">게스트 화면 미리보기</div>
-          <div className="mt-1 text-xs text-neutral-500">게스트에게 보이는 화면을 확인합니다.</div>
-        </Link>
       </div>
     </div>
   );

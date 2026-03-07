@@ -1,8 +1,8 @@
 "use client";
 
 import Link from "next/link";
-import { useMemo, useState } from "react";
-import { Download, Eye, XCircle } from "lucide-react";
+import { useMemo } from "react";
+import { Download } from "lucide-react";
 
 type WeekRow = {
   dateLabel: string;     // 예: 2/16(일)
@@ -98,7 +98,6 @@ function StatCard({
 
 export default function HostDashboard() {
   const week = useMemo(() => buildWeek(), []);
-  const [closed, setClosed] = useState<Record<string, boolean>>({});
 
   const stats = useMemo(() => {
     const today = todayISO();
@@ -155,72 +154,13 @@ export default function HostDashboard() {
         </div>
       </section>
 
-      {/* 2) 중단 데이터 7:3 */}
-      <section className="grid gap-6 lg:grid-cols-[7fr,3fr]">
-        {/* Left: 이번 주 예약 현황 */}
-        <Card className="p-6">
-          <div className="flex items-end justify-between gap-3">
-            <div>
-              <div className="text-lg font-bold">이번 주 예약 현황</div>
-              <div className="mt-1 text-sm text-neutral-500">오늘부터 7일간의 예약/빈방 상태를 확인하세요.</div>
-            </div>
-          </div>
-
-          <div className="mt-5 divide-y divide-neutral-100">
-            {week.map((r) => {
-              const isClosed = !!closed[r.iso];
-              const isEmpty = r.status === "EMPTY";
-              return (
-                <div key={r.iso} className="flex items-center justify-between gap-3 py-4">
-                  <div className="min-w-0">
-                    <div className="text-sm font-semibold">{r.dateLabel}</div>
-                    <div className="mt-1 text-sm text-neutral-600">
-                      {r.status === "BOOKED" ? (
-                        <span>
-                          예약자: <span className="font-semibold text-neutral-900">{r.guestName}</span>
-                        </span>
-                      ) : isClosed ? (
-                        <span className="inline-flex items-center gap-2 text-red-600">
-                          <XCircle className="h-4 w-4" /> 판매 중지됨
-                        </span>
-                      ) : (
-                        <span className="text-neutral-500">빈방</span>
-                      )}
-                    </div>
-                  </div>
-
-                  {isEmpty && (
-                    <button
-                      type="button"
-                      onClick={() => setClosed((p) => ({ ...p, [r.iso]: !p[r.iso] }))}
-                      className={[
-                        "shrink-0 rounded-xl border px-4 py-2 text-sm font-semibold transition",
-                        isClosed ? "border-neutral-200 bg-white hover:bg-neutral-50" : "border-neutral-900 bg-neutral-900 text-white hover:opacity-95",
-                      ].join(" ")}
-                    >
-                      {isClosed ? "판매 열기" : "판매 닫기"}
-                    </button>
-                  )}
-                </div>
-              );
-            })}
-          </div>
-        </Card>
-
-        {/* Right: 빠른 작업 */}
+      {/* 2) 빠른 작업 */}
+      <section>
         <Card className="p-6">
           <div className="text-lg font-bold">빠른 작업</div>
           <div className="mt-1 text-sm text-neutral-500">자주 쓰는 기능을 빠르게 실행합니다.</div>
 
           <div className="mt-5 grid gap-3">
-            <Link
-              href="/"
-              className="inline-flex items-center justify-center gap-2 rounded-xl border border-neutral-200 bg-white px-4 py-3 text-sm font-semibold hover:bg-neutral-50 transition"
-            >
-              <Eye className="h-4 w-4" />
-              숙소 미리보기(게스트)
-            </Link>
-
             <button
               type="button"
               onClick={downloadRosterCSV}

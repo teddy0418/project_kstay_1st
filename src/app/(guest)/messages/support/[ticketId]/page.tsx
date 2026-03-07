@@ -6,6 +6,7 @@ import { useParams } from "next/navigation";
 import Container from "@/components/layout/Container";
 import { useI18n } from "@/components/ui/LanguageProvider";
 import { apiClient } from "@/lib/api/client";
+import { formatDateTime } from "@/lib/format";
 import ChatBubble from "@/components/messages/ChatBubble";
 import StatusTag from "@/components/messages/StatusTag";
 
@@ -33,7 +34,7 @@ function statusKey(status: string) {
 export default function SupportTicketInMessagesPage() {
   const params = useParams();
   const ticketId = Array.isArray(params?.ticketId) ? params.ticketId[0] : String(params?.ticketId ?? "");
-  const { t } = useI18n();
+  const { t, locale } = useI18n();
   const [ticket, setTicket] = useState<{ id: string; subject: string; status: "OPEN" | "PENDING" | "CLOSED" } | null>(null);
   const [messages, setMessages] = useState<Message[]>([]);
   const [loading, setLoading] = useState(true);
@@ -127,9 +128,9 @@ export default function SupportTicketInMessagesPage() {
               <ChatBubble
                 key={m.id}
                 isMine={m.senderRole === "USER"}
-                senderLabel={m.senderRole === "USER" ? t("support_you") : `${t("support_customer_support")} · ${m.senderName}`}
+                senderLabel={m.senderRole === "USER" ? t("support_you") : m.senderName}
                 body={m.body}
-                createdAt={new Date(m.createdAt).toLocaleString()}
+                createdAt={formatDateTime(locale, m.createdAt)}
               />
             ))
           )}

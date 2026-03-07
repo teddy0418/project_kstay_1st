@@ -1,4 +1,5 @@
 import { prisma } from "@/lib/db";
+import { countUnreadMessagesForHost } from "@/lib/repositories/booking-messages";
 
 export type HostCalendarListing = {
   id: string;
@@ -20,6 +21,7 @@ export type HostCalendarBooking = {
   guestsInfants: number;
   guestsPets: number;
   status: string;
+  cancelledBy: string | null;
   totalKrw: number;
   listingTitle: string;
 };
@@ -47,7 +49,7 @@ export async function getHostBookingsForMonth(
     where: {
       listingId,
       listing: { hostId },
-      status: { in: ["CONFIRMED", "PENDING_PAYMENT"] },
+      status: "CONFIRMED",
       checkIn: { lte: monthEnd },
       checkOut: { gte: monthStart },
     },
@@ -63,6 +65,7 @@ export async function getHostBookingsForMonth(
       guestsInfants: true,
       guestsPets: true,
       status: true,
+      cancelledBy: true,
       totalKrw: true,
       listing: { select: { title: true } },
     },
@@ -81,6 +84,7 @@ export async function getHostBookingsForMonth(
     guestsInfants: r.guestsInfants,
     guestsPets: r.guestsPets,
     status: r.status,
+    cancelledBy: r.cancelledBy,
     totalKrw: r.totalKrw,
     listingTitle: r.listing.title,
   }));
@@ -108,6 +112,7 @@ export async function getHostBookingsForList(
       guestsInfants: true,
       guestsPets: true,
       status: true,
+      cancelledBy: true,
       totalKrw: true,
       listing: { select: { title: true } },
     },
@@ -126,6 +131,7 @@ export async function getHostBookingsForList(
     guestsInfants: r.guestsInfants,
     guestsPets: r.guestsPets,
     status: r.status,
+    cancelledBy: r.cancelledBy,
     totalKrw: r.totalKrw,
     listingTitle: r.listing.title,
   }));
@@ -156,7 +162,7 @@ export async function getHostDashboardStats(hostId: string, listingId?: string |
 
   const baseWhere = { listing: { hostId }, ...(listingId ? { listingId } : {}) };
 
-  const [todayCheckInRows, todayCheckOutRows, cancelledRows, confirmedRows] = await Promise.all([
+  const [todayCheckInRows, todayCheckOutRows, cancelledRows, confirmedRows, unreadMessages] = await Promise.all([
     prisma.booking.count({
       where: {
         ...baseWhere,
@@ -182,6 +188,7 @@ export async function getHostDashboardStats(hostId: string, listingId?: string |
       where: { ...baseWhere, status: "CONFIRMED" },
       select: { accommodationKrw: true, totalKrw: true },
     }),
+    countUnreadMessagesForHost(hostId, listingId),
   ]);
 
   const pendingSettlementKrw = confirmedRows.reduce(
@@ -192,7 +199,7 @@ export async function getHostDashboardStats(hostId: string, listingId?: string |
   return {
     todayCheckIn: todayCheckInRows,
     todayCheckOut: todayCheckOutRows,
-    newMessages: 0,
+    newMessages: unreadMessages,
     newCancels: cancelledRows,
     pendingSettlementKrw,
   };
@@ -472,10 +479,12 @@ export type BookingDetailForHost = {
   listingId: string;
   listingTitle: string;
   guestName: string | null;
+  guestNationality: string | null;
   checkIn: Date;
   checkOut: Date;
   nights: number;
   status: string;
+  cancelledBy: string | null;
   totalKrw: number;
   guestPayment: { accommodationKrw: number; guestServiceFee: number; totalKrw: number };
   hostPayout: { accommodationKrw: number; totalKrw: number };
@@ -489,10 +498,12 @@ export async function getBookingDetailForHost(bookingId: string, hostId: string)
       listingId: true,
       listing: { select: { title: true } },
       guestName: true,
+      guestUser: { select: { nationality: true } },
       checkIn: true,
       checkOut: true,
       nights: true,
       status: true,
+      cancelledBy: true,
       totalKrw: true,
     },
   });
@@ -508,10 +519,12 @@ export async function getBookingDetailForHost(bookingId: string, hostId: string)
     listingId: b.listingId,
     listingTitle: b.listing.title,
     guestName: b.guestName,
+    guestNationality: b.guestUser?.nationality ?? null,
     checkIn: b.checkIn,
     checkOut: b.checkOut,
     nights: b.nights,
     status: b.status,
+    cancelledBy: b.cancelledBy,
     totalKrw: b.totalKrw,
     guestPayment: {
       accommodationKrw,

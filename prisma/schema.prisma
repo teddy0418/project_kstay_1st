@@ -110,6 +110,7 @@ model Listing {
   rating    Float   @default(4.9)
   reviewCount Int  @default(0)
   hostBio   String?
+  hostBioEn String?  // 영어 번역 캐시 (ja/zh와 동일하게 자동 번역 후 저장)
   hostBioKo String?
   hostBioJa String?
   hostBioZh String?
@@ -148,6 +149,7 @@ model Listing {
   host   User          @relation("HostListings", fields: [hostId], references: [id], onDelete: Restrict)
   images ListingImage[]
   bookings Booking[]
+  checkoutSessions CheckoutSession[]
   wishlist WishlistItem[]
   reviews Review[]
   blockedDates   ListingBlockedDate[]
@@ -194,6 +196,9 @@ model ListingIcalFeed {
   url       String   @db.Text
   color     String?
 
+  /// false면 동기화 시 이 피드를 제외 (막힘 날짜에 반영 안 함). 켜기/끄기 토글용.
+  syncEnabled Boolean @default(true)
+
   lastSyncedAt   DateTime?
   lastSyncStatus String?  @db.Text
 
@@ -229,6 +234,23 @@ model ListingImage {
   @@index([listingId])
 }
 
+/// 결제 진행 중 임시 홀드 (즉시예약: 결제 성공 시에만 Booking 생성). TTL 15분.
+model CheckoutSession {
+  id        String   @id @default(cuid())
+  token     String   @unique
+  listingId String
+  checkIn   DateTime
+  checkOut  DateTime
+  expiresAt DateTime
+  payload   Json
+  createdAt DateTime @default(now())
+
+  listing Listing @relation(fields: [listingId], references: [id], onDelete: Cascade)
+
+  @@index([listingId, checkIn, checkOut])
+  @@index([expiresAt])
+}
+
 model Booking {
   id            String        @id @default(cuid())
   publicToken   String        @unique
@@ -253,6 +275,7 @@ model Booking {
   guestServiceFeeKrw Int?   // 게스트 서비스 수수료 12%
 
   status        BookingStatus @default(PENDING_PAYMENT)
+  cancelledBy   String?        // "GUEST" | "HOST" when status=CANCELLED; null for system/expiry
   confirmedAt   DateTime?
   cancellationDeadlineKst DateTime   // 무료 취소 마감 시각 (레거시·표시용, KST 기준 해석)
   confirmationEmailSentAt DateTime?
@@ -299,6 +322,8 @@ model BookingMessage {
   senderRole   MessageSenderRole
   body         String            @db.Text
   createdAt    DateTime          @default(now())
+  /// 호스트가 스레드를 열었을 때 읽음 처리 (GUEST 발신만 사용)
+  hostReadAt   DateTime?
 
   booking Booking @relation(fields: [bookingId], references: [id], onDelete: Cascade)
   sender  User    @relation(fields: [senderUserId], references: [id], onDelete: Cascade)

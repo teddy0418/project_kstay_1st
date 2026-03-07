@@ -75,9 +75,14 @@ export default function AdminSupportInboxClient() {
   }
 
   return (
-    <div className="rounded-2xl border border-neutral-200 bg-white shadow-sm overflow-hidden">
+    <div className="grid gap-6">
+      <div>
+        <h1 className="text-2xl font-extrabold tracking-tight">고객센터</h1>
+        <p className="mt-1 text-sm text-neutral-500">문의 티켓 목록을 확인하고 답변합니다.</p>
+      </div>
+      <div className="rounded-2xl border border-neutral-200 bg-white shadow-sm overflow-hidden">
       <div className="border-b border-neutral-100 p-4 sm:p-6">
-        <h1 className="text-xl font-extrabold tracking-tight md:text-2xl">{t("support_inbox")}</h1>
+        <h2 className="text-lg font-bold text-neutral-900">{t("support_inbox")}</h2>
         <p className="mt-2 text-xs text-neutral-500 md:text-sm">{t("support_customer_support")}</p>
       </div>
 
@@ -122,6 +127,7 @@ export default function AdminSupportInboxClient() {
           ))}
         </ul>
       )}
+      </div>
     </div>
   );
 }

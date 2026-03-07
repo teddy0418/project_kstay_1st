@@ -80,6 +80,8 @@ export const updateHostListingSchema = z
     freeCancellationDays: z.coerce.number().int().min(0).max(14).optional().nullable(),
     businessRegistrationDocUrl: z.string().trim().url().max(2000).optional().nullable().or(z.literal("")),
     lodgingReportDocUrl: z.string().trim().url().max(2000).optional().nullable().or(z.literal("")),
+    /** 외부 캘린더(iCal) URL. 실서비스에서는 https만 허용(라우트에서 검증) */
+    icalUrl: z.string().trim().max(2000).optional().nullable().or(z.literal("")),
   })
   .strict()
   .refine(
@@ -107,9 +109,10 @@ export const reorderListingImagesSchema = z.object({
 export const updateProfileSchema = z.object({
   displayName: z.string().trim().max(100).optional().nullable(),
   profilePhotoUrl: z.string().trim().max(500000).optional().nullable(), // base64 data URL 허용
-  /** 소셜 로그인 후 추가 정보 수집 완료 */
+  /** 소셜 로그인 후 추가 정보 수집 완료 (온보딩 또는 체크아웃 시) */
   completeOnboarding: z.boolean().optional(),
   name: z.string().trim().min(1).max(100).optional(),
+  email: z.string().trim().email().max(255).optional(),
   phone: z.string().trim().max(50).optional().nullable(),
   nationality: z.string().trim().max(100).optional().nullable(),
   privacyConsent: z.literal(true).optional(),

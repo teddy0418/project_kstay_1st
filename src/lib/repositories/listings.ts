@@ -14,6 +14,7 @@ type DbListing = {
   rating: number;
   reviewCount: number;
   hostBio: string | null;
+  hostBioEn: string | null;
   hostBioKo: string | null;
   hostBioJa: string | null;
   hostBioZh: string | null;
@@ -50,6 +51,7 @@ function toListing(row: DbListing): Listing {
     hostName,
     hostBio: row.hostBio ?? "Welcome to KSTAY.",
     hostBioI18n: {
+      en: row.hostBioEn ?? undefined,
       ko: row.hostBioKo ?? undefined,
       ja: row.hostBioJa ?? undefined,
       zh: row.hostBioZh ?? undefined,
@@ -72,6 +74,34 @@ export type ListingsFilter = {
 
 /** 게스트 노출용으로 필요한 필드만 선택 (DB에 없는 컬럼 참조 방지) */
 const publicListingSelect = {
+  id: true,
+  title: true,
+  city: true,
+  area: true,
+  address: true,
+  location: true,
+  lat: true,
+  lng: true,
+  basePriceKrw: true,
+  rating: true,
+  reviewCount: true,
+  hostBio: true,
+  hostBioEn: true,
+  hostBioKo: true,
+  hostBioJa: true,
+  hostBioZh: true,
+  checkInTime: true,
+  checkInGuideMessage: true,
+  houseRulesMessage: true,
+  amenities: true,
+  nonRefundableSpecialEnabled: true,
+  propertyType: true,
+  images: { select: { url: true, sortOrder: true } },
+  host: { select: { name: true, image: true, displayName: true, profilePhotoUrl: true } },
+} as const;
+
+/** 섹션(홈 추천/한옥) 쿼리용. hostBioEn 제외 (상세/검색은 publicListingSelect 사용) */
+const publicListingSelectForSection = {
   id: true,
   title: true,
   city: true,
@@ -232,12 +262,12 @@ export async function getPublicListingsBySection(
       const cursorObj = cursor ? (JSON.parse(cursor) as { id: string }) : null;
       const rows = await prisma.listing.findMany({
         where: { status: "APPROVED", kstayBlackSortOrder: { not: null } },
-        select: publicListingSelect,
+        select: publicListingSelectForSection,
         orderBy: { kstayBlackSortOrder: "asc" },
         ...(cursorObj?.id ? { cursor: { id: cursorObj.id }, skip: 1 } : {}),
         take: limit + 1,
       });
-      const list = rows.slice(0, limit).map((r) => toListing(r as DbListing));
+      const list = rows.slice(0, limit).map((r) => toListing(r as unknown as DbListing));
       const next = rows.length > limit ? rows[limit] : null;
       const nextCursor = next ? JSON.stringify({ id: next.id }) : null;
       return { listings: list, nextCursor };
@@ -253,7 +283,7 @@ export async function getPublicListingsBySection(
         };
 
     const orderBy = [{ createdAt: "desc" as const }, { id: "desc" as const }];
-    const selectWithCreatedAt = { ...publicListingSelect, createdAt: true };
+    const selectWithCreatedAt = { ...publicListingSelectForSection, createdAt: true };
     const cursorObj = cursor ? (JSON.parse(cursor) as { createdAt: string; id: string }) : null;
 
     const rows = await prisma.listing.findMany({
@@ -266,7 +296,7 @@ export async function getPublicListingsBySection(
       take: limit + 1,
     });
 
-    const list = rows.slice(0, limit).map((r) => toListing(r as DbListing));
+    const list = rows.slice(0, limit).map((r) => toListing(r as unknown as DbListing));
     const next = rows.length > limit ? rows[limit] : null;
     const nextCursor =
       next && "createdAt" in next && next.createdAt

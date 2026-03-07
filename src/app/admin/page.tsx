@@ -23,8 +23,8 @@ export default async function AdminPage() {
   return (
     <div className="grid gap-6">
       <div>
-        <h1 className="text-xl font-extrabold tracking-tight md:text-3xl">요약</h1>
-        <p className="mt-1 text-xs text-neutral-500 md:text-sm">플랫폼 현황을 한눈에 확인하세요</p>
+        <h1 className="text-2xl font-extrabold tracking-tight">요약</h1>
+        <p className="mt-1 text-sm text-neutral-500">플랫폼 현황을 한눈에 확인하세요.</p>
       </div>
 
       <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 lg:grid-cols-3">
@@ -45,12 +45,13 @@ export default async function AdminPage() {
 
       <div className="rounded-2xl border border-neutral-200 bg-white p-6">
         <h2 className="text-lg font-bold text-neutral-900">빠른 작업</h2>
-        <div className="mt-4 grid grid-cols-1 gap-3 sm:grid-cols-2 lg:grid-cols-3">
+        <p className="mt-1 text-sm text-neutral-500">자주 쓰는 메뉴로 바로 이동합니다.</p>
+        <div className="mt-4 grid grid-cols-1 gap-3 sm:grid-cols-2 lg:grid-cols-4">
           <Link
             href="/admin/listings?status=PENDING"
-            className="rounded-2xl border border-neutral-200 bg-white px-4 py-3 text-sm font-semibold hover:bg-neutral-50 transition text-center block"
+            className="rounded-xl border border-neutral-200 bg-white px-4 py-3 text-sm font-semibold text-neutral-800 hover:bg-neutral-50 transition text-center block"
           >
-            호스트 숙소 승인
+            숙소 승인
             {pendingListings.length > 0 && (
               <span className="ml-2 inline-flex items-center justify-center rounded-full bg-amber-100 text-amber-800 text-xs font-bold px-2 py-0.5">
                 {pendingListings.length}
@@ -59,19 +60,19 @@ export default async function AdminPage() {
           </Link>
           <Link
             href="/admin/bookings"
-            className="rounded-2xl border border-neutral-200 bg-white px-4 py-3 text-sm font-semibold hover:bg-neutral-50 transition text-center block"
+            className="rounded-xl border border-neutral-200 bg-white px-4 py-3 text-sm font-semibold text-neutral-800 hover:bg-neutral-50 transition text-center block"
           >
             예약 관리
           </Link>
           <Link
             href="/admin/settlements"
-            className="rounded-2xl border border-neutral-200 bg-white px-4 py-3 text-sm font-semibold hover:bg-neutral-50 transition text-center block"
+            className="rounded-xl border border-neutral-200 bg-white px-4 py-3 text-sm font-semibold text-neutral-800 hover:bg-neutral-50 transition text-center block"
           >
-            정산 관리
+            정산
           </Link>
           <Link
             href="/admin/test-review"
-            className="rounded-2xl border border-neutral-200 bg-white px-4 py-3 text-sm font-semibold hover:bg-neutral-50 transition text-center block"
+            className="rounded-xl border border-neutral-200 bg-white px-4 py-3 text-sm font-semibold text-neutral-800 hover:bg-neutral-50 transition text-center block"
           >
             테스트 리뷰
           </Link>
@@ -79,13 +80,32 @@ export default async function AdminPage() {
       </div>
 
       <div className="rounded-2xl border border-neutral-200 bg-white p-6">
-        <h2 className="text-lg font-bold text-neutral-900">안내</h2>
-        <ul className="mt-3 space-y-2 text-sm text-neutral-600">
-          <li>· <strong>숙소 관리</strong>: 전체 숙소 목록을 상태별로 보고, 승인 대기 건은 승인/거절합니다.</li>
-          <li>· <strong>예약 관리</strong>: 플랫폼 전체 예약 목록을 확인합니다.</li>
-          <li>· <strong>정산</strong>: 결제 완료·체크인 기준으로 정산 가능 건을 확인하고 (추후 포트원 연동) 출금합니다.</li>
-          <li>· <strong>테스트 리뷰</strong>: 특정 숙소에 테스트용 리뷰를 등록할 수 있습니다.</li>
-        </ul>
+        <h2 className="text-lg font-bold text-neutral-900">메뉴 안내</h2>
+        <div className="mt-4 space-y-4 text-sm text-neutral-600">
+          <div>
+            <h3 className="font-semibold text-neutral-800">운영</h3>
+            <ul className="mt-1.5 list-inside list-disc space-y-0.5 pl-1">
+              <li><strong>숙소 관리</strong> — 상태별 목록, 승인 대기 건 승인/거절</li>
+              <li><strong>예약 관리</strong> — 전체 예약·취소 이력(게스트/호스트 구분)</li>
+              <li><strong>정산</strong> — 결제 완료·체크인 24h 경과 건 정산 (PG 연동 시 출금)</li>
+            </ul>
+          </div>
+          <div>
+            <h3 className="font-semibold text-neutral-800">콘텐츠</h3>
+            <ul className="mt-1.5 list-inside list-disc space-y-0.5 pl-1">
+              <li><strong>KSTAY Black</strong> — 메인 노출 숙소 선정·순서</li>
+              <li><strong>게시판</strong> — 게스트용 게시판 글 관리</li>
+              <li><strong>호스트 공지</strong> — 호스트 대시보드 KSTAY 센터 공지·가이드</li>
+            </ul>
+          </div>
+          <div>
+            <h3 className="font-semibold text-neutral-800">고객·도구</h3>
+            <ul className="mt-1.5 list-inside list-disc space-y-0.5 pl-1">
+              <li><strong>고객센터</strong> — 문의 티켓 목록·답변</li>
+              <li><strong>테스트 리뷰</strong> — 특정 숙소 테스트 리뷰 등록</li>
+            </ul>
+          </div>
+        </div>
       </div>
     </div>
   );

@@ -120,11 +120,15 @@ export default function AdminTestReviewPage() {
   };
 
   return (
-    <div className="max-w-lg">
-      <h1 className="text-xl font-semibold">테스트 리뷰 남기기</h1>
-      <p className="mt-1 text-sm text-neutral-600">
-        관리자 계정으로 지정한 숙소에 리뷰 1개를 남깁니다. (테스트용 예약이 자동 생성됩니다.)
-      </p>
+    <div className="grid gap-6">
+      <div>
+        <h1 className="text-2xl font-extrabold tracking-tight">테스트 리뷰</h1>
+        <p className="mt-1 text-sm text-neutral-500">
+          지정한 숙소에 테스트용 리뷰 1개를 등록합니다. (테스트 예약이 자동 생성됩니다.)
+        </p>
+      </div>
+
+      <div className="max-w-lg rounded-2xl border border-neutral-200 bg-white p-6">
 
       {created ? (
         <div className="mt-6 rounded-2xl border border-green-200 bg-green-50 p-5">
@@ -221,6 +225,7 @@ export default function AdminTestReviewPage() {
           </div>
         </form>
       )}
+      </div>
     </div>
   );
 }

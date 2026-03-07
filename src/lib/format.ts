@@ -29,6 +29,28 @@ export function formatDateEn(value: Date | string): string {
   return new Intl.DateTimeFormat("en-US", { month: "short", day: "numeric", year: "numeric" }).format(d);
 }
 
+/** Locale-aware date format. Use for guest-facing pages. */
+export function formatDate(
+  locale: string,
+  value: Date | string,
+  options: Intl.DateTimeFormatOptions = { month: "short", day: "numeric", year: "numeric" }
+): string {
+  const d = typeof value === "string" ? new Date(value) : value;
+  return new Intl.DateTimeFormat(locale, options).format(d);
+}
+
+/** Locale-aware date-time format (e.g. for message timestamps). */
+export function formatDateTime(locale: string, value: Date | string): string {
+  const d = typeof value === "string" ? new Date(value) : value;
+  return new Intl.DateTimeFormat(locale, {
+    year: "numeric",
+    month: "short",
+    day: "numeric",
+    hour: "numeric",
+    minute: "2-digit",
+  }).format(d);
+}
+
 export function addDays(d: Date, days: number): Date {
   const x = new Date(d);
   x.setDate(x.getDate() + days);
@@ -51,6 +73,30 @@ export function formatDateRange(startISO: string, endISO: string) {
   return `${monthFmt.format(start)} ${dayFmt.format(start)} – ${monthFmt.format(end)} ${dayFmt.format(end)}`;
 }
 
+/** Locale-aware date range (e.g. "Jan 15–20" or "1월 15–20일"). */
+export function formatDateRangeWithLocale(locale: string, startISO: string, endISO: string): string {
+  const start = parseISODateUTC(startISO);
+  const end = parseISODateUTC(endISO);
+  const monthFmt = new Intl.DateTimeFormat(locale, { month: "short", timeZone: "UTC" });
+  const dayFmt = new Intl.DateTimeFormat(locale, { day: "numeric", timeZone: "UTC" });
+  const sameMonth =
+    start.getUTCFullYear() === end.getUTCFullYear() && start.getUTCMonth() === end.getUTCMonth();
+  if (sameMonth) {
+    return `${monthFmt.format(start)} ${dayFmt.format(start)}–${dayFmt.format(end)}`;
+  }
+  return `${monthFmt.format(start)} ${dayFmt.format(start)} – ${monthFmt.format(end)} ${monthFmt.format(end)}`;
+}
+
+/** Locale-aware number format (e.g. 1,234 vs 1.234). */
+export function formatNumber(locale: string, value: number, options?: Intl.NumberFormatOptions): string {
+  return new Intl.NumberFormat(locale, options).format(value);
+}
+
 export function formatKRW(amount: number) {
   return `₩${new Intl.NumberFormat("en-US").format(Math.round(amount))}`;
+}
+
+/** Locale-aware KRW (숫자 구분만 선택 언어 적용). */
+export function formatKRWWithLocale(locale: string, amount: number): string {
+  return `₩${new Intl.NumberFormat(locale).format(Math.round(amount))}`;
 }

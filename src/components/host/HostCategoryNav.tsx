@@ -16,7 +16,7 @@ export default function HostCategoryNav() {
 
   return (
     <nav
-      className="sticky top-14 z-30 flex items-center border-b border-neutral-200 bg-white px-2 py-3 shadow-sm sm:px-4 overflow-x-auto"
+      className="sticky top-14 z-30 flex items-center border-b border-neutral-200 bg-white px-4 py-3 shadow-sm overflow-x-auto"
       aria-label="호스트 메뉴"
     >
       <div className="mx-auto flex w-full max-w-screen-xl min-w-0 flex-shrink-0 items-center justify-center sm:justify-start gap-2 sm:gap-3">

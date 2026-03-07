@@ -39,6 +39,21 @@ function isDateInRanges(date: Date, ranges: Array<{ from: string; to: string }>)
   return ranges.some((r) => d >= r.from && d < r.to);
 }
 
+/** [fromDate, toDate) 구간 안에 예약/차단된 날이 하나라도 있으면 true (글로벌 표준: 중간에 불가한 날 있으면 구간 선택 불가) */
+function rangeContainsDisabledDay(
+  fromDate: Date,
+  toDate: Date,
+  disabledRanges: Array<{ from: string; to: string }>
+): boolean {
+  if (disabledRanges.length === 0) return false;
+  const from = startOfDay(fromDate);
+  const to = startOfDay(toDate);
+  for (let d = new Date(from); d < to; d = addDays(d, 1)) {
+    if (isDateInRanges(d, disabledRanges)) return true;
+  }
+  return false;
+}
+
 /** day 셀에 날짜 + 1박 요금(선택 통화, 전체 금액) 표시. components.DayButton 으로 전달. 가격 조회는 로컬 날짜(YYYY-MM-DD) 사용 (DB/API와 동일한 날짜 기준). */
 function createDayButtonWithPrice(
   getPriceKrwForYmd: (ymd: string) => number | null,
@@ -314,12 +329,11 @@ export default function DateDropdown({
     () => new Intl.DateTimeFormat(locale, { year: "numeric", month: "long", day: "numeric" }),
     [locale]
   );
-  const inputDateFormatter = useCallback((d: Date) => {
-    const y = d.getFullYear();
-    const m = d.getMonth() + 1;
-    const day = d.getDate();
-    return `${y}. ${m}. ${day}.`;
-  }, []);
+  const inputDateFormatter = useMemo(
+    () => (d: Date) =>
+      new Intl.DateTimeFormat(locale, { year: "numeric", month: "numeric", day: "numeric" }).format(d),
+    [locale]
+  );
 
   const formatFull = useCallback((d: Date) => {
     const date = fullDateFormatter.format(d);
@@ -418,8 +432,9 @@ export default function DateDropdown({
 
       <div className={`min-w-0 ${showBookingHeader ? (isTabletOverlay ? "mt-1 px-0.5" : "mt-2 px-0.5") : "px-1 py-2 sm:p-2"}`}>
         {!showBookingHeader && (
-          <div className="mb-2 text-sm text-neutral-700">
-            <span className="font-semibold">{t("selected")}:</span> {summary}
+          <div className="mb-2 text-sm text-neutral-700 flex flex-col gap-0.5 sm:flex-row sm:flex-wrap sm:gap-x-1 sm:gap-y-0">
+            <span className="font-semibold shrink-0">{t("selected")}:</span>
+            <span className="min-w-0">{summary}</span>
           </div>
         )}
 
@@ -443,9 +458,24 @@ export default function DateDropdown({
             month={visibleMonth}
             onMonthChange={setVisibleMonth}
             locale={dayPickerLocale}
-            disabled={(date) =>
-              date < today || (disabledRanges.length > 0 && isDateInRanges(date, disabledRanges))
-            }
+            disabled={(date) => {
+              if (date < today) return true;
+              if (disabledRanges.length > 0 && isDateInRanges(date, disabledRanges)) return true;
+              // 구간 선택 시 중간에 예약/차단된 날이 있으면 선택 불가 (글로벌 표준)
+              if (disabledRanges.length > 0) {
+                if (range?.from) {
+                  const from = startOfDay(range.from);
+                  const to = startOfDay(date);
+                  if (to > from && rangeContainsDisabledDay(from, to, disabledRanges)) return true;
+                }
+                if (range?.to) {
+                  const from = startOfDay(date);
+                  const to = startOfDay(range.to);
+                  if (to > from && rangeContainsDisabledDay(from, to, disabledRanges)) return true;
+                }
+              }
+              return false;
+            }}
             modifiers={Object.keys(modifiers).length > 0 ? modifiers : undefined}
             modifiersClassNames={Object.keys(modifiersClassNames).length > 0 ? modifiersClassNames : undefined}
             className="rdp-compact"

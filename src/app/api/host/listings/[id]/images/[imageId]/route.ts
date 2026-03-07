@@ -13,15 +13,16 @@ export async function DELETE(
   try {
     const user = await getOrCreateServerUser();
     if (!user) return apiError(401, "UNAUTHORIZED", "Login required");
-    if (user.role !== "HOST" && user.role !== "ADMIN") {
-      return apiError(403, "FORBIDDEN", "Host role required");
-    }
 
     const { id: listingId, imageId } = await ctx.params;
     if (!listingId || !imageId) return apiError(400, "BAD_REQUEST", "listing id and image id required");
 
     const ownership = await findHostListingOwnership(listingId);
     if (!ownership) return apiError(404, "NOT_FOUND", "Listing not found");
+    const isDraftOwnedByGuest = user.role === "GUEST" && ownership.hostId === user.id && ownership.status === "DRAFT";
+    if (user.role !== "HOST" && user.role !== "ADMIN" && !isDraftOwnedByGuest) {
+      return apiError(403, "FORBIDDEN", "Host role required");
+    }
     if (user.role !== "ADMIN" && ownership.hostId !== user.id) {
       return apiError(403, "FORBIDDEN", "You cannot modify this listing");
     }

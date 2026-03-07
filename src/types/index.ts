@@ -19,6 +19,7 @@ export type Listing = {
   hostName: string;
   hostBio: string;
   hostBioI18n?: {
+    en?: string;
     ko?: string;
     ja?: string;
     zh?: string;

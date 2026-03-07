@@ -4,7 +4,15 @@ import React, { createContext, useContext, useMemo } from "react";
 import { signIn as nextAuthSignIn, signOut as nextAuthSignOut, useSession } from "next-auth/react";
 
 export type UserRole = "GUEST" | "HOST" | "ADMIN";
-export type AuthUser = { id: string; name: string; role: UserRole; email?: string; provider?: string };
+export type AuthUser = {
+  id: string;
+  name: string;
+  role: UserRole;
+  email?: string;
+  provider?: string;
+  nationality?: string;
+  phone?: string;
+};
 
 type AuthCtx = {
   user: AuthUser | null;
@@ -27,12 +35,15 @@ export default function AuthProvider({
   const { data, status } = useSession();
   const user = useMemo<AuthUser | null>(() => {
     if (!data?.user?.id) return null;
+    const u = data.user as { provider?: string; nationality?: string; phone?: string };
     return {
       id: data.user.id,
       name: data.user.name ?? "Guest",
       role: data.user.role ?? "GUEST",
       email: data.user.email ?? undefined,
-      provider: (data.user as { provider?: string }).provider,
+      provider: u.provider,
+      nationality: u.nationality,
+      phone: u.phone,
     };
   }, [data]);
 

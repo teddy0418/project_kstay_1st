@@ -23,14 +23,6 @@ export default async function HostListingsPage() {
         </div>
         <div className="flex flex-wrap items-center gap-2">
           <Link
-            href="/"
-            target="_blank"
-            rel="noopener noreferrer"
-            className="inline-flex rounded-2xl border border-neutral-200 bg-white px-4 py-2.5 text-sm font-medium text-neutral-700 hover:bg-neutral-50 transition"
-          >
-            게스트 화면으로
-          </Link>
-          <Link
             href="/host/listings/new"
             className="inline-flex rounded-2xl bg-neutral-900 px-6 py-3 text-white text-sm font-semibold hover:opacity-95 transition"
           >

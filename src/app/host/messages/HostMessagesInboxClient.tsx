@@ -53,12 +53,6 @@ export default function HostMessagesInboxClient() {
       <div className="rounded-2xl border border-neutral-200 bg-white shadow-sm p-6">
         <h1 className="text-xl font-extrabold tracking-tight md:text-2xl">{t("messages_inbox")}</h1>
         <p className="mt-2 text-sm text-neutral-600">예약된 숙소가 없거나 아직 대화가 없습니다.</p>
-        <Link
-          href="/host/dashboard"
-          className="mt-6 inline-flex rounded-xl border border-neutral-200 bg-white px-4 py-2 text-sm font-semibold hover:bg-neutral-50"
-        >
-          ← {t("home")}
-        </Link>
       </div>
     );
   }

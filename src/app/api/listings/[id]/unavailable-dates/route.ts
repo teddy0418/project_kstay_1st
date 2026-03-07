@@ -11,12 +11,10 @@ export type UnavailableDatesResponse = {
 
 /**
  * GET /api/listings/[id]/unavailable-dates
- * Returns date ranges: CONFIRMED 예약 + 호스트 판매 중지(수동) + iCal 연동 차단일.
+ * Returns date ranges: CONFIRMED 예약만 + 호스트 판매 중지(수동) + iCal 연동 차단일.
+ * 결제 완료(CONFIRMED)된 구간만 막음. 결제 대기(PENDING_PAYMENT)는 막지 않아
+ * 게스트는 “결제 완료해야만 예약 확정”으로 보이게 함. 호스트 거절 시 CANCELLED 되므로 자동으로 풀림.
  * 차단일은 DB에서 date::text로 읽어 서버 타임존 영향 없이 동일한 YYYY-MM-DD 보장.
- *
- * 플랫폼 룰: 선택 불가(ranges)에는 예약된 구간 + 실제 판매중지일만 포함.
- * (블록 직전/직후 날은 판매중지가 아니므로 캘린더에서 선택 가능. 2/28·3/4 선택 가능.
- * 체크인·체크아웃 구간이 판매중지일을 포함하면 예약 시 overlapsDisabled로 막힘)
  */
 function nextDayYmd(ymd: string): string {
   const dt = new Date(ymd + "T00:00:00Z");
@@ -35,9 +33,14 @@ export async function GET(
     const { id: listingId } = await params;
     if (!listingId) return apiError(400, "BAD_REQUEST", "Listing ID required");
 
-    const [bookings, manualBlockedYmd, icalBlockedYmd] = await Promise.all([
+    const now = new Date();
+    const [bookings, holdSessions, manualBlockedYmd, icalBlockedYmd] = await Promise.all([
       prisma.booking.findMany({
         where: { listingId, status: "CONFIRMED" },
+        select: { checkIn: true, checkOut: true },
+      }),
+      prisma.checkoutSession.findMany({
+        where: { listingId, expiresAt: { gt: now } },
         select: { checkIn: true, checkOut: true },
       }),
       prisma.$queryRaw<{ date: string }[]>`
@@ -55,10 +58,10 @@ export async function GET(
       return `${y}-${m}-${day}`;
     };
 
-    const bookedRanges: Array<{ from: string; to: string }> = bookings.map((b) => ({
-      from: toYmdUtc(b.checkIn),
-      to: toYmdUtc(b.checkOut),
-    }));
+    const bookedRanges: Array<{ from: string; to: string }> = [
+      ...bookings.map((b) => ({ from: toYmdUtc(b.checkIn), to: toYmdUtc(b.checkOut) })),
+      ...holdSessions.map((s) => ({ from: toYmdUtc(s.checkIn), to: toYmdUtc(s.checkOut) })),
+    ];
 
     const allBlockedYmd = [...manualBlockedYmd, ...icalBlockedYmd]
       .map((r) => (r.date && r.date.slice(0, 10)) || "")

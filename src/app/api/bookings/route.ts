@@ -10,7 +10,11 @@ import {
 } from "@/lib/bookings/utils";
 import { createBookingSchema } from "@/lib/validation/schemas";
 import {
-  createPendingBookingWithPayment,
+  createCheckoutSession,
+  deleteExpiredCheckoutSessions,
+  hasOverlappingBookingOrHold,
+} from "@/lib/repositories/checkout-session";
+import {
   findListingPricingById,
   findPastStaysByGuestUserId,
 } from "@/lib/repositories/bookings";
@@ -135,20 +139,15 @@ export async function POST(req: Request) {
     const checkOutDate = parseISODate(body.checkOut);
     if (!checkInDate || !checkOutDate) return apiError(400, "BAD_REQUEST", "Invalid check-in/check-out date");
 
+    await deleteExpiredCheckoutSessions();
+
     const nights = nightsBetween(checkInDate, checkOutDate);
     if (nights <= 0) return apiError(400, "BAD_REQUEST", "Stay must be at least 1 night");
 
     const listing = await findListingPricingById(listingId);
     if (!listing) return apiError(404, "NOT_FOUND", "Listing not found");
 
-    const overlapping = await prisma.booking.findFirst({
-      where: {
-        listingId,
-        status: { in: ["PENDING_PAYMENT", "CONFIRMED"] },
-        AND: [{ checkIn: { lt: checkOutDate } }, { checkOut: { gt: checkInDate } }],
-      },
-      select: { id: true },
-    });
+    const overlapping = await hasOverlappingBookingOrHold(listingId, checkInDate, checkOutDate);
     if (overlapping) {
       return apiError(409, "CONFLICT", "Selected dates are not available");
     }
@@ -192,15 +191,11 @@ export async function POST(req: Request) {
     const publicToken = randomUUID().replace(/-/g, "");
 
     const requestedCurrency = (body.currency ?? "KRW") as "USD" | "KRW" | "JPY" | "CNY";
-    const booking = await createPendingBookingWithPayment({
-      publicToken,
-      listingId: listing.id,
+    const sessionPayload = {
       guestUserId: sessionUser.id,
       guestEmail,
       guestName,
       guestMessageToHost,
-      checkIn: checkInDate,
-      checkOut: checkOutDate,
       nights,
       guestsAdults,
       guestsChildren,
@@ -210,8 +205,8 @@ export async function POST(req: Request) {
       totalKrw,
       accommodationKrw,
       guestServiceFeeKrw,
-      cancellationDeadlineKst: snapshot.cancellationDeadlineKst,
-      paymentProvider: providerMode === "PORTONE" ? "PORTONE" : "MOCK",
+      cancellationDeadlineKst: snapshot.cancellationDeadlineKst.toISOString(),
+      paymentProvider: (providerMode === "PORTONE" ? "PORTONE" : "MOCK") as "PORTONE" | "MOCK",
       paymentStoreId: process.env.PORTONE_STORE_ID ?? null,
       paymentAmountKrw:
         providerMode === "PORTONE" && requestedCurrency === "KRW" ? totalKrw : null,
@@ -219,14 +214,21 @@ export async function POST(req: Request) {
       cancellationPolicyVersion: snapshot.cancellationPolicyVersion,
       policyTextLocale: body.policyTextLocale ?? "en",
       policyType: snapshot.policyType,
-      freeCancelEndsAt: snapshot.freeCancelEndsAt,
+      freeCancelEndsAt: snapshot.freeCancelEndsAt?.toISOString() ?? null,
       refundSchedule: snapshot.refundSchedule,
-      policyAgreedAt,
+      policyAgreedAt: policyAgreedAt.toISOString(),
+    };
+    await createCheckoutSession({
+      token: publicToken,
+      listingId: listing.id,
+      checkIn: checkInDate,
+      checkOut: checkOutDate,
+      payload: sessionPayload,
     });
 
     const payload: CreateBookingResponse = {
-      token: booking.publicToken,
-      nextUrl: `/checkout/success/${booking.publicToken}`,
+      token: publicToken,
+      nextUrl: `/checkout/success/${publicToken}`,
     };
 
     if (providerMode === "PORTONE") {
@@ -251,7 +253,11 @@ export async function POST(req: Request) {
       let bookingCurrency = requestedCurrency;
       let totalAmount = totalKrw;
 
-      if (bookingCurrency !== "KRW") {
+      // 카카오페이는 KRW만 지원 — 통화/금액 고정
+      if (paymentMethod === "KAKAOPAY") {
+        bookingCurrency = "KRW";
+        totalAmount = totalKrw;
+      } else if (bookingCurrency !== "KRW") {
         try {
           const rates = await getExchangeRates();
           const rate = rates[bookingCurrency];
@@ -286,7 +292,7 @@ export async function POST(req: Request) {
       payload.portone = {
         storeId,
         channelKey,
-        paymentId: booking.publicToken,
+        paymentId: publicToken,
         orderName: `${listing.title} (${nights} nights)`,
         totalAmount,
         currency: bookingCurrency,

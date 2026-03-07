@@ -5,6 +5,7 @@ import {
   getMessagesByBookingId,
   createBookingMessage,
   markNotificationsReadByBookingAndUser,
+  markBookingMessagesReadByHost,
   isBookingGuest,
   isBookingHost,
 } from "@/lib/repositories/booking-messages";
@@ -24,6 +25,7 @@ export async function GET(
 
   const messages = await getMessagesByBookingId(bookingId);
   if (isGuest) await markNotificationsReadByBookingAndUser(bookingId, user.id);
+  if (isHost) await markBookingMessagesReadByHost(bookingId, user.id);
 
   const list = messages.map((m) => ({
     id: m.id,

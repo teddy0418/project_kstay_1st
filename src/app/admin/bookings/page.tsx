@@ -13,6 +13,8 @@ type AdminBooking = {
   nights: number;
   totalKrw: number;
   status: string;
+  cancelledBy: string | null;
+  updatedAt: string;
   createdAt: string;
   listing: { id: string; title: string };
   host: { id: string; name: string | null };
@@ -26,18 +28,42 @@ const STATUS_OPTIONS = [
   { value: "CANCELLED", label: "취소" },
 ];
 
-const STATUS_LABEL: Record<string, string> = {
-  CONFIRMED: "결제 완료",
-  PENDING_PAYMENT: "결제 대기",
-  CANCELLED: "취소",
-};
+const CANCELLED_BY_OPTIONS = [
+  { value: "", label: "취소 주체 전체" },
+  { value: "GUEST", label: "게스트 측 취소" },
+  { value: "HOST", label: "호스트 측 취소" },
+];
+
+function getStatusLabel(row: AdminBooking): string {
+  if (row.status === "CONFIRMED") return "결제 완료";
+  if (row.status === "PENDING_PAYMENT") return "결제 대기";
+  if (row.status === "CANCELLED") {
+    if (row.cancelledBy === "GUEST") return "게스트 측 취소";
+    if (row.cancelledBy === "HOST") return "호스트 측 취소";
+    return "취소";
+  }
+  return row.status;
+}
+
+function formatCancelledAt(updatedAt: string): string {
+  return new Date(updatedAt).toLocaleString("ko-KR", {
+    year: "numeric",
+    month: "2-digit",
+    day: "2-digit",
+    hour: "2-digit",
+    minute: "2-digit",
+    hour12: false,
+  });
+}
 
 export default function AdminBookingsPage() {
   const router = useRouter();
   const searchParams = useSearchParams();
   const statusParam = searchParams.get("status") ?? "";
+  const cancelledByParam = searchParams.get("cancelledBy") ?? "";
   const pageParam = searchParams.get("page") ?? "1";
   const [status, setStatus] = useState(statusParam);
+  const [cancelledBy, setCancelledBy] = useState(cancelledByParam);
   const [page, setPage] = useState(Math.max(1, parseInt(pageParam, 10) || 1));
   const [items, setItems] = useState<AdminBooking[]>([]);
   const [total, setTotal] = useState(0);
@@ -49,6 +75,7 @@ export default function AdminBookingsPage() {
     try {
       const params = new URLSearchParams();
       if (status) params.set("status", status);
+      if (status === "CANCELLED" && cancelledBy) params.set("cancelledBy", cancelledBy);
       params.set("page", String(page));
       params.set("pageSize", String(PAGE_SIZE));
       const res = await apiClient.get<{ bookings: AdminBooking[]; total: number; page: number; pageSize: number }>(
@@ -66,7 +93,7 @@ export default function AdminBookingsPage() {
     } finally {
       setLoading(false);
     }
-  }, [status, page, router]);
+  }, [status, cancelledBy, page, router]);
 
   useEffect(() => {
     void load();
@@ -76,12 +103,26 @@ export default function AdminBookingsPage() {
     const p = searchParams.get("page");
     setPage(Math.max(1, parseInt(p ?? "1", 10) || 1));
   }, [searchParams.get("page")]);
+  useEffect(() => {
+    setCancelledBy(searchParams.get("cancelledBy") ?? "");
+  }, [searchParams.get("cancelledBy")]);
 
   const setStatusAndReplace = (v: string) => {
     setStatus(v);
     setPage(1);
     const params = new URLSearchParams();
     if (v) params.set("status", v);
+    if (cancelledBy && v === "CANCELLED") params.set("cancelledBy", cancelledBy);
+    params.set("page", "1");
+    router.replace(`/admin/bookings?${params}`);
+  };
+
+  const setCancelledByAndReplace = (v: string) => {
+    setCancelledBy(v);
+    setPage(1);
+    const params = new URLSearchParams();
+    if (status) params.set("status", status);
+    if (v) params.set("cancelledBy", v);
     params.set("page", "1");
     router.replace(`/admin/bookings?${params}`);
   };
@@ -92,6 +133,7 @@ export default function AdminBookingsPage() {
     setPage(next);
     const params = new URLSearchParams();
     if (status) params.set("status", status);
+    if (cancelledBy) params.set("cancelledBy", cancelledBy);
     if (next > 1) params.set("page", String(next));
     router.replace(`/admin/bookings${params.toString() ? `?${params}` : ""}`);
   };
@@ -103,7 +145,7 @@ export default function AdminBookingsPage() {
           <h1 className="text-2xl font-extrabold tracking-tight">예약 관리</h1>
           <p className="mt-1 text-sm text-neutral-500">플랫폼 전체 예약 목록입니다. 상태별로 필터할 수 있습니다.</p>
         </div>
-        <div>
+        <div className="flex flex-wrap items-center gap-2">
           <label className="sr-only" htmlFor="admin-bookings-status">상태 필터</label>
           <select
             id="admin-bookings-status"
@@ -115,6 +157,21 @@ export default function AdminBookingsPage() {
               <option key={o.value || "all"} value={o.value}>{o.label}</option>
             ))}
           </select>
+          {status === "CANCELLED" && (
+            <>
+              <label className="sr-only" htmlFor="admin-bookings-cancelledBy">취소 주체</label>
+              <select
+                id="admin-bookings-cancelledBy"
+                value={cancelledBy}
+                onChange={(e) => setCancelledByAndReplace(e.target.value)}
+                className="rounded-xl border border-neutral-200 bg-white px-4 py-2.5 text-sm font-medium text-neutral-800"
+              >
+                {CANCELLED_BY_OPTIONS.map((o) => (
+                  <option key={o.value || "all"} value={o.value}>{o.label}</option>
+                ))}
+              </select>
+            </>
+          )}
         </div>
       </div>
 
@@ -134,6 +191,7 @@ export default function AdminBookingsPage() {
                 <th className="p-4 font-semibold">체크인 / 체크아웃</th>
                 <th className="p-4 font-semibold">금액</th>
                 <th className="p-4 font-semibold">상태</th>
+                <th className="p-4 font-semibold">취소 시각</th>
                 <th className="p-4 font-semibold">결제</th>
               </tr>
             </thead>
@@ -157,8 +215,11 @@ export default function AdminBookingsPage() {
                       row.status === "CANCELLED" ? "bg-red-100 text-red-700" :
                       "bg-amber-100 text-amber-700"
                     }`}>
-                      {STATUS_LABEL[row.status] ?? row.status}
+                      {getStatusLabel(row)}
                     </span>
+                  </td>
+                  <td className="p-4 text-neutral-600 text-xs">
+                    {row.status === "CANCELLED" ? formatCancelledAt(row.updatedAt) : "—"}
                   </td>
                   <td className="p-4">
                     {row.payment?.status === "PAID" ? (

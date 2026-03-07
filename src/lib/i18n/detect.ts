@@ -1,5 +1,17 @@
 export type AppLang = "en" | "ko" | "ja" | "zh";
 
+/** 언어 코드 → Intl locale (날짜/숫자 포맷용) */
+export const LANG_TO_LOCALE: Record<AppLang, string> = {
+  en: "en-US",
+  ko: "ko-KR",
+  ja: "ja-JP",
+  zh: "zh-CN",
+};
+
+export function langToLocale(lang: string): string {
+  return LANG_TO_LOCALE[lang as AppLang] ?? "en-US";
+}
+
 export function normalizeAppLang(raw?: string | null): AppLang {
   if (!raw) return "en";
   const v = raw.trim().toLowerCase();

@@ -84,7 +84,7 @@ export const authOptions = {
             data: {
               email: normalizedEmail,
               name: user.name || existing.name,
-              image: user.image || existing.image,
+              image: existing.image,
               role: shouldBeAdmin ? "ADMIN" : existing.role,
             },
             select: { id: true },
@@ -93,7 +93,7 @@ export const authOptions = {
             data: {
               email: normalizedEmail,
               name: user.name || "Guest",
-              image: user.image,
+              image: null,
               role: shouldBeAdmin ? "ADMIN" : "GUEST",
             },
             select: { id: true },
@@ -132,11 +132,13 @@ export const authOptions = {
         if (email) {
           const dbUser = await prisma.user.findUnique({
             where: { email },
-            select: { id: true, role: true },
+            select: { id: true, role: true, nationality: true, phone: true },
           });
           if (dbUser) {
             session.user.id = dbUser.id;
             session.user.role = (dbUser.role as "GUEST" | "HOST" | "ADMIN") || "GUEST";
+            session.user.nationality = dbUser.nationality ?? undefined;
+            session.user.phone = dbUser.phone ?? undefined;
             return session;
           }
         }

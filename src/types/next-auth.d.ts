@@ -6,6 +6,8 @@ declare module "next-auth" {
       id: string;
       role: "GUEST" | "HOST" | "ADMIN";
       provider?: string;
+      nationality?: string;
+      phone?: string;
     } & DefaultSession["user"];
   }
 }

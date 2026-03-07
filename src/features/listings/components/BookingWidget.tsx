@@ -4,7 +4,7 @@ import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { useRouter } from "next/navigation";
 import type { DateRange } from "react-day-picker";
 import { totalGuestPriceKRW, NON_REFUNDABLE_DISCOUNT_RATE } from "@/lib/policy";
-import { formatKRW, nightsBetween, formatDateEn, addDays, parseISODate } from "@/lib/format";
+import { formatKRW, nightsBetween, formatDate, addDays, parseISODate } from "@/lib/format";
 import { useAuth } from "@/components/ui/AuthProvider";
 import { useAuthModal } from "@/components/ui/AuthModalProvider";
 import { useCurrency } from "@/components/ui/CurrencyProvider";
@@ -24,9 +24,9 @@ function toISO(d: Date) {
   const day = String(d.getDate()).padStart(2, "0");
   return `${y}-${m}-${day}`;
 }
-function freeCancelUntilKST(checkInDate: Date) {
+function freeCancelUntilKST(locale: string, checkInDate: Date) {
   const deadline = addDays(checkInDate, -5);
-  return `${formatDateEn(deadline)} 23:59 (KST)`;
+  return `${formatDate(locale, deadline)} 23:59 (KST)`;
 }
 
 export default function BookingWidget({
@@ -154,7 +154,7 @@ export default function BookingWidget({
   const nightlyAllInKRW = nights > 0 ? totalKRW / nights : totalGuestPriceKRW(basePerNightKRW);
   const totalDual = { main: formatFromKRW(totalKRW, currency), approxKRW: formatKRW(totalKRW) };
   const nightlyDual = { main: formatFromKRW(nightlyAllInKRW, currency), approxKRW: formatKRW(nightlyAllInKRW) };
-  const cancelText = freeCancelUntilKST(effectiveRange.from);
+  const cancelText = freeCancelUntilKST(locale, effectiveRange.from);
 
   const shortDateFormatter = useMemo(
     () => new Intl.DateTimeFormat(locale, { month: "short", day: "numeric" }),
@@ -192,7 +192,7 @@ export default function BookingWidget({
     lang === "ko"
       ? {
           total: "총 결제금액",
-          included: "세금/서비스 요금 포함 · (약 {approx})",
+          included: "세금/서비스 요금 포함",
           perNight: "1박 기준",
           freeCancel: "무료 취소 가능 기한",
           reserve: "예약하기",
@@ -216,7 +216,7 @@ export default function BookingWidget({
         : lang === "zh"
           ? {
               total: "总金额",
-              included: "含税及服务费 · (约 {approx})",
+              included: "含税及服务费",
               perNight: "每晚",
               freeCancel: "免费取消截止",
               reserve: "预订",
@@ -227,7 +227,7 @@ export default function BookingWidget({
             }
           : {
               total: "Total",
-              included: "Tax & service fee included · (≈ {approx})",
+              included: "Tax & service fee included",
               perNight: "per night",
               freeCancel: "Free cancellation until",
               reserve: "Reserve",
@@ -247,7 +247,7 @@ export default function BookingWidget({
           <div className="text-xs text-neutral-500">{c.total}</div>
           <div className="booking-widget-total mt-1 text-2xl font-semibold text-neutral-900">{totalDual.main}</div>
           <div className="mt-1 text-xs text-neutral-500">
-            {c.included.replace("{approx}", totalDual.approxKRW)}
+            {c.included}
           </div>
         </div>
         <div className="text-right text-xs text-neutral-500">

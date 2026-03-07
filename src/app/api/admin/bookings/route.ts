@@ -10,12 +10,13 @@ export async function GET(req: Request) {
 
     const url = new URL(req.url);
     const status = url.searchParams.get("status") ?? undefined;
+    const cancelledBy = url.searchParams.get("cancelledBy") ?? undefined;
     const pageParam = url.searchParams.get("page");
     const pageSizeParam = url.searchParams.get("pageSize");
     const page = pageParam ? Math.max(1, parseInt(pageParam, 10) || 1) : 1;
     const pageSize = pageSizeParam ? Math.min(100, Math.max(1, parseInt(pageSizeParam, 10) || 10)) : 10;
 
-    const { bookings, total } = await getAdminBookings(status, { page, pageSize });
+    const { bookings, total } = await getAdminBookings(status, { page, pageSize, cancelledBy });
     return apiOk({ bookings, total, page, pageSize });
   } catch (err) {
     console.error("[api/admin/bookings] GET failed", err);

@@ -67,11 +67,15 @@ export default function AdminSettlementsPage() {
   }, []);
 
   return (
-    <div className="rounded-2xl border border-neutral-200 bg-white p-6">
-      <h1 className="text-xl font-semibold">정산 관리 (MVP)</h1>
-      <p className="mt-2 text-sm text-neutral-600">
-        정산 가능 = [PG 결제완료] + [체크인 시각 이후 24시간]. 현재: {nowKSTLabel()}
-      </p>
+    <div className="grid gap-6">
+      <div>
+        <h1 className="text-2xl font-extrabold tracking-tight">정산</h1>
+        <p className="mt-1 text-sm text-neutral-500">
+          정산 가능 = [PG 결제완료] + [체크인 시각 이후 24시간]. 현재: {nowKSTLabel()}
+        </p>
+      </div>
+
+      <div className="rounded-2xl border border-neutral-200 bg-white p-6">
 
       {loading ? (
         <div className="mt-6 py-8 text-center text-neutral-500">불러오는 중...</div>
@@ -159,6 +163,7 @@ export default function AdminSettlementsPage() {
         >
           주간 지급 리스트 생성 (준비중)
         </button>
+      </div>
       </div>
     </div>
   );

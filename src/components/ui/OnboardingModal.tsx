@@ -206,7 +206,7 @@ export default function OnboardingModal({ open, onClose, onComplete, initialData
             <div>
               <label className="block text-xs font-semibold text-neutral-500">{t("onboarding_contact")}</label>
               <div className="mt-1 text-sm text-neutral-500">{initialData.email || "—"}</div>
-              <p className="mt-0.5 text-[11px] text-neutral-400">{t("onboarding_email")}</p>
+              <p className="mt-0.5 text-[11px] text-neutral-400">{t("onboarding_email")}. {t("onboarding_email_hint")}</p>
               <div className="mt-2 flex gap-2">
                 <select
                   value={countryCode}

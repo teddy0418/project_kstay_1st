@@ -64,8 +64,8 @@ export default function AdminBoardPage() {
     <div className="grid gap-6">
       <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
         <div>
-          <h1 className="text-2xl font-extrabold tracking-tight">게시판 관리</h1>
-          <p className="mt-1 text-sm text-neutral-500">게스트 게시판에 노출되는 글을 등록·수정·삭제합니다.</p>
+          <h1 className="text-2xl font-extrabold tracking-tight">게시판</h1>
+          <p className="mt-1 text-sm text-neutral-500">게스트용 게시판에 노출되는 글을 등록·수정·삭제합니다.</p>
         </div>
         <Link
           href="/admin/board/new"

@@ -6,6 +6,7 @@ import { useParams } from "next/navigation";
 import Container from "@/components/layout/Container";
 import { useI18n } from "@/components/ui/LanguageProvider";
 import { apiClient } from "@/lib/api/client";
+import { formatDateTime } from "@/lib/format";
 import ChatBubble from "@/components/messages/ChatBubble";
 
 type Message = {
@@ -22,7 +23,7 @@ type Res = { data?: { messages?: Message[] } };
 export default function MessageThreadPage() {
   const params = useParams();
   const bookingId = Array.isArray(params?.bookingId) ? params.bookingId[0] : String(params?.bookingId ?? "");
-  const { t } = useI18n();
+  const { t, locale } = useI18n();
   const [messages, setMessages] = useState<Message[]>([]);
   const [loading, setLoading] = useState(true);
   const [body, setBody] = useState("");
@@ -98,7 +99,7 @@ export default function MessageThreadPage() {
                 isMine={m.senderRole === "GUEST"}
                 senderLabel={`${m.senderRole === "GUEST" ? t("message_guest") : t("message_host")} · ${m.senderName}`}
                 body={m.body}
-                createdAt={new Date(m.createdAt).toLocaleString()}
+                createdAt={formatDateTime(locale, m.createdAt)}
               />
             ))
           )}

@@ -9,6 +9,8 @@ export type AdminBookingRow = {
   nights: number;
   totalKrw: number;
   status: string;
+  cancelledBy: string | null;
+  updatedAt: Date;
   createdAt: Date;
   listing: { id: string; title: string };
   host: { id: string; name: string | null };
@@ -19,12 +21,19 @@ const DEFAULT_PAGE_SIZE = 10;
 
 export async function getAdminBookings(
   statusFilter?: string,
-  opts?: { page?: number; pageSize?: number }
+  opts?: { page?: number; pageSize?: number; cancelledBy?: string }
 ): Promise<{ bookings: AdminBookingRow[]; total: number }> {
   const status = statusFilter && ["PENDING_PAYMENT", "CONFIRMED", "CANCELLED"].includes(statusFilter)
     ? statusFilter
     : undefined;
-  const where = status ? { status: status as "PENDING_PAYMENT" | "CONFIRMED" | "CANCELLED" } : {};
+  const cancelledByFilter =
+    opts?.cancelledBy && ["GUEST", "HOST"].includes(opts.cancelledBy) ? opts.cancelledBy : undefined;
+
+  const where: { status?: "PENDING_PAYMENT" | "CONFIRMED" | "CANCELLED"; cancelledBy?: string } = status
+    ? { status: status as "PENDING_PAYMENT" | "CONFIRMED" | "CANCELLED" }
+    : {};
+  if (cancelledByFilter) where.cancelledBy = cancelledByFilter;
+
   const page = Math.max(1, opts?.page ?? 1);
   const pageSize = Math.min(100, Math.max(1, opts?.pageSize ?? DEFAULT_PAGE_SIZE));
   const skip = (page - 1) * pageSize;
@@ -42,6 +51,8 @@ export async function getAdminBookings(
         nights: true,
         totalKrw: true,
         status: true,
+        cancelledBy: true,
+        updatedAt: true,
         createdAt: true,
         listing: {
           select: {
@@ -56,7 +67,7 @@ export async function getAdminBookings(
           select: { status: true, pgTid: true },
         },
       },
-      orderBy: { createdAt: "desc" },
+      orderBy: { updatedAt: "desc" },
       skip,
       take: pageSize,
     }),
@@ -71,6 +82,8 @@ export async function getAdminBookings(
     nights: r.nights,
     totalKrw: r.totalKrw,
     status: r.status,
+    cancelledBy: r.cancelledBy,
+    updatedAt: r.updatedAt,
     createdAt: r.createdAt,
     listing: r.listing ? { id: r.listing.id, title: r.listing.title } : { id: "", title: "" },
     host: r.listing?.host ? { id: r.listing.host.id, name: r.listing.host.name } : { id: "", name: null },

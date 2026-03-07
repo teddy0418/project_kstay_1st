@@ -154,7 +154,7 @@ export default function AdminSupportTicketPage() {
             <ChatBubble
               key={m.id}
               isMine={m.senderRole === "SUPPORT"}
-              senderLabel={m.senderRole === "USER" ? `${t("support_you")} · ${m.senderName}` : `${t("support_customer_support")} · ${m.senderName}`}
+              senderLabel={m.senderRole === "USER" ? `${t("support_you")} · ${m.senderName}` : m.senderName}
               body={m.body}
               createdAt={new Date(m.createdAt).toLocaleString()}
             />
