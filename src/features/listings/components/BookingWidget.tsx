@@ -4,6 +4,7 @@ import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { useRouter } from "next/navigation";
 import type { DateRange } from "react-day-picker";
 import { totalGuestPriceKRW, NON_REFUNDABLE_DISCOUNT_RATE } from "@/lib/policy";
+import { setFrozenQuote } from "@/lib/price-freeze";
 import { formatKRW, nightsBetween, formatDate, addDays, parseISODate } from "@/lib/format";
 import { useAuth } from "@/components/ui/AuthProvider";
 import { useAuthModal } from "@/components/ui/AuthModalProvider";
@@ -156,6 +157,17 @@ export default function BookingWidget({
   const nightlyDual = { main: formatFromKRW(nightlyAllInKRW, currency), approxKRW: formatKRW(nightlyAllInKRW) };
   const cancelText = freeCancelUntilKST(locale, effectiveRange.from);
 
+  useEffect(() => {
+    if (!listingId || nights < 1 || totalKRW <= 0) return;
+    setFrozenQuote({
+      listingId,
+      checkIn: checkInISO,
+      checkOut: checkOutISO,
+      guests: totalGuests,
+      totalKRW,
+    });
+  }, [listingId, checkInISO, checkOutISO, totalGuests, totalKRW, nights]);
+
   const shortDateFormatter = useMemo(
     () => new Intl.DateTimeFormat(locale, { month: "short", day: "numeric" }),
     [locale]
@@ -192,7 +204,7 @@ export default function BookingWidget({
     lang === "ko"
       ? {
           total: "총 결제금액",
-          included: "세금/서비스 요금 포함",
+          included: "세금·서비스요금·환율 버퍼 포함",
           perNight: "1박 기준",
           freeCancel: "무료 취소 가능 기한",
           reserve: "예약하기",
@@ -227,7 +239,7 @@ export default function BookingWidget({
             }
           : {
               total: "Total",
-              included: "Tax & service fee included",
+              included: "Tax, service fee & exchange buffer included",
               perNight: "per night",
               freeCancel: "Free cancellation until",
               reserve: "Reserve",

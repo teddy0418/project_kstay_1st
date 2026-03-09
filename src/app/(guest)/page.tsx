@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 import Container from "@/components/layout/Container";
 import PopularDestinations from "@/features/home/components/PopularDestinations";
 import HorizontalTwoRowListings from "@/features/home/components/HorizontalTwoRowListings";
+import SupportedBrandLogos from "@/features/home/components/SupportedBrandLogos";
 import { getPublicListingsBySection } from "@/lib/repositories/listings";
 import { getServerLang } from "@/lib/i18n/server";
 
@@ -94,8 +95,11 @@ export default async function Page() {
   return (
     <>
       <PopularDestinations />
+      <Container className="pt-1.5">
+        <SupportedBrandLogos lang={lang} />
+      </Container>
 
-      <Container className="py-10">
+      <Container className="pt-6 pb-10">
         <div className="flex flex-wrap items-end justify-between gap-4 border-l-4 border-neutral-900 pl-4">
           <div className="min-w-0">
             <h2 className="text-base font-semibold tracking-tight text-neutral-900 md:text-xl">{c.title}</h2>

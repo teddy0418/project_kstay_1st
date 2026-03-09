@@ -5,7 +5,7 @@ export const LANG_TO_LOCALE: Record<AppLang, string> = {
   en: "en-US",
   ko: "ko-KR",
   ja: "ja-JP",
-  zh: "zh-CN",
+  zh: "zh-TW",
 };
 
 export function langToLocale(lang: string): string {

@@ -88,7 +88,7 @@ export default function OnboardingModal({ open, onClose, onComplete, initialData
     const first = NATIONALITIES[0];
     const rest = NATIONALITIES.slice(1);
     return [
-      { value: first.value, label: lang === "ko" ? "국적 선택" : lang === "ja" ? "国籍を選択" : lang === "zh" ? "选择国籍" : "Select nationality" },
+      { value: first.value, label: lang === "ko" ? "국적 선택" : lang === "ja" ? "国籍を選択" : lang === "zh" ? "選擇國籍" : "Select nationality" },
       ...rest.map((n) => ({ value: n.value, label: n.label })),
     ];
   }, [lang]);
@@ -213,7 +213,7 @@ export default function OnboardingModal({ open, onClose, onComplete, initialData
                   onChange={(e) => setCountryCode(e.target.value)}
                   className="w-28 rounded-xl border border-neutral-200 px-2 py-2.5 text-sm outline-none focus:border-neutral-400 bg-white"
                 >
-                  <option value="">{lang === "ko" ? "국가번호" : lang === "ja" ? "国番号" : lang === "zh" ? "国家区号" : "Code"}</option>
+                  <option value="">{lang === "ko" ? "국가번호" : lang === "ja" ? "国番号" : lang === "zh" ? "國家區號" : "Code"}</option>
                   <option value="+82">+82 (KR)</option>
                   <option value="+81">+81 (JP)</option>
                   <option value="+86">+86 (CN)</option>

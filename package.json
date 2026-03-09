@@ -6,7 +6,7 @@
     "clean": "node scripts/clean-dev.mjs",
     "dev": "next dev --webpack -p 3001",
     "postinstall": "prisma generate",
-    "prebuild": "npm run prisma:generate",
+    "prebuild": "npm run prisma:generate && npm run prisma:migrate",
     "build": "next build --webpack",
     "start": "next start",
     "lint": "eslint",

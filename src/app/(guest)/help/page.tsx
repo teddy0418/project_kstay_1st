@@ -81,7 +81,7 @@ export default async function HelpPage() {
             <div className="mt-2 text-sm text-neutral-600 leading-6">{c.contactBody}</div>
             <p className="mt-3">
               <a href="/messages" className="font-medium text-neutral-800 underline hover:text-neutral-600">
-                {lang === "ko" ? "고객센터 문의하기" : lang === "ja" ? "お問い合わせ" : lang === "zh" ? "联系客服" : "Contact support"}
+                {lang === "ko" ? "고객센터 문의하기" : lang === "ja" ? "お問い合わせ" : lang === "zh" ? "聯絡客服" : "Contact support"}
               </a>
             </p>
           </section>

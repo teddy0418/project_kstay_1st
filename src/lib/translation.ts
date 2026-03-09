@@ -22,7 +22,7 @@ export async function translateText(
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({
         q: text.trim(),
-        target: targetLang === "zh" ? "zh-CN" : targetLang,
+        target: targetLang === "zh" ? "zh-TW" : targetLang,
         format: "text",
       }),
     });

@@ -103,7 +103,7 @@ export default function HorizontalTwoRowListings({
 
   if (isEmpty && showWhenEmpty && title) {
     return (
-      <section className="min-w-0 overflow-x-hidden mt-10">
+      <section className="min-w-0 overflow-x-hidden mt-8">
         <div
           className={cn(
             "flex flex-wrap items-end justify-between gap-3 mb-4 pl-4",
@@ -161,7 +161,7 @@ export default function HorizontalTwoRowListings({
   }
 
   return (
-    <section className={`min-w-0 overflow-x-hidden ${title ? "mt-10" : "mt-6"}`}>
+    <section className={`min-w-0 overflow-x-hidden ${title ? "mt-8" : "mt-5"}`}>
       {title ? (
         <div
           className={cn(
@@ -231,22 +231,20 @@ export default function HorizontalTwoRowListings({
                     )}
                   </div>
                 ))}
-                <div className="shrink-0 w-[120px] min-w-[100px] md:w-[160px] rounded-2xl border border-neutral-200 bg-neutral-50 flex flex-col items-center justify-center px-4 self-stretch">
-                  {hasMore && batchIdx === batches.length - 1 ? (
-                    <button
-                      type="button"
-                      onClick={() => void loadMore()}
-                      disabled={loadingMore}
-                      className="text-sm font-semibold text-neutral-700 hover:text-neutral-900 disabled:opacity-50"
-                    >
-                      {loadingMore ? "..." : `${t("load_more")} >`}
-                    </button>
-                  ) : (
-                    <span className="text-sm text-neutral-500">{t("load_more")} &gt;</span>
-                  )}
-                </div>
               </Fragment>
             ))}
+            {hasMore && (
+              <div className="shrink-0 w-[120px] min-w-[100px] md:w-[160px] rounded-2xl border border-neutral-200 bg-neutral-50 flex flex-col items-center justify-center px-4 self-stretch">
+                <button
+                  type="button"
+                  onClick={() => void loadMore()}
+                  disabled={loadingMore}
+                  className="text-sm font-semibold text-neutral-700 hover:text-neutral-900 disabled:opacity-50"
+                >
+                  {loadingMore ? "..." : `${t("load_more")} >`}
+                </button>
+              </div>
+            )}
           </div>
         </div>
       </div>

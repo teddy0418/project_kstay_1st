@@ -11,6 +11,12 @@ type Props = {
   guestServiceFeeKrwFormatted: string;
   totalKrwFormatted: string;
   totalUsdFormatted: string;
+  /** 실제 결제한 통화 금액 (예: $100.00 USD). 있으면 총 결제금액으로 우선 표시 */
+  paymentAmountFormatted?: string | null;
+  /** 게스트 선택 통화 참고 금액 (Approx. XXX [Currency]) */
+  approxLocalFormatted?: string | null;
+  /** 영수증 하단 안내 문구 */
+  settlementDisclaimer?: string | null;
   cancellationDeadlineKst: string;
   manageUrl: string;
   checkInTime?: string;
@@ -78,11 +84,24 @@ export default function BookingConfirmedEmail(props: Props) {
             <Hr style={{ borderColor: "#eee", margin: "8px 0" }} />
             <div style={{ ...rowStyle, fontWeight: 600, fontSize: "15px" }}>
               <p style={{ ...labelStyle, fontWeight: 600 }}>총 결제금액 / Total</p>
-              <p style={valueStyle}>{props.totalKrwFormatted} ({props.totalUsdFormatted})</p>
+              <p style={valueStyle}>
+                {props.paymentAmountFormatted ?? `${props.totalKrwFormatted} (${props.totalUsdFormatted})`}
+              </p>
             </div>
+            {props.approxLocalFormatted && (
+              <div style={{ ...rowStyle, marginTop: "4px", fontWeight: 400, fontSize: "13px" }}>
+                <p style={labelStyle} />
+                <p style={{ ...valueStyle, color: "#666" }}>{props.approxLocalFormatted}</p>
+              </div>
+            )}
             <Text style={{ margin: "12px 0 0", fontSize: "12px", color: "#666" }}>
               무료 취소: {props.cancellationDeadlineKst} 까지
             </Text>
+            {props.settlementDisclaimer && (
+              <Text style={{ margin: "8px 0 0", fontSize: "11px", color: "#888" }}>
+                {props.settlementDisclaimer}
+              </Text>
+            )}
           </Section>
 
           {(props.checkInGuide || props.houseRules) && (

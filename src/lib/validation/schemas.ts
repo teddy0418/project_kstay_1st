@@ -16,13 +16,17 @@ export const createBookingSchema = z.object({
   guestsChildren: z.coerce.number().int().min(0).optional(),
   guestsInfants: z.coerce.number().int().min(0).optional(),
   guestsPets: z.coerce.number().int().min(0).optional(),
-  currency: z.enum(["USD", "KRW", "JPY", "CNY"]).optional(),
-  paymentMethod: z.enum(["KAKAOPAY", "PAYPAL", "EXIMBAY"]).optional(),
+  currency: z
+    .enum(["USD", "JPY", "SGD", "HKD", "THB", "TWD", "MYR", "VND", "PHP", "EUR", "GBP", "AUD", "IDR", "KRW"])
+    .optional(),
+  paymentMethod: z.enum(["EXIMBAY"]).optional(),
   /** 환불 불가 특가 선택 (listing이 해당 옵션 제공 시에만 유효) */
   isNonRefundableSpecial: z.boolean().optional(),
   /** 정책 동의 시각 ISO 문자열 (분쟁 대비 스냅샷) */
   policyAgreedAt: z.string().trim().optional(),
   policyTextLocale: z.string().trim().max(10).optional(),
+  /** Price Freeze: 상세에서 본 가격 30분 고정 시 클라이언트가 전달. 서버는 계산값과 ±2% 이내일 때만 사용 */
+  totalKrw: z.coerce.number().int().positive().optional(),
 });
 
 export const createHostListingSchema = z.object({

@@ -36,6 +36,13 @@ export function totalGuestPriceKRW(baseKRW: number) {
 /** 환불 불가 특가: 게스트 할인율 (10%) */
 export const NON_REFUNDABLE_DISCOUNT_RATE = 0.1;
 
+/**
+ * 환율 변환 시 적용하는 마진 (정산·환전 리스크 방어).
+ * 게스트 노출가 = (원화 합계 × 환율) × (1 + EXCHANGE_RATE_MARKUP - 1) = 원화합계 × 환율 × EXCHANGE_RATE_MARKUP
+ * 1.5% 버퍼: 1.015
+ */
+export const EXCHANGE_RATE_MARKUP = 1.015;
+
 // ---- End Pricing Policy ----
 
 /** 표준: 체크인 N일 전 23:59 KST까지 무료 취소 (기본 5일) */

@@ -65,7 +65,27 @@ function MapOverlay({
 
 type MobileView = "list" | "map";
 
-export default function BrowseMapLayout({ items }: { items: Listing[] }) {
+function buildListingHref(listingId: string, start?: string, end?: string, guests?: number): string {
+  const base = `/listings/${encodeURIComponent(listingId)}`;
+  if (!start || !end) return base;
+  const params = new URLSearchParams();
+  params.set("start", start);
+  params.set("end", end);
+  if (guests != null && guests >= 1) params.set("guests", String(guests));
+  return `${base}?${params.toString()}`;
+}
+
+export default function BrowseMapLayout({
+  items,
+  searchStart,
+  searchEnd,
+  searchGuests,
+}: {
+  items: Listing[];
+  searchStart?: string;
+  searchEnd?: string;
+  searchGuests?: number;
+}) {
   const router = useRouter();
   const [hoveredId, setHoveredId] = useState<string | null>(null);
   const [mobileView, setMobileView] = useState<MobileView>("list");
@@ -225,6 +245,7 @@ export default function BrowseMapLayout({ items }: { items: Listing[] }) {
                     <ListingCard
                       key={l.id}
                       listing={l}
+                      href={buildListingHref(l.id, searchStart, searchEnd, searchGuests)}
                       active={hoveredId === l.id}
                       onHoverChange={setHoveredId}
                     />
@@ -272,7 +293,16 @@ export default function BrowseMapLayout({ items }: { items: Listing[] }) {
               <div className="absolute inset-x-3 bottom-3 z-[1000] pointer-events-auto">
                 <button
                   type="button"
-                  onClick={() => router.push(`/listings/${String(selectedListing.id)}`)}
+                  onClick={() =>
+                    router.push(
+                      buildListingHref(
+                        String(selectedListing.id),
+                        searchStart,
+                        searchEnd,
+                        searchGuests
+                      )
+                    )
+                  }
                   className="w-full text-left block rounded-2xl border border-neutral-200 bg-white p-3 shadow-elevated cursor-pointer hover:bg-neutral-50 active:bg-neutral-100 transition"
                 >
                   <div className="flex gap-3">
@@ -329,6 +359,7 @@ export default function BrowseMapLayout({ items }: { items: Listing[] }) {
                 <ListingCard
                   key={l.id}
                   listing={l}
+                  href={buildListingHref(l.id, searchStart, searchEnd, searchGuests)}
                   active={hoveredId === l.id}
                   onHoverChange={setHoveredId}
                 />

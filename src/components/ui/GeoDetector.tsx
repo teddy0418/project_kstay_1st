@@ -32,7 +32,7 @@ export default function GeoDetector() {
       .get<{ lang?: Lang; currency?: string }>("/api/geo")
       .then((data) => {
         if (!hasLang && data?.lang && data.lang !== lang) setLang(data.lang);
-        if (!hasCurrency && data?.currency && data.currency !== currency) setCurrency(data.currency as "USD" | "KRW" | "JPY" | "CNY");
+        if (!hasCurrency && data?.currency && data.currency !== currency) setCurrency(data.currency as import("@/lib/currency").Currency);
       })
       .catch(() => {});
   }, [lang, currency, setLang, setCurrency]);

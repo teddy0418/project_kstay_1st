@@ -4,9 +4,10 @@ import Script from "next/script";
 import { cookies, headers } from "next/headers";
 import Providers from "@/components/ui/Providers";
 import { geoCountryToLocale } from "@/lib/geo";
+import type { Currency } from "@/lib/currency";
+import { SUPPORTED_CURRENCIES } from "@/lib/currency";
 
 type Lang = "en" | "ko" | "ja" | "zh";
-type Currency = "USD" | "KRW" | "JPY" | "CNY";
 
 export const metadata: Metadata = {
   title: "KSTAY",
@@ -32,7 +33,7 @@ function normalizeLang(raw?: string): Lang {
 }
 
 function normalizeCurrency(raw?: string): Currency {
-  if (raw === "KRW" || raw === "JPY" || raw === "CNY") return raw;
+  if (raw && SUPPORTED_CURRENCIES.includes(raw as Currency)) return raw as Currency;
   return "USD";
 }
 

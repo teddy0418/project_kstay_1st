@@ -1,5 +1,12 @@
 import { apiError, apiOk } from "@/lib/api/response";
-import { formatCancellationDeadlineKst, formatDateEn, formatUsdFromCents } from "@/lib/bookings/utils";
+import {
+  formatCancellationDeadlineKst,
+  formatDateEn,
+  formatUsdFromCents,
+  formatPaymentAmount,
+  formatApproxLocalFromKRW,
+  getSettlementDisclaimer,
+} from "@/lib/bookings/utils";
 import { findPublicBookingByToken } from "@/lib/repositories/bookings";
 import { cancelGuestBookingByToken } from "@/lib/repositories/payment-processing";
 
@@ -52,6 +59,25 @@ export async function GET(_: Request, ctx: { params: Promise<{ token: string }> 
         usd: booking.totalUsd,
         krw: booking.totalKrw,
         usdText: formatUsdFromCents(booking.totalUsd),
+        paymentCurrency: booking.paymentCurrency ?? null,
+        paymentAmount: booking.paymentAmount ?? null,
+        paymentAmountFormatted:
+          booking.paymentCurrency && booking.paymentAmount != null
+            ? formatPaymentAmount(
+                booking.paymentCurrency as "USD" | "KRW" | "JPY",
+                booking.paymentAmount
+              )
+            : null,
+        approxLocalFormatted:
+          booking.currency &&
+          booking.paymentCurrency &&
+          booking.currency !== booking.paymentCurrency
+            ? formatApproxLocalFromKRW(booking.totalKrw, booking.currency)
+            : null,
+        settlementDisclaimer:
+          booking.paymentCurrency != null
+            ? getSettlementDisclaimer(booking.paymentCurrency as "USD" | "KRW" | "JPY")
+            : null,
       },
       checkInText: formatDateEn(booking.checkIn),
       checkOutText: formatDateEn(booking.checkOut),

@@ -5,6 +5,8 @@ import {
   FREE_CANCELLATION_DAYS,
 } from "@/lib/policy";
 import { nightsBetween, formatDateEn } from "@/lib/format";
+import type { Currency } from "@/lib/currency";
+import { KRW_PER, CURRENCY_SYMBOL } from "@/lib/currency";
 
 const CANCELLATION_POLICY_VERSION = "v1-standard-5d";
 
@@ -83,4 +85,54 @@ export function buildCancellationSnapshot(params: {
 
 export function formatUsdFromCents(amountUsd: number) {
   return `$${(amountUsd / 100).toFixed(2)} USD`;
+}
+
+/** 결제 영수증/인보이스용: 실제 결제한 통화·금액 포맷 (USD=센트, KRW/JPY=정수) */
+export function formatPaymentAmount(
+  paymentCurrency: "USD" | "KRW" | "JPY",
+  paymentAmount: number
+): string {
+  if (paymentCurrency === "USD") {
+    return `$${(paymentAmount / 100).toFixed(2)} USD`;
+  }
+  if (paymentCurrency === "KRW") {
+    return `₩${paymentAmount.toLocaleString("ko-KR")} KRW`;
+  }
+  if (paymentCurrency === "JPY") {
+    return `¥${paymentAmount.toLocaleString("ja-JP")} JPY`;
+  }
+  return `${paymentAmount} ${paymentCurrency}`;
+}
+
+/** 현지 통화 소수 자리: JPY/VND/IDR/KRW 정수, 나머지 2자리 (policy·표시 규칙과 동일) */
+function localCurrencyDecimals(currency: Currency): number {
+  return currency === "JPY" || currency === "VND" || currency === "IDR" || currency === "KRW" ? 0 : 2;
+}
+
+/**
+ * 영수증 병기용: totalKrw를 게스트 선택 통화로 환산해 "Approx. XXX [Currency]" 포맷.
+ * 반올림 규칙 적용(JPY/IDR/VND/KRW 정수, 그 외 2자리).
+ */
+export function formatApproxLocalFromKRW(
+  totalKrw: number,
+  localCurrency: string | null | undefined
+): string | null {
+  if (!localCurrency || typeof localCurrency !== "string") return null;
+  const key = localCurrency.trim().toUpperCase().slice(0, 3) as Currency;
+  const per = KRW_PER[key];
+  const symbol = CURRENCY_SYMBOL[key];
+  if (per == null || per <= 0 || symbol == null) return null;
+  const amount = totalKrw / per;
+  const decimals = localCurrencyDecimals(key);
+  const rounded = decimals === 0 ? Math.round(amount) : Math.round(amount * 100) / 100;
+  const formatted =
+    decimals === 0
+      ? rounded.toLocaleString("en-US", { maximumFractionDigits: 0 })
+      : rounded.toLocaleString("en-US", { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+  return `Approx. ${symbol}${formatted} ${key}`;
+}
+
+/** 영수증 하단 안내 문구 (실제 결제 통화에 맞춤) */
+export function getSettlementDisclaimer(paymentCurrency: "USD" | "KRW" | "JPY"): string {
+  return `Final settlement is processed in ${paymentCurrency}, and the local currency amount is for reference based on the current exchange rate.`;
 }

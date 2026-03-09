@@ -16,7 +16,7 @@ const COPY = {
     base: "Base",
     fee: "Guest service fee (12%)",
     total: "Total",
-    included: "Tax & Service Fee Included",
+    included: "Tax, service fee & exchange buffer included",
   },
   ko: {
     title: "결제",
@@ -27,7 +27,7 @@ const COPY = {
     base: "기본 요금",
     fee: "게스트 서비스 수수료 (12%)",
     total: "합계",
-    included: "세금 및 서비스 요금 포함",
+    included: "세금·서비스요금·환율 버퍼 포함",
   },
   ja: {
     title: "チェックアウト",
@@ -38,7 +38,7 @@ const COPY = {
     base: "基本料金",
     fee: "ゲストサービス料 (12%)",
     total: "合計",
-    included: "税・サービス料込み",
+    included: "税・サービス料・為替バッファ込み",
   },
   zh: {
     title: "结算",
@@ -49,7 +49,7 @@ const COPY = {
     base: "基础费用",
     fee: "客人服务费 (12%)",
     total: "总计",
-    included: "已含税费与服务费",
+    included: "含税费、服务费及汇率缓冲",
   },
 } as const;
 

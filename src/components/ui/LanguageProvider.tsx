@@ -24,7 +24,7 @@ const DEFAULT_LANG: Lang = "en";
 const OPTIONS: Option[] = [
   { code: "en", label: "English", nativeLabel: "English", locale: "en-US" },
   { code: "ja", label: "Japanese", nativeLabel: "日本語", locale: "ja-JP" },
-  { code: "zh", label: "Chinese", nativeLabel: "中文", locale: "zh-CN" },
+  { code: "zh", label: "Chinese", nativeLabel: "繁體中文", locale: "zh-TW" },
   { code: "ko", label: "Korean", nativeLabel: "한국어", locale: "ko-KR" },
 ];
 
@@ -59,7 +59,7 @@ function persistLang(l: Lang) {
   } catch {}
   for (const k of COOKIE_KEYS) setCookie(k, l);
   if (typeof document !== "undefined") {
-    document.documentElement.lang = l === "zh" ? "zh" : l;
+    document.documentElement.lang = l === "zh" ? "zh-TW" : l;
   }
 }
 

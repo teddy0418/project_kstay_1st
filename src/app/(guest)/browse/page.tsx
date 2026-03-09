@@ -24,6 +24,8 @@ export default async function BrowsePage({
   const where = one(sp.where);
   const start = one(sp.start);
   const end = one(sp.end);
+  const guestsRaw = one(sp.guests);
+  const guests = guestsRaw ? Math.max(1, parseInt(guestsRaw, 10) || 1) : undefined;
 
   const filters =
     where || (start && end)
@@ -34,7 +36,12 @@ export default async function BrowsePage({
 
   return (
     <Container className="py-6">
-      <BrowseMapLayout items={listings} />
+      <BrowseMapLayout
+        items={listings}
+        searchStart={start || undefined}
+        searchEnd={end || undefined}
+        searchGuests={guests}
+      />
     </Container>
   );
 }

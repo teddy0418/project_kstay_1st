@@ -268,9 +268,11 @@ model Booking {
   guestsInfants Int @default(0)
   guestsPets    Int @default(0)
 
-  currency      String @default("USD")
+  currency      String   @default("USD")  // 게스트 요청 표시 통화 (TWD, JPY 등)
   totalUsd      Int
   totalKrw      Int
+  paymentCurrency String?  // 실제 결제 통화 (USD | KRW | JPY, 엑심베이 기준)
+  paymentAmount   Int?     // 결제 금액: USD=센트, KRW/JPY=원/엔 정수
   accommodationKrw Int?     // 숙박료 (게스트 결제 내역·호스트 수령액 산출용)
   guestServiceFeeKrw Int?   // 게스트 서비스 수수료 12%
 

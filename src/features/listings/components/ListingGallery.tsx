@@ -160,8 +160,8 @@ export default function ListingGallery({
               </div>
 
               <div className="mt-5 grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
-                {safe.map((src) => (
-                  <div key={src} className="relative aspect-[4/3] overflow-hidden rounded-2xl bg-neutral-900">
+                {safe.map((src, i) => (
+                  <div key={i} className="relative aspect-[4/3] overflow-hidden rounded-2xl bg-neutral-900">
                     <Image src={src} alt={title} className="h-full w-full object-cover" fill sizes="33vw" />
                   </div>
                 ))}

@@ -63,7 +63,7 @@ export default function PopularDestinations() {
   };
 
   return (
-    <section className="mt-8 min-w-0 overflow-x-hidden">
+    <section className="mt-5 min-w-0 overflow-x-hidden">
       <Container>
         <div className="flex flex-wrap items-end justify-between gap-3">
           <div className="min-w-0">

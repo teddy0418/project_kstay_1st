@@ -10,15 +10,19 @@ import { useAuthModal } from "@/components/ui/AuthModalProvider";
 import { useCurrency } from "@/components/ui/CurrencyProvider";
 import { useI18n } from "@/components/ui/LanguageProvider";
 import { requestPortonePayment, type PortonePayParams } from "@/lib/portone/requestPayment";
+import { getFrozenQuote } from "@/lib/price-freeze";
 import {
   CardBrandLogos,
   PayPalLogo,
-  LinePayLogo,
   AlipayHKLogo,
-  PromptPayLogo,
-  KakaoPayLogo,
+  TouchNGoLogo,
+  DanaLogo,
+  GCashLogo,
+  PayPayLogo,
+  EcontextLogo,
 } from "@/components/ui/PaymentLogos";
 import CheckoutPriceDisplay from "./CheckoutPriceDisplay";
+import type { Currency } from "@/lib/currency";
 
 const NATIONALITIES = [
   { value: "", label: "" },
@@ -30,6 +34,13 @@ const NATIONALITIES = [
   { value: "HK", label: "香港" },
   { value: "SG", label: "Singapore" },
   { value: "TH", label: "Thailand" },
+  { value: "MY", label: "Malaysia" },
+  { value: "VN", label: "Vietnam" },
+  { value: "PH", label: "Philippines" },
+  { value: "ID", label: "Indonesia" },
+  { value: "GB", label: "United Kingdom" },
+  { value: "AU", label: "Australia" },
+  { value: "DE", label: "Germany" },
   { value: "OTHER", label: "기타" },
 ] as const;
 
@@ -42,11 +53,45 @@ const NATIONALITY_TO_DIAL_CODE: Record<string, string> = {
   HK: "+852",
   SG: "+65",
   TH: "+66",
+  MY: "+60",
+  VN: "+84",
+  PH: "+63",
+  ID: "+62",
+  GB: "+44",
+  AU: "+61",
+  DE: "+49",
   OTHER: "",
   "": "",
 };
 
-type UiPaymentId = "KAKAOPAY" | "CARD" | "LINEPAY" | "ALIPAYHK" | "PROMPTPAY" | "PAYPAL";
+/** 통화에 맞는 대표 국가(체크아웃 국가 선택 동기화용) */
+const CURRENCY_TO_COUNTRY: Record<Currency, string> = {
+  KRW: "KR",
+  JPY: "JP",
+  USD: "US",
+  SGD: "SG",
+  HKD: "HK",
+  THB: "TH",
+  TWD: "TW",
+  MYR: "MY",
+  VND: "VN",
+  PHP: "PH",
+  IDR: "ID",
+  EUR: "DE",
+  GBP: "GB",
+  AUD: "AU",
+};
+
+/** 엑심베이(Eximbay) 가이드라인: 글로벌카드 / 간편결제 / 일본 econtext */
+type UiPaymentId =
+  | "CARD"
+  | "PAYPAL"
+  | "ALIPAYHK"
+  | "TNG"
+  | "DANA"
+  | "GCASH"
+  | "PAYPAY"
+  | "ECONTEXT";
 
 type SummaryCopy = {
   dates: string;
@@ -237,6 +282,18 @@ export default function CheckoutPaymentCard(props: Props) {
   const [paying, setPaying] = useState(false);
   const [payModalOpen, setPayModalOpen] = useState(false);
   const [payParams, setPayParams] = useState<PortonePayParams | null>(null);
+  const [frozenTotalKrw, setFrozenTotalKrw] = useState<number | null>(null);
+
+  useEffect(() => {
+    const q = getFrozenQuote({
+      listingId: props.listingId,
+      checkIn: props.checkIn,
+      checkOut: props.checkOut,
+      guests: props.guests,
+    });
+    if (q) setFrozenTotalKrw(q.totalKRW);
+    else setFrozenTotalKrw(null);
+  }, [props.listingId, props.checkIn, props.checkOut, props.guests]);
   const [payModalError, setPayModalError] = useState<string | null>(null);
   const emailReadonly = Boolean(user?.email);
 
@@ -244,13 +301,13 @@ export default function CheckoutPaymentCard(props: Props) {
     const first = NATIONALITIES[0];
     const rest = NATIONALITIES.slice(1);
     const selectLabel =
-      lang === "ko" ? "국가 선택" : lang === "ja" ? "国を選択" : lang === "zh" ? "选择国家" : "Select country";
+      lang === "ko" ? "국가 선택" : lang === "ja" ? "国を選択" : lang === "zh" ? "選擇國家" : "Select country";
     return [{ value: first.value, label: selectLabel }, ...rest.map((n) => ({ value: n.value, label: n.label }))];
   }, [lang]);
 
+  /** 엑심베이(Eximbay) 가이드라인: 글로벌 카드 / 간편결제 / 일본 econtext */
   const paymentOptions: Array<{
     id: UiPaymentId;
-    base: "KAKAOPAY" | "PAYPAL" | "EXIMBAY";
     label: string;
     sub: string;
     showCardBrands?: boolean;
@@ -259,85 +316,37 @@ export default function CheckoutPaymentCard(props: Props) {
       ? [
           {
             id: "CARD",
-            base: "EXIMBAY",
-            label: "신용/체크카드 (해외)",
-            sub: "Visa, Mastercard, Amex",
+            label: "글로벌 카드",
+            sub: "",
             showCardBrands: true,
           },
-          {
-            id: "LINEPAY",
-            base: "EXIMBAY",
-            label: "LINE Pay",
-            sub: "일부 국가에서만 지원",
-          },
-          {
-            id: "ALIPAYHK",
-            base: "EXIMBAY",
-            label: "AlipayHK",
-            sub: "홍콩 전자지갑",
-          },
-          {
-            id: "PROMPTPAY",
-            base: "EXIMBAY",
-            label: "PromptPay",
-            sub: "태국 QR 결제",
-          },
-          {
-            id: "PAYPAL",
-            base: "PAYPAL",
-            label: "PayPal",
-            sub: "글로벌 전자지갑",
-          },
-          {
-            id: "KAKAOPAY",
-            base: "KAKAOPAY",
-            label: "카카오페이",
-            sub: "국내 간편결제",
-          },
+          { id: "PAYPAL", label: "PayPal", sub: "영어권 간편결제" },
+          { id: "PAYPAY", label: "PayPay", sub: "일본" },
+          { id: "DANA", label: "Dana", sub: "인도네시아" },
+          { id: "GCASH", label: "GCash", sub: "필리핀" },
+          { id: "TNG", label: "Touch 'n Go", sub: "말레이시아" },
+          { id: "ALIPAYHK", label: "Alipay HK", sub: "홍콩" },
+          { id: "ECONTEXT", label: "econtext", sub: "일본 편의점·은행 결제" },
         ]
       : [
           {
             id: "CARD",
-            base: "EXIMBAY",
-            label: "International cards",
-            sub: "Visa, Mastercard, Amex",
+            label: "Global cards",
+            sub: "",
             showCardBrands: true,
           },
-          {
-            id: "LINEPAY",
-            base: "EXIMBAY",
-            label: "LINE Pay",
-            sub: "Selected countries",
-          },
-          {
-            id: "ALIPAYHK",
-            base: "EXIMBAY",
-            label: "AlipayHK",
-            sub: "Hong Kong wallet",
-          },
-          {
-            id: "PROMPTPAY",
-            base: "EXIMBAY",
-            label: "PromptPay",
-            sub: "Thailand QR payment",
-          },
-          {
-            id: "PAYPAL",
-            base: "PAYPAL",
-            label: "PayPal",
-            sub: "Global wallet",
-          },
-          {
-            id: "KAKAOPAY",
-            base: "KAKAOPAY",
-            label: "KakaoPay",
-            sub: "Korea only",
-          },
+          { id: "PAYPAL", label: "PayPal", sub: "Global e-wallet" },
+          { id: "PAYPAY", label: "PayPay", sub: "Japan" },
+          { id: "DANA", label: "Dana", sub: "Indonesia" },
+          { id: "GCASH", label: "GCash", sub: "Philippines" },
+          { id: "TNG", label: "Touch 'n Go", sub: "Malaysia" },
+          { id: "ALIPAYHK", label: "Alipay HK", sub: "Hong Kong" },
+          { id: "ECONTEXT", label: "econtext", sub: "Japan convenience & bank" },
         ];
 
   const selectedOption =
     paymentOptions.find((opt) => opt.id === uiPayment) ?? paymentOptions[0];
-  const paymentMethod = selectedOption.base;
+  const paymentMethod = "EXIMBAY" as const;
 
   const onOpenPaymentWindow = useCallback(async () => {
     if (!payParams || paying) return;
@@ -375,6 +384,12 @@ export default function CheckoutPaymentCard(props: Props) {
       }
     }
   }, [user?.email, user?.name, user?.nationality, user?.phone]);
+
+  /** 통화에 맞게 국가(국적) 자동 설정: 진입 시·통화 변경 시 */
+  useEffect(() => {
+    const country = CURRENCY_TO_COUNTRY[currency];
+    if (country) setGuestNationality(country);
+  }, [currency]);
 
   useEffect(() => {
     setGuestDialCode(NATIONALITY_TO_DIAL_CODE[guestNationality] ?? "");
@@ -430,7 +445,7 @@ export default function CheckoutPaymentCard(props: Props) {
       });
 
       // 카카오페이는 KRW만 지원
-      const requestCurrency = paymentMethod === "KAKAOPAY" ? "KRW" : currency;
+      const requestCurrency = currency;
 
       const created = await apiClient.post<CreateBookingResponse>("/api/bookings", {
         listingId: props.listingId,
@@ -446,6 +461,7 @@ export default function CheckoutPaymentCard(props: Props) {
         currency: requestCurrency,
         paymentMethod,
         isNonRefundableSpecial: props.isNonRefundableSpecial ?? false,
+        ...(frozenTotalKrw != null && frozenTotalKrw > 0 ? { totalKrw: frozenTotalKrw } : {}),
       });
 
       const paymentProvider = (process.env.NEXT_PUBLIC_PAYMENT_PROVIDER || "MOCK").toUpperCase();
@@ -471,7 +487,6 @@ export default function CheckoutPaymentCard(props: Props) {
           currency: created.portone.currency,
           redirectUrl: created.portone.redirectUrl,
           forceRedirect: created.portone.forceRedirect,
-          paymentMethod,
           guestName: guestName.trim() || user?.name || c.guestFallback,
           guestEmail,
         };
@@ -524,7 +539,7 @@ export default function CheckoutPaymentCard(props: Props) {
           </span>
         )}
       </label>
-      <div className="mt-3 space-y-2">
+      <div className="mt-3 grid grid-cols-1 sm:grid-cols-2 gap-2">
         {paymentOptions.map((opt) => (
           <button
             key={opt.id}
@@ -538,15 +553,17 @@ export default function CheckoutPaymentCard(props: Props) {
           >
             <div className="flex min-w-0 flex-1 flex-col items-start gap-0.5">
               <span className="font-medium">{opt.label}</span>
-              <span className="text-[11px] text-neutral-500">{opt.sub}</span>
+              {opt.sub && <span className="text-[11px] text-neutral-500">{opt.sub}</span>}
             </div>
             <div className="shrink-0">
               {opt.id === "CARD" && <CardBrandLogos />}
               {opt.id === "PAYPAL" && <PayPalLogo />}
-              {opt.id === "LINEPAY" && <LinePayLogo />}
               {opt.id === "ALIPAYHK" && <AlipayHKLogo />}
-              {opt.id === "PROMPTPAY" && <PromptPayLogo />}
-              {opt.id === "KAKAOPAY" && <KakaoPayLogo />}
+              {opt.id === "TNG" && <TouchNGoLogo />}
+              {opt.id === "DANA" && <DanaLogo />}
+              {opt.id === "GCASH" && <GCashLogo />}
+              {opt.id === "PAYPAY" && <PayPayLogo />}
+              {opt.id === "ECONTEXT" && <EcontextLogo />}
             </div>
           </button>
         ))}
@@ -595,21 +612,10 @@ export default function CheckoutPaymentCard(props: Props) {
           <p id="checkout-email-hint" className="mt-0.5 text-[11px] text-neutral-400">{c.emailHint}</p>
         </div>
         <div className="rounded-xl border border-neutral-200 px-3 py-2">
-          <label className="flex cursor-pointer items-start gap-2">
-            <input
-              type="checkbox"
-              checked={privacyConsent}
-              onChange={(e) => setPrivacyConsent(e.target.checked)}
-              className="mt-0.5 shrink-0 rounded border-neutral-300"
-            />
-            <span className="text-xs font-semibold text-neutral-500">{c.privacyConsent}</span>
-          </label>
-        </div>
-        <div className="rounded-xl border border-neutral-200 px-3 py-2">
           <label className="text-xs font-semibold text-neutral-500">{c.phone}</label>
           <div className="mt-1 flex items-center gap-1 rounded-lg border border-transparent bg-transparent">
             <span className="shrink-0 text-sm text-neutral-500 tabular-nums">
-              {guestDialCode || (lang === "ko" ? "국가 선택 시 자동" : lang === "ja" ? "国選択で自動" : lang === "zh" ? "选国家后自动" : "Auto when country selected")}
+              {guestDialCode || (lang === "ko" ? "국가 선택 시 자동" : lang === "ja" ? "国選択で自動" : lang === "zh" ? "選國家後自動" : "Auto when country selected")}
             </span>
             <input
               value={guestPhoneLocal}
@@ -631,26 +637,39 @@ export default function CheckoutPaymentCard(props: Props) {
         </div>
       </div>
       <p className="mt-3 text-xs text-neutral-500">* {c.disclaimer}</p>
-      {!canPay && !paying && (
+      {!canPay && !paying && !guestEmail.includes("@") && (
+        <p className="mt-3 text-xs text-amber-600">{c.enterEmail}</p>
+      )}
+      {!canPay && !paying && guestEmail.includes("@") && guestName.trim().length < 1 && (
+        <p className="mt-3 text-xs text-amber-600">{c.enterName}</p>
+      )}
+      {!canPay && !paying && guestEmail.includes("@") && guestName.trim().length >= 1 && !guestNationality.trim() && (
+        <p className="mt-3 text-xs text-amber-600">{c.selectCountry}</p>
+      )}
+      {!canPay && !paying && guestEmail.includes("@") && guestName.trim().length >= 1 && guestNationality.trim() && privacyConsent && (
         <p className="mt-3 text-xs text-amber-600">
-          {!guestEmail.includes("@")
-            ? c.enterEmail
-            : guestName.trim().length < 1
-              ? c.enterName
-              : !guestNationality.trim()
-                ? c.selectCountry
-                : !privacyConsent
-                  ? c.consentRequired
-                  : lang === "ko"
-                    ? "일정을 선택한 뒤 예약하기로 체크아웃에 진입해 주세요."
-                    : "Select dates and use Reserve to reach checkout."}
+          {lang === "ko" ? "일정을 선택한 뒤 예약하기로 체크아웃에 진입해 주세요." : "Select dates and use Reserve to reach checkout."}
         </p>
+      )}
+      <div className="mt-4 rounded-xl border border-neutral-200 px-3 py-2">
+        <label className="flex cursor-pointer items-start gap-2">
+          <input
+            type="checkbox"
+            checked={privacyConsent}
+            onChange={(e) => setPrivacyConsent(e.target.checked)}
+            className="mt-0.5 shrink-0 rounded border-neutral-300"
+          />
+          <span className="text-xs font-semibold text-neutral-500">{c.privacyConsent}</span>
+        </label>
+      </div>
+      {!privacyConsent && (
+        <p className="mt-2 text-xs text-amber-600">{c.consentRequired}</p>
       )}
       <button
         type="button"
         onClick={onPayNow}
         disabled={paying}
-        className="mt-4 w-full rounded-xl bg-brand px-4 py-3 text-sm font-semibold text-brand-foreground hover:bg-neutral-900 hover:text-white disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+        className="mt-3 w-full rounded-xl bg-brand px-4 py-3 text-sm font-semibold text-brand-foreground hover:bg-neutral-900 hover:text-white disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
       >
         {paying ? c.processing : c.payNow}
       </button>
@@ -658,7 +677,16 @@ export default function CheckoutPaymentCard(props: Props) {
   );
 
   if (props.summary) {
-    const sum = props.summary;
+    const base = props.summary;
+    const sum =
+      frozenTotalKrw != null && frozenTotalKrw > 0
+        ? {
+            ...base,
+            baseTotal: Math.round(frozenTotalKrw / 1.132),
+            fee: frozenTotalKrw - Math.round(frozenTotalKrw / 1.132),
+            total: frozenTotalKrw,
+          }
+        : base;
     return (
       <div className="mt-6 grid gap-6 lg:grid-cols-[1fr_1fr] lg:items-start">
         <div className="space-y-6 min-w-0">
@@ -671,14 +699,14 @@ export default function CheckoutPaymentCard(props: Props) {
               <div className="mt-3 sm:mt-4 rounded-xl border border-amber-200 bg-gradient-to-br from-amber-50 to-amber-50/50 px-3 py-3 sm:px-4 sm:py-3.5">
                 <div className="flex flex-wrap items-center gap-2">
                   <span className="font-bold text-amber-900 text-sm sm:text-base">
-                    {lang === "ko" ? "할인 특가 적용" : lang === "ja" ? "割引特価適用" : lang === "zh" ? "已享特价优惠" : "Discount rate applied"}
+                    {lang === "ko" ? "할인 특가 적용" : lang === "ja" ? "割引特価適用" : lang === "zh" ? "已享特價優惠" : "Discount rate applied"}
                   </span>
                   <span className="rounded-full bg-amber-200/80 px-2 py-0.5 text-[10px] sm:text-xs font-semibold text-amber-900">
                     {lang === "ko" ? "10% 할인" : lang === "ja" ? "10%OFF" : lang === "zh" ? "9折" : "10% off"}
                   </span>
                 </div>
                 <p className="mt-1.5 text-[11px] sm:text-xs text-amber-700/90">
-                  {lang === "ko" ? "예약 후 24시간 지나면 취소 시 환불 불가" : lang === "ja" ? "予約から24時間経過後のキャンセルは返金不可" : lang === "zh" ? "预订超过24小时后取消不可退款" : "No refund after 24 hours from booking"}
+                  {lang === "ko" ? "예약 후 24시간 지나면 취소 시 환불 불가" : lang === "ja" ? "予約から24時間経過後のキャンセルは返金不可" : lang === "zh" ? "預訂超過24小時後取消不可退款" : "No refund after 24 hours from booking"}
                 </p>
               </div>
             )}
@@ -714,18 +742,18 @@ export default function CheckoutPaymentCard(props: Props) {
               onMouseDown={(e) => e.stopPropagation()}
             >
               <p className="text-center text-sm font-medium text-neutral-800">
-                {lang === "ko" ? "결제 진행" : lang === "ja" ? "決済を進める" : lang === "zh" ? "继续支付" : "Proceed to payment"}
+                {lang === "ko" ? "결제 진행" : lang === "ja" ? "決済を進める" : lang === "zh" ? "繼續支付" : "Proceed to payment"}
               </p>
               {payModalError && (
                 <div className="mt-3 space-y-1 rounded-lg bg-amber-50 px-3 py-2 text-center text-sm text-amber-800">
                   <p>{payModalError}</p>
                   <a href={payParams ? `/checkout/pay?token=${encodeURIComponent(payParams.paymentId)}` : "#"} target="_blank" rel="noopener noreferrer" className="inline-block text-brand underline hover:no-underline">
-                    {lang === "ko" ? "팝업이 차단된 경우 새 탭에서 결제 시도" : lang === "ja" ? "ポップアップがブロックされた場合は新しいタブでお支払い" : lang === "zh" ? "若弹窗被拦截，请在新标签页中完成支付" : "Try payment in new tab (if popup blocked)"}
+                    {lang === "ko" ? "팝업이 차단된 경우 새 탭에서 결제 시도" : lang === "ja" ? "ポップアップがブロックされた場合は新しいタブでお支払い" : lang === "zh" ? "若彈窗被攔截，請在新分頁中完成支付" : "Try payment in new tab (if popup blocked)"}
                   </a>
                 </div>
               )}
               <button type="button" onClick={onOpenPaymentWindow} disabled={paying} className="mt-4 w-full rounded-xl bg-brand px-4 py-3 text-sm font-semibold text-brand-foreground hover:opacity-95 disabled:opacity-50">
-                {paying ? (lang === "ko" ? "열림..." : lang === "ja" ? "開いています..." : lang === "zh" ? "正在打开…" : "Opening...") : lang === "ko" ? "결제창 열기" : lang === "ja" ? "決済画面を開く" : lang === "zh" ? "打开支付窗口" : "Open payment window"}
+                {paying ? (lang === "ko" ? "열림..." : lang === "ja" ? "開いています..." : lang === "zh" ? "正在開啟…" : "Opening...") : lang === "ko" ? "결제창 열기" : lang === "ja" ? "決済画面を開く" : lang === "zh" ? "開啟支付視窗" : "Open payment window"}
               </button>
               <button type="button" onClick={() => { setPayModalOpen(false); setPayParams(null); setPayModalError(null); }} className="mt-2 w-full rounded-xl border border-neutral-200 py-2.5 text-sm font-medium text-neutral-600 hover:bg-neutral-50">
                 {lang === "ko" ? "취소" : lang === "ja" ? "キャンセル" : lang === "zh" ? "取消" : "Cancel"}
@@ -767,12 +795,6 @@ export default function CheckoutPaymentCard(props: Props) {
           <p id="checkout-email-hint" className="mt-0.5 text-[11px] text-neutral-400">{c.emailHint}</p>
         </div>
         <div className="rounded-xl border border-neutral-200 px-3 py-2">
-          <label className="flex cursor-pointer items-start gap-2">
-            <input type="checkbox" checked={privacyConsent} onChange={(e) => setPrivacyConsent(e.target.checked)} className="mt-0.5 shrink-0 rounded border-neutral-300" />
-            <span className="text-xs font-semibold text-neutral-500">{c.privacyConsent}</span>
-          </label>
-        </div>
-        <div className="rounded-xl border border-neutral-200 px-3 py-2">
           <label className="text-xs font-semibold text-neutral-500">{c.phone}</label>
           <div className="mt-1 flex items-center gap-1">
             <span className="shrink-0 text-sm text-neutral-500 tabular-nums">{guestDialCode || "—"}</span>
@@ -785,12 +807,30 @@ export default function CheckoutPaymentCard(props: Props) {
         </div>
       </div>
       <p className="mt-3 text-xs text-neutral-500">* {c.disclaimer}</p>
-      {!canPay && !paying && (
+      {!canPay && !paying && !guestEmail.includes("@") && (
+        <p className="mt-3 text-xs text-amber-600">{c.enterEmail}</p>
+      )}
+      {!canPay && !paying && guestEmail.includes("@") && guestName.trim().length < 1 && (
+        <p className="mt-3 text-xs text-amber-600">{c.enterName}</p>
+      )}
+      {!canPay && !paying && guestEmail.includes("@") && guestName.trim().length >= 1 && !guestNationality.trim() && (
+        <p className="mt-3 text-xs text-amber-600">{c.selectCountry}</p>
+      )}
+      {!canPay && !paying && guestEmail.includes("@") && guestName.trim().length >= 1 && guestNationality.trim() && privacyConsent && (
         <p className="mt-3 text-xs text-amber-600">
-          {!guestEmail.includes("@") ? c.enterEmail : guestName.trim().length < 1 ? c.enterName : !guestNationality.trim() ? c.selectCountry : !privacyConsent ? c.consentRequired : lang === "ko" ? "일정을 선택한 뒤 예약하기로 체크아웃에 진입해 주세요." : "Select dates and use Reserve to reach checkout."}
+          {lang === "ko" ? "일정을 선택한 뒤 예약하기로 체크아웃에 진입해 주세요." : "Select dates and use Reserve to reach checkout."}
         </p>
       )}
-      <button type="button" onClick={onPayNow} disabled={paying} className="mt-4 w-full rounded-xl bg-brand px-4 py-3 text-sm font-semibold text-brand-foreground hover:bg-neutral-900 hover:text-white disabled:opacity-50 disabled:cursor-not-allowed transition-colors">
+      <div className="mt-4 rounded-xl border border-neutral-200 px-3 py-2">
+        <label className="flex cursor-pointer items-start gap-2">
+          <input type="checkbox" checked={privacyConsent} onChange={(e) => setPrivacyConsent(e.target.checked)} className="mt-0.5 shrink-0 rounded border-neutral-300" />
+          <span className="text-xs font-semibold text-neutral-500">{c.privacyConsent}</span>
+        </label>
+      </div>
+      {!privacyConsent && (
+        <p className="mt-2 text-xs text-amber-600">{c.consentRequired}</p>
+      )}
+      <button type="button" onClick={onPayNow} disabled={paying} className="mt-3 w-full rounded-xl bg-brand px-4 py-3 text-sm font-semibold text-brand-foreground hover:bg-neutral-900 hover:text-white disabled:opacity-50 disabled:cursor-not-allowed transition-colors">
         {paying ? c.processing : c.payNow}
       </button>
 
@@ -848,7 +888,7 @@ export default function CheckoutPaymentCard(props: Props) {
                 className="mt-4 w-full rounded-xl bg-brand px-4 py-3 text-sm font-semibold text-brand-foreground hover:opacity-95 disabled:opacity-50"
               >
                 {paying
-                  ? (lang === "ko" ? "열림..." : lang === "ja" ? "開いています..." : lang === "zh" ? "正在打开…" : "Opening...")
+                  ? (lang === "ko" ? "열림..." : lang === "ja" ? "開いています..." : lang === "zh" ? "正在開啟…" : "Opening...")
                   : lang === "ko"
                     ? "결제창 열기"
                     : lang === "ja"

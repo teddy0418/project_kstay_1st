@@ -20,6 +20,12 @@ export type CheckoutSessionPayload = {
   paymentProvider: PaymentProvider;
   paymentStoreId: string | null;
   paymentAmountKrw?: number | null;
+  /** 실제 결제 통화 (USD | KRW | JPY). 영수증/인보이스 표시용 */
+  paymentCurrency?: string | null;
+  /** 결제 금액: USD=센트, KRW/JPY=정수 */
+  paymentAmount?: number | null;
+  /** 게스트 요청 표시 통화 (TWD, JPY 등) */
+  currency?: string | null;
   isNonRefundableSpecial?: boolean;
   cancellationPolicyVersion?: string | null;
   policyTextLocale?: string | null;
@@ -139,9 +145,11 @@ export async function createBookingFromCheckoutSession(
         guestsChildren: p.guestsChildren,
         guestsInfants: p.guestsInfants,
         guestsPets: p.guestsPets,
-        currency: "USD",
+        currency: (p.currency ?? "USD").slice(0, 10),
         totalUsd: p.totalUsd,
         totalKrw: p.totalKrw,
+        paymentCurrency: p.paymentCurrency ?? null,
+        paymentAmount: p.paymentAmount ?? null,
         accommodationKrw: p.accommodationKrw ?? null,
         guestServiceFeeKrw: p.guestServiceFeeKrw ?? null,
         cancellationDeadlineKst,

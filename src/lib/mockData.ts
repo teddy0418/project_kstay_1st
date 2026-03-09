@@ -48,7 +48,7 @@ export const listings: Listing[] = [
     hostBioI18n: {
       ko: "서울 로컬 호스트입니다. 명확한 체크인 가이드와 간단한 하우스 룰을 제공합니다.",
       ja: "ソウル在住ホストです。分かりやすいチェックイン案内とシンプルなハウスルールをご用意しています。",
-      zh: "首尔本地房东，提供清晰的入住指引和简洁的房屋规则。"
+      zh: "首爾本地房東，提供清晰的入住指引與簡潔的房屋規則。"
     },
     hostProfileImageUrl: "https://images.unsplash.com/photo-1524504388940-b1c1722653e1?auto=format&fit=crop&w=800&q=80",
     checkInTime: "15:00",
@@ -75,7 +75,7 @@ export const listings: Listing[] = [
     hostBioI18n: {
       ko: "해외 게스트도 쉽게 이용할 수 있도록 상세 안내를 제공하는 조용한 한옥 숙소입니다.",
       ja: "海外ゲスト向けの詳細案内がある、静かな韓屋ステイです。",
-      zh: "安静的韩屋住宿，并为国际旅客提供详细入住说明。"
+      zh: "安靜的韓屋住宿，並為國際旅客提供詳細入住說明。"
     },
     hostProfileImageUrl: "https://images.unsplash.com/photo-1544723795-3fb6469f5b39?auto=format&fit=crop&w=800&q=80",
     checkInTime: "15:00",
@@ -102,7 +102,7 @@ export const listings: Listing[] = [
     hostBioI18n: {
       ko: "부산 로컬 호스트로 빠른 응답과 쉬운 체크인을 제공합니다.",
       ja: "釜山ローカルホスト。返信が早く、チェックインも簡単です。",
-      zh: "釜山本地房东，回复及时，入住流程简单。"
+      zh: "釜山本地房東，回覆及時，入住流程簡單。"
     },
     hostProfileImageUrl: "https://images.unsplash.com/photo-1544005313-94ddf0286df2?auto=format&fit=crop&w=800&q=80",
     checkInTime: "15:00",
@@ -129,7 +129,7 @@ export const listings: Listing[] = [
     hostBioI18n: {
       ko: "제주의 느리고 평화로운 분위기를 담은 숙소로, 명확한 영어 안내를 제공합니다.",
       ja: "済州のゆったりした空気を感じられる宿で、英語案内も分かりやすいです。",
-      zh: "济州风格的慢节奏宁静住宿，并提供清晰的英文引导。"
+      zh: "濟州風格的慢節奏寧靜住宿，並提供清晰的英文引導。"
     },
     hostProfileImageUrl: "https://images.unsplash.com/photo-1502685104226-ee32379fefbe?auto=format&fit=crop&w=800&q=80",
     checkInTime: "15:00",
@@ -156,7 +156,7 @@ export const listings: Listing[] = [
     hostBioI18n: {
       ko: "공항 접근이 좋아 늦은 도착에도 빠르게 체크인할 수 있는 숙소입니다.",
       ja: "空港アクセスに優れ、深夜到着でもスムーズにチェックインできます。",
-      zh: "靠近机场，适合晚到旅客，可快速办理入住。"
+      zh: "靠近機場，適合晚到旅客，可快速辦理入住。"
     },
     hostProfileImageUrl: "https://images.unsplash.com/photo-1535713875002-d1d0cf377fde?auto=format&fit=crop&w=800&q=80",
     checkInTime: "15:00",

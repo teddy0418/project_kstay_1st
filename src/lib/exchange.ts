@@ -1,17 +1,19 @@
 /**
  * Frankfurter API - 무인증 환율 API
- * https://www.frankfurter.app/docs/
- * KRW → USD, JPY, CNY 등 변환
+ * KRW → 엑심베이 DCC 12개국 통화 등 변환
  */
 import type { Currency } from "@/lib/currency";
+import { KRW_PER } from "@/lib/currency";
 
 const CACHE_TTL_MS = 60 * 60 * 1000; // 1시간
 let cached: { rates: Record<string, number>; ts: number } | null = null;
 
 export type ExchangeRates = { KRW: 1; [k: string]: number };
 
+const EXCHANGE_TO = "USD,JPY,SGD,HKD,THB,TWD,MYR,VND,PHP,EUR,GBP,AUD,IDR";
+
 async function fetchRates(): Promise<Record<string, number>> {
-  const url = "https://api.frankfurter.app/latest?from=KRW&to=USD,JPY,CNY";
+  const url = `https://api.frankfurter.app/latest?from=KRW&to=${EXCHANGE_TO}`;
   const res = await fetch(url, { next: { revalidate: 3600 } });
   if (!res.ok) throw new Error("Exchange API error");
   const json = await res.json();
@@ -22,6 +24,16 @@ async function fetchRates(): Promise<Record<string, number>> {
     }
   }
   return rates;
+}
+
+/** KRW_PER 역수 = 1 KRW당 해당 통화 (fallback) */
+function fallbackRates(): Record<string, number> {
+  const out: Record<string, number> = { KRW: 1 };
+  for (const [code, per] of Object.entries(KRW_PER)) {
+    if (code === "KRW") continue;
+    out[code] = 1 / per;
+  }
+  return out;
 }
 
 /**
@@ -37,13 +49,7 @@ export async function getExchangeRates(): Promise<ExchangeRates> {
     cached = { rates, ts: now };
     return { KRW: 1, ...rates } as ExchangeRates;
   } catch {
-    // fallback 정적 환율
-    return {
-      KRW: 1,
-      USD: 0.00074,
-      JPY: 0.11,
-      CNY: 0.0054,
-    } as ExchangeRates;
+    return { KRW: 1, ...fallbackRates() } as ExchangeRates;
   }
 }
 

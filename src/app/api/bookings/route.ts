@@ -21,6 +21,7 @@ import {
 import { getExchangeRates } from "@/lib/exchange";
 import { calcGuestPriceBreakdownKRW, NON_REFUNDABLE_DISCOUNT_RATE } from "@/lib/policy";
 import type { Listing } from "@/types";
+import type { Currency } from "@/lib/currency";
 
 type CreateBookingResponse = {
   token: string;
@@ -31,11 +32,18 @@ type CreateBookingResponse = {
     paymentId: string;
     orderName: string;
     totalAmount: number;
-    currency: "USD" | "KRW" | "JPY" | "CNY";
+    currency: "USD" | "KRW" | "JPY";
     redirectUrl: string;
     forceRedirect: true;
   };
 };
+
+/** 엑심베이/PortOne 결제 요청 시 지원 통화만 전달 (나머지는 USD) */
+function toPortoneCurrency(c: Currency): "USD" | "KRW" | "JPY" {
+  if (c === "KRW") return "KRW";
+  if (c === "JPY") return "JPY";
+  return "USD";
+}
 
 function toListingForTrip(row: {
   id: string;
@@ -173,8 +181,18 @@ export async function POST(req: Request) {
       ? Math.round(baseBeforeDiscount * (1 - NON_REFUNDABLE_DISCOUNT_RATE))
       : baseBeforeDiscount;
 
-    const { base: accommodationKrw, serviceFeeGross: guestServiceFeeKrw, total: totalKrw } =
-      calcGuestPriceBreakdownKRW(baseKrw);
+    const calculated = calcGuestPriceBreakdownKRW(baseKrw);
+    let totalKrw = calculated.total;
+    let accommodationKrw = calculated.base;
+    let guestServiceFeeKrw = calculated.serviceFeeGross;
+    if (typeof body.totalKrw === "number" && body.totalKrw > 0) {
+      const diff = Math.abs(body.totalKrw - calculated.total) / calculated.total;
+      if (diff <= 0.02) {
+        totalKrw = Math.round(body.totalKrw);
+        accommodationKrw = Math.round(totalKrw / (1 + 0.132));
+        guestServiceFeeKrw = totalKrw - accommodationKrw;
+      }
+    }
     const totalUsd = Math.max(1, Math.round(totalKrw / 13));
 
     const nowMs = Date.now();
@@ -190,7 +208,39 @@ export async function POST(req: Request) {
 
     const publicToken = randomUUID().replace(/-/g, "");
 
-    const requestedCurrency = (body.currency ?? "KRW") as "USD" | "KRW" | "JPY" | "CNY";
+    /** 엑심베이 가이드라인: 결제 요청 currency는 USD 기본 권장(엑심베이 공통 지원). DCC 활성화 시 게스트 통화 전달 가능 */
+    const requestedCurrency = (body.currency ?? "USD") as Currency;
+    let paymentCurrency: "USD" | "KRW" | "JPY" = "USD";
+    let paymentAmount: number = totalKrw;
+    if (providerMode === "PORTONE") {
+      let bookingCurrency = requestedCurrency;
+      let totalAmount = totalKrw;
+      const rates: Record<string, number> = { KRW: 1 };
+      try {
+        const r = await getExchangeRates();
+        Object.assign(rates, r);
+        const rate = rates[bookingCurrency];
+        if (rate != null && rate > 0 && bookingCurrency !== "KRW") {
+          totalAmount = Math.round(totalKrw * rate);
+        } else {
+          bookingCurrency = "KRW";
+          totalAmount = totalKrw;
+        }
+      } catch {
+        bookingCurrency = "KRW";
+        totalAmount = totalKrw;
+      }
+      paymentCurrency = toPortoneCurrency(bookingCurrency as Currency);
+      if (paymentCurrency !== bookingCurrency) {
+        const rate = rates[paymentCurrency];
+        if (rate != null && rate > 0) paymentAmount = Math.round(totalKrw * rate);
+        else paymentAmount = paymentCurrency === "KRW" ? totalKrw : totalAmount;
+      } else {
+        paymentAmount = totalAmount;
+      }
+      if (paymentCurrency === "USD") paymentAmount = Math.round(paymentAmount * 100);
+    }
+
     const sessionPayload = {
       guestUserId: sessionUser.id,
       guestEmail,
@@ -210,6 +260,9 @@ export async function POST(req: Request) {
       paymentStoreId: process.env.PORTONE_STORE_ID ?? null,
       paymentAmountKrw:
         providerMode === "PORTONE" && requestedCurrency === "KRW" ? totalKrw : null,
+      paymentCurrency: providerMode === "PORTONE" ? paymentCurrency : null,
+      paymentAmount: providerMode === "PORTONE" ? paymentAmount : null,
+      currency: requestedCurrency,
       isNonRefundableSpecial,
       cancellationPolicyVersion: snapshot.cancellationPolicyVersion,
       policyTextLocale: body.policyTextLocale ?? "en",
@@ -233,14 +286,12 @@ export async function POST(req: Request) {
 
     if (providerMode === "PORTONE") {
       const storeId = String(process.env.PORTONE_STORE_ID ?? "").trim();
-      const paymentMethod = (body.paymentMethod ?? "KAKAOPAY") as "KAKAOPAY" | "PAYPAL" | "EXIMBAY";
       const channelKey = String(
-        paymentMethod === "PAYPAL"
-          ? process.env.PORTONE_CHANNEL_KEY_PAYPAL
-          : paymentMethod === "EXIMBAY"
-            ? process.env.PORTONE_CHANNEL_KEY_PAYMENTWALL ?? process.env.PORTONE_CHANNEL_KEY_EXIMBAY
-            : process.env.PORTONE_CHANNEL_KEY_KAKAOPAY ?? ""
-      ).trim() || String(process.env.PORTONE_CHANNEL_KEY ?? "").trim();
+        process.env.PORTONE_CHANNEL_KEY_EXIMBAY ??
+        process.env.PORTONE_CHANNEL_KEY_PAYMENTWALL ??
+        process.env.PORTONE_CHANNEL_KEY ??
+        ""
+      ).trim();
 
       const siteUrl = String(
         process.env.NEXT_PUBLIC_SITE_URL || process.env.AUTH_URL || "http://localhost:3001"
@@ -250,52 +301,13 @@ export async function POST(req: Request) {
         return apiError(500, "INTERNAL_ERROR", "PortOne env is not configured");
       }
 
-      let bookingCurrency = requestedCurrency;
-      let totalAmount = totalKrw;
-
-      // 카카오페이는 KRW만 지원 — 통화/금액 고정
-      if (paymentMethod === "KAKAOPAY") {
-        bookingCurrency = "KRW";
-        totalAmount = totalKrw;
-      } else if (bookingCurrency !== "KRW") {
-        try {
-          const rates = await getExchangeRates();
-          const rate = rates[bookingCurrency];
-          if (rate != null && rate > 0) {
-            totalAmount = Math.round(totalKrw * rate);
-          } else {
-            bookingCurrency = "KRW";
-          }
-        } catch {
-          bookingCurrency = "KRW";
-        }
-      }
-
-      // PayPal은 KRW 미지원 — USD로 결제 요청
-      if (paymentMethod === "PAYPAL" && bookingCurrency === "KRW") {
-        try {
-          const rates = await getExchangeRates();
-          const usdRate = rates["USD"];
-          if (usdRate != null && usdRate > 0) {
-            totalAmount = Math.max(1, Math.round(totalKrw * usdRate));
-            bookingCurrency = "USD";
-          } else {
-            totalAmount = Math.max(1, Math.round(totalKrw / 1300));
-            bookingCurrency = "USD";
-          }
-        } catch {
-          totalAmount = Math.max(1, Math.round(totalKrw / 1300));
-          bookingCurrency = "USD";
-        }
-      }
-
       payload.portone = {
         storeId,
         channelKey,
         paymentId: publicToken,
         orderName: `${listing.title} (${nights} nights)`,
-        totalAmount,
-        currency: bookingCurrency,
+        totalAmount: paymentAmount,
+        currency: paymentCurrency,
         redirectUrl: `${siteUrl}/payment-redirect`,
         forceRedirect: true,
       };

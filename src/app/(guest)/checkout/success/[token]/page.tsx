@@ -15,7 +15,13 @@ type PublicBooking = {
   checkOutText: string;
   nights: number;
   guests: { adults: number; children: number; infants: number; pets: number };
-  totals: { usdText: string; krw: number };
+  totals: {
+    usdText: string;
+    krw: number;
+    paymentAmountFormatted: string | null;
+    approxLocalFormatted: string | null;
+    settlementDisclaimer: string | null;
+  };
   cancellationDeadlineKst: string;
 };
 
@@ -238,9 +244,18 @@ export default function CheckoutSuccessPage() {
           <div><strong>{c.bookingToken}:</strong> {booking.token}</div>
           <div><strong>{c.dates}:</strong> {booking.checkInText} - {booking.checkOutText} ({booking.nights} {c.nights})</div>
           <div><strong>{c.guests}:</strong> {guestsText}</div>
-          <div><strong>{c.total}:</strong> {booking.totals.usdText} / {formatKRWWithLocale(locale, booking.totals.krw)}</div>
+          <div>
+            <strong>{c.total}:</strong>{" "}
+            {booking.totals.paymentAmountFormatted ?? `${booking.totals.usdText} / ${formatKRWWithLocale(locale, booking.totals.krw)}`}
+            {booking.totals.approxLocalFormatted && (
+              <span className="block mt-0.5 text-neutral-500 font-normal">{booking.totals.approxLocalFormatted}</span>
+            )}
+          </div>
           <div><strong>{c.cancellation}:</strong> {booking.cancellationDeadlineKst}</div>
         </div>
+        {booking.totals.settlementDisclaimer && (
+          <p className="mt-4 text-xs text-neutral-500">{booking.totals.settlementDisclaimer}</p>
+        )}
       </section>
 
       <div className="mt-6 flex flex-wrap gap-3">

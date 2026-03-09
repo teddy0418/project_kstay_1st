@@ -166,21 +166,23 @@ export default function Header() {
                 <div className="h-px bg-neutral-200" />
 
                 <div className="px-4 py-3 text-xs font-semibold text-neutral-500">{t("currency").toUpperCase()}</div>
-                {supported.map((c) => (
-                  <button
-                    key={c}
-                    type="button"
-                    onClick={() => {
-                      setCurrency(c);
-                      toast(`Currency: ${c}`);
-                      setOpenLang(false);
-                    }}
-                    className="w-full text-left px-4 py-3 text-sm hover:bg-neutral-50 flex items-center justify-between"
-                  >
-                    <span>{c}</span>
-                    {currency === c && <CheckCircle2 className="h-4 w-4 text-brand" />}
-                  </button>
-                ))}
+                <div className="max-h-[200px] overflow-y-auto overscroll-contain">
+                  {supported.map((c) => (
+                    <button
+                      key={c}
+                      type="button"
+                      onClick={() => {
+                        setCurrency(c);
+                        toast(`Currency: ${c}`);
+                        setOpenLang(false);
+                      }}
+                      className="w-full text-left px-4 py-3 text-sm hover:bg-neutral-50 flex items-center justify-between"
+                    >
+                      <span>{c}</span>
+                      {currency === c && <CheckCircle2 className="h-4 w-4 text-brand" />}
+                    </button>
+                  ))}
+                </div>
               </div>
             )}
           </div>

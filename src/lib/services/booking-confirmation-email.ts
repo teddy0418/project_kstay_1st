@@ -1,5 +1,12 @@
 import React from "react";
-import { formatCancellationDeadlineKst, formatDateEn, formatUsdFromCents } from "@/lib/bookings/utils";
+import {
+  formatCancellationDeadlineKst,
+  formatDateEn,
+  formatUsdFromCents,
+  formatPaymentAmount,
+  formatApproxLocalFromKRW,
+  getSettlementDisclaimer,
+} from "@/lib/bookings/utils";
 import BookingConfirmedEmail from "@/emails/BookingConfirmedEmail";
 import { sendEmailWithResend } from "@/lib/email/resend";
 import {
@@ -56,6 +63,23 @@ export async function sendBookingConfirmedEmailIfNeeded(bookingId: string) {
       guestServiceFeeKrwFormatted: formatKrw(guestServiceFeeKrw),
       totalKrwFormatted: formatKrw(totalKrw),
       totalUsdFormatted: formatUsdFromCents(booking.totalUsd),
+      paymentAmountFormatted:
+        booking.paymentCurrency && booking.paymentAmount != null
+          ? formatPaymentAmount(
+              booking.paymentCurrency as "USD" | "KRW" | "JPY",
+              booking.paymentAmount
+            )
+          : null,
+      approxLocalFormatted:
+        booking.currency &&
+        booking.paymentCurrency &&
+        booking.currency !== booking.paymentCurrency
+          ? formatApproxLocalFromKRW(booking.totalKrw, booking.currency)
+          : null,
+      settlementDisclaimer:
+        booking.paymentCurrency != null
+          ? getSettlementDisclaimer(booking.paymentCurrency as "USD" | "KRW" | "JPY")
+          : null,
       cancellationDeadlineKst: formatCancellationDeadlineKst(booking.cancellationDeadlineKst),
       manageUrl: `${process.env.NEXT_PUBLIC_SITE_URL || process.env.AUTH_URL || "http://localhost:3001"}/profile`,
       checkInTime: listing.checkInTime ?? undefined,

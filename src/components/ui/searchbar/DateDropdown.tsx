@@ -4,7 +4,7 @@ import type { RefObject } from "react";
 import { createPortal } from "react-dom";
 import { DayPicker } from "react-day-picker";
 import type { DateRange } from "react-day-picker";
-import { enUS, ko, ja, zhCN } from "react-day-picker/locale";
+import { enUS, ko, ja, zhTW } from "react-day-picker/locale";
 import { Calendar, X } from "lucide-react";
 import { useCallback, useEffect, useLayoutEffect, useMemo, useRef, useState } from "react";
 import { useCurrency } from "@/components/ui/CurrencyProvider";
@@ -149,7 +149,7 @@ export default function DateDropdown({
   const dayPickerLocale = useMemo(() => {
     if (locale.startsWith("ko")) return ko;
     if (locale.startsWith("ja")) return ja;
-    if (locale.startsWith("zh")) return zhCN;
+    if (locale.startsWith("zh")) return zhTW;
     return enUS;
   }, [locale]);
   const [datePrices, setDatePrices] = useState<Record<string, number>>({});
