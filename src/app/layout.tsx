@@ -1,11 +1,19 @@
 import "./globals.css";
 import type { Metadata, Viewport } from "next";
 import Script from "next/script";
+import { Outfit } from "next/font/google";
 import { cookies, headers } from "next/headers";
 import Providers from "@/components/ui/Providers";
 import { geoCountryToLocale } from "@/lib/geo";
 import type { Currency } from "@/lib/currency";
 import { SUPPORTED_CURRENCIES } from "@/lib/currency";
+
+const outfit = Outfit({
+  weight: ["400", "500", "600", "700"],
+  subsets: ["latin"],
+  variable: "--font-ader",
+  display: "swap",
+});
 
 type Lang = "en" | "ko" | "ja" | "zh";
 
@@ -74,7 +82,7 @@ export default async function RootLayout({ children }: { children: React.ReactNo
   }
 
   return (
-    <html lang={initialLang} suppressHydrationWarning>
+    <html lang={initialLang} suppressHydrationWarning className={outfit.variable}>
       <body className="min-h-screen bg-white text-neutral-900 antialiased overflow-x-hidden">
         <Script
           src="https://cdn.portone.io/v2/browser-sdk.js"

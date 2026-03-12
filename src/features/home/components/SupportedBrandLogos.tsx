@@ -81,11 +81,11 @@ export default async function SupportedBrandLogos({ lang }: { lang: Lang }) {
   return (
     <section className="mt-4">
       <div className="rounded-2xl border border-neutral-200 bg-white px-4 py-3 shadow-sm">
-        <div className="text-xs font-semibold text-neutral-500 text-center">{LABEL[lang]}</div>
+        <div className="text-xs font-semibold text-[#E73587] text-center">{LABEL[lang]}</div>
         {/* 모바일: 두 줄 (위/아래), PC: 한 줄로 쭉 나열 */}
         <div className="mt-3">
           {/* 모바일 전용 2줄 배치 (결제 레이아웃 안에 딱 맞게 조금 줄인 크기) */}
-          <div className="flex flex-col gap-1.5 sm:hidden">
+          <div className="flex flex-col gap-1.5 xl:hidden">
             <div className="flex w-full items-center justify-center gap-2">
               {firstRow.map((x) => (
                 <div key={x.key} aria-label={x.label} title={x.label} className="flex items-center justify-center">
@@ -125,7 +125,7 @@ export default async function SupportedBrandLogos({ lang }: { lang: Lang }) {
           </div>
 
           {/* PC 이상: 모든 로고를 한 줄에서, 결제 레이아웃 안에 들어가도록 적당한 크기로 배치 */}
-          <div className="hidden sm:flex w-full items-center justify-center gap-6 md:gap-8">
+          <div className="hidden xl:flex w-full items-center justify-center gap-6 md:gap-8">
             {logos.map((x) => (
               <div key={x.key} aria-label={x.label} title={x.label} className="flex items-center justify-center">
                 <img

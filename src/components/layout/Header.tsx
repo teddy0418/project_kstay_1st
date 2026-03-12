@@ -57,6 +57,7 @@ export default function Header() {
 
   const isBoard = pathname.startsWith("/board");
   const activeIndex = isBoard ? 1 : 0;
+  const isHomeOrBoard = pathname === "/" || isBoard;
 
   const toRole = (r: string): "GUEST" | "HOST" | "ADMIN" =>
     r === "host" ? "HOST" : r === "admin" ? "ADMIN" : "GUEST";
@@ -81,16 +82,19 @@ export default function Header() {
   };
 
   return (
-    <header className="sticky top-0 z-[90] border-b border-neutral-200 bg-white/85 backdrop-blur supports-[backdrop-filter]:bg-white/60">
+    <header
+      className={cn(
+        "sticky top-0 z-[90] border-b border-neutral-200",
+        isHomeOrBoard
+          ? "border-transparent bg-transparent backdrop-blur-0 supports-[backdrop-filter]:bg-transparent"
+          : "bg-white/85 backdrop-blur supports-[backdrop-filter]:bg-white/60"
+      )}
+    >
       <Container className="relative flex h-[76px] items-center justify-between gap-3 md:flex-wrap">
         <Link href="/" className="flex items-center gap-2 shrink-0 z-10 md:z-auto" aria-label="KSTAY Home">
-          <div className="h-10 w-10 shrink-0 rounded-xl bg-white border border-neutral-200 text-[#D4AF37] grid place-items-center font-semibold text-lg">
-            K
-          </div>
-          <div className="hidden sm:block leading-tight">
-            <div className="text-sm font-semibold tracking-tight">KSTAY</div>
-            <div className="text-xs text-neutral-500">the best value for your k-stay</div>
-          </div>
+          {/* 가로형 텍스트 로고 (여기어때 스타일) */}
+          <span className="font-ader text-xl font-semibold text-[#E73587] tracking-tight sm:text-2xl">KSTAY</span>
+          <span className="hidden sm:inline text-xs text-neutral-500 ml-0.5">the best value for your k-stay</span>
         </Link>
 
         {/* 모바일: 화면 정중앙 고정 / 데스크톱: flex-1로 중앙 영역 */}
@@ -109,22 +113,46 @@ export default function Header() {
               href="/"
               className={cn(
                 "relative z-10 inline-flex items-center justify-center gap-1.5 sm:gap-2 rounded-full px-2 sm:px-4 py-2 text-xs sm:text-sm font-semibold transition-colors min-w-0 overflow-hidden",
-                activeIndex === 0 ? "text-white" : "text-neutral-700 hover:bg-neutral-50"
+                "hover:bg-neutral-50"
               )}
             >
-              <Home className="h-4 w-4 shrink-0" />
-              <span className="whitespace-nowrap">{t("stays")}</span>
+              <Home
+                className={cn(
+                  "h-4 w-4 shrink-0",
+                  activeIndex === 0 ? "text-[#E73587]" : "text-neutral-700"
+                )}
+              />
+              <span
+                className={cn(
+                  "whitespace-nowrap uppercase",
+                  activeIndex === 0 ? "text-white" : "text-neutral-700"
+                )}
+              >
+                {t("stays")}
+              </span>
             </Link>
 
             <Link
               href="/board"
               className={cn(
                 "relative z-10 inline-flex items-center justify-center gap-1.5 sm:gap-2 rounded-full px-2 sm:px-4 py-2 text-xs sm:text-sm font-semibold transition-colors min-w-0 overflow-hidden",
-                activeIndex === 1 ? "text-white" : "text-neutral-700 hover:bg-neutral-50"
+                "hover:bg-neutral-50"
               )}
             >
-              <MapPin className="h-4 w-4 shrink-0" />
-              <span className="whitespace-nowrap">{t("board")}</span>
+              <MapPin
+                className={cn(
+                  "h-4 w-4 shrink-0",
+                  activeIndex === 1 ? "text-[#E73587]" : "text-neutral-700"
+                )}
+              />
+              <span
+                className={cn(
+                  "whitespace-nowrap uppercase",
+                  activeIndex === 1 ? "text-white" : "text-neutral-700"
+                )}
+              >
+                {t("board")}
+              </span>
             </Link>
           </div>
         </div>
@@ -138,7 +166,7 @@ export default function Header() {
             <button
               type="button"
               onClick={() => setOpenLang((v) => !v)}
-              className="inline-flex h-10 w-10 items-center justify-center rounded-full hover:bg-neutral-100 transition"
+              className="inline-flex h-10 w-10 items-center justify-center rounded-full hover:bg-neutral-100 transition translate-x-[4px] md:translate-x-0"
               aria-label="Language & currency"
             >
               <Globe className="h-5 w-5" />
@@ -194,7 +222,7 @@ export default function Header() {
               className="inline-flex items-center gap-2 rounded-full border border-neutral-200 bg-white px-3 py-2 shadow-soft hover:shadow-elevated transition"
               aria-label="Menu"
             >
-              <Menu className="h-5 w-5" />
+              <Menu className="h-5 w-5 text-[#E73587]" />
               <span className="hidden sm:inline text-sm font-semibold">{t("menu")}</span>
             </button>
 

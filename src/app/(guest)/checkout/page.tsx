@@ -3,6 +3,7 @@ import { redirect } from "next/navigation";
 import { diffNights, addDays } from "@/lib/format";
 import { calcGuestServiceFeeKRW, NON_REFUNDABLE_DISCOUNT_RATE } from "@/lib/policy";
 import { getPublicListingById } from "@/lib/repositories/listings";
+import { getDateRangeTotalBaseKRW } from "@/lib/listing-date-prices";
 import CheckoutPaymentCard from "./CheckoutPaymentCard";
 import { getServerLang } from "@/lib/i18n/server";
 
@@ -100,8 +101,9 @@ export default async function CheckoutPage({
 
   const isNonRefundableSpecial =
     Boolean(listing.nonRefundableSpecialEnabled) && specialRequested;
-  const nights = diffNights(start, end);
-  const baseBeforeDiscount = listing.pricePerNightKRW * Math.max(1, nights);
+  const nights = Math.max(1, diffNights(start, end));
+  const baseBeforeDiscount = await getDateRangeTotalBaseKRW(listingId, start, end)
+    || listing.pricePerNightKRW * nights;
   const baseTotal = isNonRefundableSpecial
     ? Math.round(baseBeforeDiscount * (1 - NON_REFUNDABLE_DISCOUNT_RATE))
     : baseBeforeDiscount;

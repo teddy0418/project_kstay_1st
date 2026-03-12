@@ -13,9 +13,11 @@ export default function FloatingSearchWrapper() {
 
   if (!showSearch) return null;
   return (
-    <>
-      <HomeAdPanels />
-      <FloatingSearch />
-    </>
+    <div className="relative">
+      <div className="relative z-10">
+        <HomeAdPanels />
+        <FloatingSearch />
+      </div>
+    </div>
   );
 }

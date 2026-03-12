@@ -166,6 +166,21 @@ export default function LanguageProvider({
 
 export function useI18n() {
   const ctx = useContext(LanguageContext);
-  if (!ctx) throw new Error("useI18n must be used within <LanguageProvider/>");
-  return ctx;
+  if (ctx) return ctx;
+
+  if (process.env.NODE_ENV !== "production") {
+    // Don't hard-crash SSR/CSR if a provider boundary is missing.
+    // This can happen during route-level RSC boundaries or transient dev errors.
+    // eslint-disable-next-line no-console
+    console.warn("[i18n] useI18n called without <LanguageProvider/>; falling back to defaults");
+  }
+
+  return {
+    lang: DEFAULT_LANG,
+    setLang: () => {},
+    t: (key: string) => DEFAULT_DICT[key] ?? key,
+    options: OPTIONS,
+    languages: OPTIONS.map((o) => ({ code: o.code, label: o.label, nativeLabel: o.nativeLabel })),
+    locale: localeOf(DEFAULT_LANG),
+  } satisfies Ctx;
 }

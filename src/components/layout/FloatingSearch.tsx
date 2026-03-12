@@ -6,7 +6,7 @@ import Container from "@/components/layout/Container";
 
 export default function FloatingSearch() {
   return (
-    <div className="relative z-40 mt-3">
+    <div className="relative z-40 mt-4 md:mt-2 lg:mt-4">
       <Container>
         <Suspense fallback={<div className="h-14 rounded-2xl bg-neutral-100 animate-pulse" />}>
           <SearchBar />

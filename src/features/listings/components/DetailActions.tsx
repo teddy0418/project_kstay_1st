@@ -45,11 +45,11 @@ export default function DetailActions(props: Record<string, unknown>) {
       <button
         type="button"
         onClick={onToggle}
-        className="inline-flex h-10 w-10 items-center justify-center rounded-full border border-neutral-200 bg-white shadow-sm hover:shadow-md transition"
+        className="group/heart inline-flex h-10 w-10 items-center justify-center rounded-full border border-neutral-200 bg-white shadow-sm hover:shadow-md transition"
         aria-label={t("wishlist")}
         title={liked ? t("remove_wishlist") : t("add_wishlist")}
       >
-        <Heart className={liked ? "h-5 w-5 fill-red-500 text-red-500" : "h-5 w-5"} />
+        <Heart className={liked ? "h-5 w-5 fill-[#E73587] text-[#E73587]" : "h-5 w-5 group-hover/heart:fill-[#E73587] group-hover/heart:text-[#E73587] transition-colors"} />
       </button>
 
       <button

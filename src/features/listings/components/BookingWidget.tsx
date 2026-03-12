@@ -350,7 +350,7 @@ export default function BookingWidget({
         onClick={reserve}
         disabled={overlapsDisabled}
         title={overlapsDisabled ? t("dates_unavailable") : undefined}
-        className="booking-widget-reserve-btn mt-4 w-full rounded-full bg-neutral-900 py-3 text-sm font-semibold text-white hover:opacity-95 transition disabled:opacity-50 disabled:cursor-not-allowed"
+        className="booking-widget-reserve-btn mt-4 w-full rounded-full bg-neutral-900 py-3 text-sm font-semibold text-[#E73587] hover:opacity-95 transition disabled:opacity-50 disabled:cursor-not-allowed"
       >
         {c.reserve}
       </button>

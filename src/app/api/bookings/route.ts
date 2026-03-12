@@ -19,6 +19,7 @@ import {
   findPastStaysByGuestUserId,
 } from "@/lib/repositories/bookings";
 import { getExchangeRates } from "@/lib/exchange";
+import { getDateRangeTotalBaseKRW } from "@/lib/listing-date-prices";
 import { calcGuestPriceBreakdownKRW, NON_REFUNDABLE_DISCOUNT_RATE } from "@/lib/policy";
 import type { Listing } from "@/types";
 import type { Currency } from "@/lib/currency";
@@ -176,7 +177,9 @@ export async function POST(req: Request) {
 
     const isNonRefundableSpecial =
       Boolean(listing.nonRefundableSpecialEnabled) && Boolean(body.isNonRefundableSpecial);
-    const baseBeforeDiscount = listing.basePriceKrw * nights;
+    const baseBeforeDiscount =
+      (await getDateRangeTotalBaseKRW(listingId, body.checkIn, body.checkOut)) ||
+      listing.basePriceKrw * nights;
     const baseKrw = isNonRefundableSpecial
       ? Math.round(baseBeforeDiscount * (1 - NON_REFUNDABLE_DISCOUNT_RATE))
       : baseBeforeDiscount;

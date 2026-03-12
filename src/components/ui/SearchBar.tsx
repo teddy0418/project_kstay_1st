@@ -180,7 +180,7 @@ export default function SearchBar() {
     "w-full sm:w-auto flex-1 rounded-2xl sm:rounded-full px-4 py-2.5 sm:py-3 text-left text-sm font-semibold text-neutral-900 transition hover:bg-neutral-50 focus:outline-none focus:ring-2 focus:ring-neutral-200";
 
   const dividerV = <div className="hidden sm:block h-8 w-px bg-neutral-200" />;
-  const dividerH = <div className="sm:hidden h-px bg-neutral-200" />;
+  const dividerH = <div className="sm:hidden mx-4 h-0.5 rounded-full bg-neutral-200" />;
 
   return (
     <div ref={wrapRef} className="mx-auto w-full max-w-screen-xl px-4 relative">
@@ -223,7 +223,7 @@ export default function SearchBar() {
               onClick={runSearch}
               className="w-full sm:w-12 h-10 sm:h-12 inline-flex items-center justify-center gap-2 rounded-full bg-neutral-900 text-white hover:opacity-95 transition"
             >
-              <Search className="h-5 w-5" />
+              <Search className="h-5 w-5 text-[#E73587]" />
               <span className="sm:hidden text-sm font-semibold">{t("search")}</span>
             </button>
           </div>

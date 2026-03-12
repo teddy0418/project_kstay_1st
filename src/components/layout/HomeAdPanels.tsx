@@ -56,20 +56,19 @@ export default function HomeAdPanels() {
   };
 
   return (
-    <section className="border-b border-neutral-100 bg-neutral-50/50" style={{ borderBottomColor: BORDER_COLORS[1] }}>
+    <section className="bg-transparent">
       <Container className="py-1.5 sm:py-2">
         {/* 데스크톱: 3열 그리드 */}
         <div className="hidden md:grid md:grid-cols-3 gap-2">
           {panels.map((i) => (
             <div
               key={i}
-              className="rounded-lg p-2 min-h-[48px] bg-white"
-              style={{ border: `2px solid ${BORDER_COLORS[i]}` }}
+              className="rounded-lg p-2 min-h-[48px] bg-transparent"
             >
               {i === 0 && (
                 <>
-                  <p className="text-[10px] font-bold text-neutral-900 leading-tight">{t("ad_q0")}</p>
-                  <p className="mt-0.5 text-[10px] text-neutral-800 leading-tight">
+                  <p className="text-xs sm:text-sm font-bold text-white leading-tight">{t("ad_q0")}</p>
+                  <p className="mt-0.5 text-[11px] sm:text-xs text-white/80 leading-tight">
                     <span>{t("ad_a1_0")}</span>
                     <span className="block">{t("ad_a2_0")}</span>
                   </p>
@@ -77,8 +76,8 @@ export default function HomeAdPanels() {
               )}
               {i === 1 && (
                 <>
-                  <p className="text-[10px] font-bold text-neutral-900 leading-tight">{t("ad_q1")}</p>
-                  <p className="mt-0.5 text-[10px] text-neutral-800 leading-tight">
+                  <p className="text-xs sm:text-sm font-bold text-white leading-tight">{t("ad_q1")}</p>
+                  <p className="mt-0.5 text-[11px] sm:text-xs text-white/80 leading-tight">
                     <span>{t("ad_a1_1")}</span>
                     <span className="block">{t("ad_a2_1")}</span>
                   </p>
@@ -86,8 +85,8 @@ export default function HomeAdPanels() {
               )}
               {i === 2 && (
                 <>
-                  <p className="text-[10px] font-bold text-neutral-900 leading-tight">{t("ad_q2")}</p>
-                  <p className="mt-0.5 text-[10px] text-neutral-800 leading-tight">
+                  <p className="text-xs sm:text-sm font-bold text-white leading-tight">{t("ad_q2")}</p>
+                  <p className="mt-0.5 text-[11px] sm:text-xs text-white/80 leading-tight">
                     <span>{t("ad_a1_2")}</span>
                     {t("ad_a2_2") ? <span className="block">{t("ad_a2_2")}</span> : null}
                   </p>
@@ -107,13 +106,13 @@ export default function HomeAdPanels() {
             {panels.map((i) => (
               <div
                 key={i}
-                className="shrink-0 w-full min-w-full rounded-lg p-2 min-h-[52px] bg-white snap-start snap-always box-border"
-                style={{ border: `2px solid ${BORDER_COLORS[i]}`, scrollSnapAlign: "start" }}
+                className="shrink-0 w-full min-w-full rounded-lg p-2 min-h-[52px] bg-transparent snap-start snap-always"
+                style={{ scrollSnapAlign: "start" }}
               >
                 {i === 0 && (
                   <>
-                    <p className="text-[10px] font-bold text-neutral-900 leading-tight">{t("ad_q0")}</p>
-                    <p className="mt-0.5 text-[10px] text-neutral-800 leading-tight">
+                    <p className="text-xs sm:text-sm font-bold text-white leading-tight">{t("ad_q0")}</p>
+                    <p className="mt-0.5 text-[11px] sm:text-xs text-white/80 leading-tight">
                       <span>{t("ad_a1_0")}</span>
                       <span className="block">{t("ad_a2_0")}</span>
                     </p>
@@ -121,8 +120,8 @@ export default function HomeAdPanels() {
                 )}
                 {i === 1 && (
                   <>
-                    <p className="text-[10px] font-bold text-neutral-900 leading-tight">{t("ad_q1")}</p>
-                    <p className="mt-0.5 text-[10px] text-neutral-800 leading-tight">
+                    <p className="text-xs sm:text-sm font-bold text-white leading-tight">{t("ad_q1")}</p>
+                    <p className="mt-0.5 text-[11px] sm:text-xs text-white/80 leading-tight">
                       <span>{t("ad_a1_1")}</span>
                       <span className="block">{t("ad_a2_1")}</span>
                     </p>
@@ -130,8 +129,8 @@ export default function HomeAdPanels() {
                 )}
                 {i === 2 && (
                   <>
-                    <p className="text-[10px] font-bold text-neutral-900 leading-tight">{t("ad_q2")}</p>
-                    <p className="mt-0.5 text-[10px] text-neutral-800 leading-tight">
+                    <p className="text-xs sm:text-sm font-bold text-white leading-tight">{t("ad_q2")}</p>
+                    <p className="mt-0.5 text-[11px] sm:text-xs text-white/80 leading-tight">
                       <span>{t("ad_a1_2")}</span>
                       {t("ad_a2_2") ? <span className="block">{t("ad_a2_2")}</span> : null}
                     </p>
@@ -148,7 +147,7 @@ export default function HomeAdPanels() {
                 onClick={() => scrollTo(i)}
                 className={cn(
                   "h-1 rounded-full transition-all",
-                  i === index ? "w-4 bg-[#D4AF37]" : "w-1 bg-neutral-300" // 가운데 패널 색으로 도트
+                  i === index ? "w-4 bg-[#E73587]" : "w-1 bg-neutral-300"
                 )}
                 aria-label={`Panel ${i + 1}`}
               />

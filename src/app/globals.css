@@ -29,6 +29,25 @@
   --brand-soft: 172 66% 96%;
 }
 
+.font-ader {
+  font-family: var(--font-ader), sans-serif;
+}
+
+/* 로고 전용: Helvetica Now Display Extra Bold Italic (상용 폰트 – 파일은 public/fonts/ 에 추가) */
+@font-face {
+  font-family: "Helvetica Now Display";
+  font-style: italic;
+  font-weight: 800;
+  font-display: swap;
+  src: url("/fonts/HelveticaNowDisplay-ExtraBoldItalic.woff2") format("woff2"),
+       url("/fonts/HelveticaNowDisplay-ExtraBoldItalic.woff") format("woff");
+}
+.font-helvetica-now-display {
+  font-family: "Helvetica Now Display", "Helvetica Neue", Helvetica, Arial, sans-serif;
+  font-weight: 800;
+  font-style: italic;
+}
+
 @layer base {
   html {
     @apply overflow-x-hidden;

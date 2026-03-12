@@ -100,12 +100,12 @@ export default function ListingCard(props: ListingCardProps) {
 
         <button
           type="button"
-          onClick={onToggle}
-          className="absolute right-2 top-2 inline-flex h-8 w-8 items-center justify-center rounded-full bg-white/95 shadow-md hover:shadow-lg transition md:right-3 md:top-3 md:h-10 md:w-10"
+          onClick={(e) => { e.preventDefault(); e.stopPropagation(); onToggle(e); }}
+          className="group/heart absolute right-2 top-2 z-10 inline-flex h-8 w-8 items-center justify-center rounded-full bg-white/95 shadow-md hover:shadow-lg transition md:right-3 md:top-3 md:h-10 md:w-10"
           aria-label="Wishlist"
           title={liked ? "Saved" : "Save"}
         >
-          <Heart className={liked ? "h-4 w-4 fill-red-500 text-red-500 md:h-5 md:w-5" : "h-4 w-4 md:h-5 md:w-5"} />
+          <Heart className={liked ? "h-4 w-4 fill-[#E73587] text-[#E73587] md:h-5 md:w-5" : "h-4 w-4 md:h-5 md:w-5 group-hover/heart:fill-[#E73587] group-hover/heart:text-[#E73587] transition-colors"} />
         </button>
       </div>
 

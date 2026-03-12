@@ -1,5 +1,6 @@
 import { prisma } from "@/lib/db";
 import { apiError, apiOk } from "@/lib/api/response";
+import { getDatePricesForRange } from "@/lib/listing-date-prices";
 
 export type PublicDatePricesResponse = {
   prices: Array<{ date: string; priceKrw: number }>;
@@ -7,7 +8,9 @@ export type PublicDatePricesResponse = {
 
 /**
  * GET /api/listings/[id]/date-prices?from=YYYY-MM-DD&to=YYYY-MM-DD
- * Public endpoint for guests: returns host-set per-date prices (KRW).
+ * Public endpoint for guests: returns per-date prices (KRW).
+ * - 호스트가 설정한 날짜별 가격(ListingDatePrice)이 있으면 그대로 사용.
+ * - 없으면 기본가(basePriceKrw)에 주말/성수기 할증을 적용한 금액 반영.
  */
 export async function GET(_req: Request, { params }: { params: Promise<{ id: string }> }) {
   try {
@@ -21,20 +24,10 @@ export async function GET(_req: Request, { params }: { params: Promise<{ id: str
       return apiError(400, "BAD_REQUEST", "from and to (YYYY-MM-DD) required");
     }
 
-    // Read date as text to avoid server timezone shifting YYYY-MM-DD.
-    const rows = await prisma.$queryRaw<{ date: string; priceKrw: number }[]>`
-      SELECT "date"::text AS date, "priceKrw" AS "priceKrw"
-      FROM "ListingDatePrice"
-      WHERE "listingId" = ${listingId}
-        AND "date"::text >= ${from}
-        AND "date"::text <= ${to}
-      ORDER BY "date" ASC
-    `;
+    const exists = await prisma.listing.findUnique({ where: { id: listingId }, select: { id: true } });
+    if (!exists) return apiError(404, "NOT_FOUND", "Listing not found");
 
-    const prices = (rows ?? [])
-      .map((r) => ({ date: (r.date ?? "").slice(0, 10), priceKrw: Number(r.priceKrw) }))
-      .filter((p) => /^\d{4}-\d{2}-\d{2}$/.test(p.date) && Number.isFinite(p.priceKrw) && p.priceKrw >= 0);
-
+    const prices = await getDatePricesForRange(listingId, from, to);
     const res = apiOk<PublicDatePricesResponse>({ prices });
     res.headers.set("Cache-Control", "no-store, no-cache, must-revalidate");
     return res;
