@@ -251,6 +251,8 @@ export type SectionPageResult = {
   nextCursor: string | null;
 };
 
+type PromotionPlacement = "HOME_RECOMMENDED" | "HOME_HANOK" | "HOME_KSTAY_BLACK";
+
 /** 섹션별 10개씩 커서 페이지네이션 (더보기용). cursor는 JSON 문자열 (이전 응답의 nextCursor) */
 export async function getPublicListingsBySection(
   section: SectionType,
@@ -296,7 +298,54 @@ export async function getPublicListingsBySection(
       take: limit + 1,
     });
 
-    const list = rows.slice(0, limit).map((r) => toListing(r as unknown as DbListing));
+    // 광고·상위 노출: 섹션별 placement에 따라 현재 활성 프로모션이 있는 숙소를 위로 올린다.
+    const limitedRows = rows.slice(0, limit);
+    const placement: PromotionPlacement | null =
+      section === "recommended" ? "HOME_RECOMMENDED" : section === "hanok" ? "HOME_HANOK" : null;
+
+    let sortedRows = limitedRows;
+    // 신규 ListingPromotion 모델이 아직 Prisma Client에 반영되지 않은 환경(개발 서버 캐시 등)에서도
+    // 전체 섹션이 터지지 않도록 방어적으로 확인한다.
+    const hasListingPromotion =
+      (prisma as unknown as { listingPromotion?: { findMany?: unknown } }).listingPromotion?.findMany != null;
+
+    if (placement && limitedRows.length > 0 && hasListingPromotion) {
+      const listingIds = limitedRows.map((r) => r.id);
+      const now = new Date();
+      const promos = await prisma.listingPromotion.findMany({
+        where: {
+          listingId: { in: listingIds },
+          placement,
+          status: "ACTIVE",
+          startAt: { lte: now },
+          endAt: { gt: now },
+        },
+        select: { listingId: true, priority: true },
+      });
+      if (promos.length > 0) {
+        const priorityMap = new Map<string, number>();
+        for (const p of promos) {
+          const prev = priorityMap.get(p.listingId) ?? 0;
+          priorityMap.set(p.listingId, Math.max(prev, p.priority ?? 0));
+        }
+        const indexMap = new Map<string, number>();
+        limitedRows.forEach((r, idx) => indexMap.set(r.id, idx));
+
+        sortedRows = [...limitedRows].sort((a, b) => {
+          const pa = priorityMap.get(a.id);
+          const pb = priorityMap.get(b.id);
+          if (pa != null && pb != null) {
+            if (pb !== pa) return pb - pa;
+            return (indexMap.get(a.id) ?? 0) - (indexMap.get(b.id) ?? 0);
+          }
+          if (pa != null && pb == null) return -1;
+          if (pa == null && pb != null) return 1;
+          return (indexMap.get(a.id) ?? 0) - (indexMap.get(b.id) ?? 0);
+        });
+      }
+    }
+
+    const list = sortedRows.map((r) => toListing(r as unknown as DbListing));
     const next = rows.length > limit ? rows[limit] : null;
     const nextCursor =
       next && "createdAt" in next && next.createdAt

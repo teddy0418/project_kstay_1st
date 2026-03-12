@@ -156,6 +156,7 @@ model Listing {
   datePrices     ListingDatePrice[]
   icalFeeds      ListingIcalFeed[]
   icalBlockedDates ListingIcalBlockedDate[]
+  promotions    ListingPromotion[]
 
   @@index([status, createdAt])
   @@index([hostId, createdAt])
@@ -355,6 +356,50 @@ model Notification {
 
   @@index([userId, readAt])
   @@index([supportTicketId])
+}
+
+/// 광고·상위 노출용: 특정 숙소를 인기 섹션 / KSTAY Black 등에 노출
+enum ListingPromotionPlacement {
+  HOME_RECOMMENDED   /// 홈 인기 숙소 섹션
+  HOME_HANOK         /// 홈 인기 한옥 섹션
+  HOME_KSTAY_BLACK   /// 홈 KSTAY Black 섹션
+}
+
+enum ListingPromotionStatus {
+  PENDING
+  ACTIVE
+  ENDED
+  CANCELLED
+}
+
+model ListingPromotion {
+  id        String                   @id @default(cuid())
+  listingId String
+  placement ListingPromotionPlacement
+  status    ListingPromotionStatus   @default(PENDING)
+
+  /// 우선순위 (숫자가 클수록 더 위에 노출)
+  priority  Int                      @default(0)
+
+  /// 노출 시작/종료 시각 (KST 기준으로 해석)
+  startAt   DateTime
+  endAt     DateTime
+
+  /// 계약/광고 금액 (KRW 기준)
+  amountKrw Int?
+  currency  String?                  @default("KRW")
+
+  /// 운영 메모 (계약 정보, 메모 등)
+  memo      String?                  @db.Text
+
+  createdByAdminId String?
+
+  createdAt DateTime                 @default(now())
+  updatedAt DateTime                 @updatedAt
+
+  listing Listing @relation(fields: [listingId], references: [id], onDelete: Cascade)
+
+  @@index([listingId, placement, status, startAt, endAt])
 }
 
 enum SupportTicketStatus {

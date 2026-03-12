@@ -17,6 +17,7 @@ export type AdminListingRow = {
   status: string;
   approvedAt: Date | null;
   createdAt: Date;
+  propertyType: string | null;
   host: { id: string; name: string | null };
 };
 
@@ -73,6 +74,7 @@ export async function getAdminListings(statusFilter?: string): Promise<AdminList
       status: true,
       approvedAt: true,
       createdAt: true,
+      propertyType: true,
       host: { select: { id: true, name: true } },
     },
     orderBy: { createdAt: "desc" },
@@ -88,6 +90,7 @@ export async function getAdminListings(statusFilter?: string): Promise<AdminList
     status: r.status,
     approvedAt: r.approvedAt,
     createdAt: r.createdAt,
+    propertyType: r.propertyType,
     host: r.host,
   }));
 }

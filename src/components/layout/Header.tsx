@@ -118,7 +118,7 @@ export default function Header() {
             <Link
               href="/"
               className={cn(
-                "relative z-10 inline-flex items-center justify-center gap-1.5 sm:gap-2 rounded-full px-2 sm:px-4 py-2 text-xs sm:text-sm font-semibold transition-colors min-w-0 overflow-hidden",
+                "relative z-10 inline-flex items-center justify-center gap-1.5 sm:gap-2 rounded-full px-2 sm:px-4 py-2 text-xs sm:text-sm font-semibold transition-colors min-w-0 overflow-hidden outline-none focus-visible:ring-2 focus-visible:ring-white focus-visible:ring-offset-2 focus-visible:ring-offset-neutral-900",
                 "hover:bg-neutral-50"
               )}
             >
@@ -141,7 +141,7 @@ export default function Header() {
             <Link
               href="/board"
               className={cn(
-                "relative z-10 inline-flex items-center justify-center gap-1.5 sm:gap-2 rounded-full px-2 sm:px-4 py-2 text-xs sm:text-sm font-semibold transition-colors min-w-0 overflow-hidden",
+                "relative z-10 inline-flex items-center justify-center gap-1.5 sm:gap-2 rounded-full px-2 sm:px-4 py-2 text-xs sm:text-sm font-semibold transition-colors min-w-0 overflow-hidden outline-none focus-visible:ring-2 focus-visible:ring-white focus-visible:ring-offset-2 focus-visible:ring-offset-neutral-900",
                 "hover:bg-neutral-50"
               )}
             >

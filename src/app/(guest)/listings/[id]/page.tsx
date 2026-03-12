@@ -797,7 +797,7 @@ export default async function ListingDetailPage({
             </div>
             <div className="min-w-0 flex-1 flex items-center justify-between gap-3">
               <span className="text-base font-semibold text-neutral-900 sm:text-lg">{tx.hostedBy} {listing.hostName}</span>
-              <span className="inline-flex shrink-0 items-center gap-1 rounded-full bg-neutral-900 px-2 py-0.5 text-[10px] font-semibold text-[#E73587] whitespace-nowrap sm:gap-1.5 sm:px-2.5 sm:py-1 sm:text-[11px]">
+              <span className="inline-flex shrink-0 items-center gap-1 rounded-full bg-neutral-900 px-2 py-0.5 text-[10px] font-semibold text-white whitespace-nowrap sm:gap-1.5 sm:px-2.5 sm:py-1 sm:text-[11px]">
                 <ShieldCheck className="h-3 w-3 shrink-0 text-[#E73587] sm:h-3.5 sm:w-3.5" aria-hidden />
                 {tx.govCertified}
               </span>

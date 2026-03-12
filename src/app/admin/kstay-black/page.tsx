@@ -23,6 +23,7 @@ type AdminListing = {
   approvedAt: string | null;
   createdAt: string;
   host: { id: string; name: string | null };
+  propertyType: string | null;
 };
 
 export default function AdminKstayBlackPage() {

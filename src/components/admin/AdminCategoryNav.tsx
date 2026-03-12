@@ -11,8 +11,9 @@ const OPERATIONS = [
   { label: "정산", href: "/admin/settlements" },
 ] as const;
 
-/** 콘텐츠·정책: KSTAY Black, 게시판, 호스트 공지 */
+/** 콘텐츠·정책: 광고(상위 노출), KSTAY Black, 게시판, 호스트 공지 */
 const CONTENT = [
+  { label: "광고 관리", href: "/admin/promotions" },
   { label: "KSTAY Black", href: "/admin/kstay-black" },
   { label: "게시판", href: "/admin/board" },
   { label: "호스트 공지", href: "/admin/host-announcements" },
