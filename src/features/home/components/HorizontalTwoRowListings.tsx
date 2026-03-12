@@ -195,13 +195,19 @@ export default function HorizontalTwoRowListings({
         </button>
         <button
           type="button"
-          onClick={() => scrollByDir(1)}
-          disabled={!canRight}
+          onClick={() => {
+            if (canRight) {
+              scrollByDir(1);
+            } else if (hasMore && !loadingMore) {
+              void loadMore();
+            }
+          }}
+          disabled={!canRight && !hasMore}
           className={cn(
             "absolute right-2 md:-right-3 top-1/2 -translate-y-1/2 z-10 h-10 w-10 md:h-11 md:w-11 inline-flex items-center justify-center rounded-full bg-white/95 shadow-md hover:shadow-lg transition",
-            !canRight && "opacity-30 cursor-default"
+            !canRight && !hasMore && "opacity-30 cursor-default"
           )}
-          aria-label={t("scroll_right")}
+          aria-label={hasMore && !canRight ? t("load_more") : t("scroll_right")}
         >
           <ChevronRight className="h-5 w-5" />
         </button>
@@ -233,18 +239,6 @@ export default function HorizontalTwoRowListings({
                 ))}
               </Fragment>
             ))}
-            {hasMore && (
-              <div className="shrink-0 w-[120px] min-w-[100px] md:w-[160px] rounded-2xl border border-neutral-200 bg-neutral-50 flex flex-col items-center justify-center px-4 self-stretch">
-                <button
-                  type="button"
-                  onClick={() => void loadMore()}
-                  disabled={loadingMore}
-                  className="text-sm font-semibold text-neutral-700 hover:text-neutral-900 disabled:opacity-50"
-                >
-                  {loadingMore ? "..." : `${t("load_more")} >`}
-                </button>
-              </div>
-            )}
           </div>
         </div>
       </div>

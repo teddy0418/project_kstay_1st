@@ -92,9 +92,15 @@ export default function Header() {
     >
       <Container className="relative flex h-[76px] items-center justify-between gap-3 md:flex-wrap">
         <Link href="/" className="flex items-center gap-2 shrink-0 z-10 md:z-auto" aria-label="KSTAY Home">
-          {/* 가로형 텍스트 로고 (여기어때 스타일) */}
-          <span className="font-ader text-xl font-semibold text-[#E73587] tracking-tight sm:text-2xl">KSTAY</span>
-          <span className="hidden sm:inline text-xs text-neutral-500 ml-0.5">the best value for your k-stay</span>
+          {/* 텍스트 로고 + 슬로건 (슬로건을 아래 줄에 배치) */}
+          <div className="flex flex-col leading-tight">
+            <span className="font-ader text-xl font-semibold text-[#E73587] tracking-tight sm:text-2xl">
+              KSTAY
+            </span>
+            <span className="hidden sm:inline text-[10px] text-neutral-500">
+              the best value for your k-stay
+            </span>
+          </div>
         </Link>
 
         {/* 모바일: 화면 정중앙 고정 / 데스크톱: flex-1로 중앙 영역 */}
