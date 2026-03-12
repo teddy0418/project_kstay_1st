@@ -386,7 +386,7 @@ export default function AdminListingsPage() {
                 <select
                   className="w-full rounded-xl border border-neutral-200 bg-white px-3 py-2 text-sm text-neutral-800"
                   value={placement}
-                  onChange={(e) => setPlacement(e.target.value as AdminListingPromotion["placement"])}
+                  onChange={(e) => setPlacement(e.target.value as AdminPromotionRow["placement"])}
                 >
                   <option value="HOME_RECOMMENDED">홈 인기 숙소</option>
                   <option value="HOME_HANOK">홈 인기 한옥</option>
