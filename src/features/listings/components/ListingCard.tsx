@@ -38,6 +38,7 @@ export default function ListingCard(props: ListingCardProps) {
   const area = (listing?.area ?? listing?.neighborhood ?? "") as string;
   const city = (listing?.city ?? listing?.region ?? "") as string;
   const rating = toNumber(listing?.rating, 0);
+  const reviewCount = toNumber(listing?.reviewCount, 0);
   const pricePerNightKRW = toNumber(
     listing?.pricePerNightKRW ?? listing?.basePriceKrw ?? listing?.priceKrw,
     0
@@ -125,7 +126,11 @@ export default function ListingCard(props: ListingCardProps) {
 
         <div className={isCompact ? "text-xs text-neutral-700 inline-flex items-center gap-0.5 md:text-sm md:gap-1" : "text-sm text-neutral-700 inline-flex items-center gap-1"}>
           <span>★</span>
-          <span className="font-semibold">{Number(rating || 0).toFixed(2)}</span>
+          {reviewCount > 0 ? (
+            <span className="font-semibold">{Number(rating || 0).toFixed(2)}</span>
+          ) : (
+            <span className="font-semibold">{t("new_badge")}</span>
+          )}
         </div>
       </div>
     </Link>

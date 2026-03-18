@@ -29,14 +29,14 @@ export function formatDateEn(value: Date | string): string {
   return new Intl.DateTimeFormat("en-US", { month: "short", day: "numeric", year: "numeric" }).format(d);
 }
 
-/** Locale-aware date format. Use for guest-facing pages. */
+/** Locale-aware date format. Use for guest-facing pages. Uses UTC to avoid off-by-one across timezones. */
 export function formatDate(
   locale: string,
   value: Date | string,
   options: Intl.DateTimeFormatOptions = { month: "short", day: "numeric", year: "numeric" }
 ): string {
   const d = typeof value === "string" ? new Date(value) : value;
-  return new Intl.DateTimeFormat(locale, options).format(d);
+  return new Intl.DateTimeFormat(locale, { ...options, timeZone: "UTC" }).format(d);
 }
 
 /** Locale-aware date-time format (e.g. for message timestamps). */

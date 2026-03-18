@@ -81,7 +81,7 @@ export async function sendBookingConfirmedEmailIfNeeded(bookingId: string) {
           ? getSettlementDisclaimer(booking.paymentCurrency as "USD" | "KRW" | "JPY")
           : null,
       cancellationDeadlineKst: formatCancellationDeadlineKst(booking.cancellationDeadlineKst),
-      manageUrl: `${process.env.NEXT_PUBLIC_SITE_URL || process.env.AUTH_URL || "http://localhost:3001"}/profile`,
+      manageUrl: `${process.env.NEXT_PUBLIC_SITE_URL || process.env.AUTH_URL || "https://kstay.co.kr"}/profile`,
       checkInTime: listing.checkInTime ?? undefined,
       checkOutTime: listing.checkOutTime ?? undefined,
       checkInGuide: listing.checkInGuideMessage ?? undefined,

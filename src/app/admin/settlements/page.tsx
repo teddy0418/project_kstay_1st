@@ -82,70 +82,92 @@ export default function AdminSettlementsPage() {
       ) : rows.length === 0 ? (
         <div className="mt-6 py-8 text-center text-neutral-500">정산 후보 예약이 없습니다. (결제 완료된 CONFIRMED 예약만 표시됩니다)</div>
       ) : (
-        <div className="mt-6 w-full min-w-0 overflow-x-auto">
-          <table className="min-w-[960px] w-full text-sm">
-            <thead className="text-left text-neutral-500">
-              <tr className="border-b border-neutral-200">
-                <th className="py-3 pr-3">예약</th>
-                <th className="py-3 pr-3">숙소 / 호스트</th>
-                <th className="py-3 pr-3">pg_tid</th>
-                <th className="py-3 pr-3">정산 가능?</th>
-                <th className="py-3 pr-3">보류</th>
-                <th className="py-3 pr-3">액션</th>
-              </tr>
-            </thead>
-            <tbody>
-              {rows.map((b) => {
-                const ready = isSettlementReady(b, now) && !holds[b.id];
-                const hold = Boolean(holds[b.id]);
+        <>
+          {/* Desktop table */}
+          <div className="mt-6 hidden md:block w-full min-w-0 overflow-x-auto">
+            <table className="w-full text-sm">
+              <thead className="text-left text-neutral-500">
+                <tr className="border-b border-neutral-200">
+                  <th className="py-3 pr-3 whitespace-nowrap">예약</th>
+                  <th className="py-3 pr-3 whitespace-nowrap">숙소 / 호스트</th>
+                  <th className="py-3 pr-3 whitespace-nowrap">pg_tid</th>
+                  <th className="py-3 pr-3 whitespace-nowrap">정산 가능?</th>
+                  <th className="py-3 pr-3 whitespace-nowrap">보류</th>
+                  <th className="py-3 pr-3 whitespace-nowrap">액션</th>
+                </tr>
+              </thead>
+              <tbody>
+                {rows.map((b) => {
+                  const ready = isSettlementReady(b, now) && !holds[b.id];
+                  const hold = Boolean(holds[b.id]);
+                  return (
+                    <tr key={b.id} className="border-b border-neutral-200">
+                      <td className="py-4 pr-3">
+                        <div className="font-semibold">{b.id}</div>
+                        <div className="text-xs text-neutral-500">
+                          <span className="whitespace-nowrap">체크인 {new Date(b.checkIn).toLocaleDateString("ko-KR")}</span> · {b.guestName ?? "—"} · <span className="whitespace-nowrap">₩{b.totalKrw.toLocaleString()}</span>
+                        </div>
+                      </td>
+                      <td className="py-4 pr-3">
+                        <div className="truncate max-w-[180px]">{b.listingTitle}</div>
+                        <div className="text-xs text-neutral-500">{b.host.name ?? b.host.id}</div>
+                      </td>
+                      <td className="py-4 pr-3 font-mono text-xs">{b.pgTid ?? "-"}</td>
+                      <td className="py-4 pr-3">
+                        <span className={`inline-flex rounded-full px-3 py-1 text-xs font-semibold ${ready ? "bg-green-100 text-green-700" : "bg-red-100 text-red-700"}`}>
+                          {ready ? "가능" : "대기"}
+                        </span>
+                      </td>
+                      <td className="py-4 pr-3">
+                        <button type="button" onClick={() => setHolds((h) => ({ ...h, [b.id]: !h[b.id] }))} className="whitespace-nowrap rounded-full border border-neutral-200 px-3 py-1 text-xs hover:bg-neutral-50">
+                          {hold ? "보류 중" : "해제"}
+                        </button>
+                      </td>
+                      <td className="py-4 pr-3">
+                        <button type="button" onClick={() => comingSoon({ message: "정산 API 연동 준비중입니다." })} className="whitespace-nowrap rounded-full bg-neutral-900 px-3 py-2 text-xs font-semibold text-white hover:opacity-95 disabled:opacity-40 disabled:pointer-events-none" disabled={!ready}>
+                          API 지급 (준비중)
+                        </button>
+                      </td>
+                    </tr>
+                  );
+                })}
+              </tbody>
+            </table>
+          </div>
 
-                return (
-                  <tr key={b.id} className="border-b border-neutral-200">
-                    <td className="py-4 pr-3">
-                      <div className="font-semibold">{b.id}</div>
-                      <div className="text-xs text-neutral-500">
-                        체크인 {new Date(b.checkIn).toLocaleDateString("ko-KR")} · {b.guestName ?? "—"} · ₩{b.totalKrw.toLocaleString()}
-                      </div>
-                    </td>
-                    <td className="py-4 pr-3">
-                      <div className="truncate max-w-[180px]">{b.listingTitle}</div>
-                      <div className="text-xs text-neutral-500">{b.host.name ?? b.host.id}</div>
-                    </td>
-                    <td className="py-4 pr-3 font-mono text-xs">{b.pgTid ?? "-"}</td>
-                    <td className="py-4 pr-3">
-                      <span
-                        className={`inline-flex rounded-full px-3 py-1 text-xs font-semibold ${
-                          ready ? "bg-green-100 text-green-700" : "bg-red-100 text-red-700"
-                        }`}
-                      >
-                        {ready ? "가능" : "대기"}
-                      </span>
-                    </td>
-                    <td className="py-4 pr-3">
-                      <button
-                        type="button"
-                        onClick={() => setHolds((h) => ({ ...h, [b.id]: !h[b.id] }))}
-                        className="rounded-full border border-neutral-200 px-3 py-1 text-xs hover:bg-neutral-50"
-                      >
-                        {hold ? "보류 중" : "해제"}
-                      </button>
-                    </td>
-                    <td className="py-4 pr-3">
-                      <button
-                        type="button"
-                        onClick={() => comingSoon({ message: "정산 API 연동 준비중입니다." })}
-                        className="rounded-full bg-neutral-900 px-3 py-2 text-xs font-semibold text-white hover:opacity-95 disabled:opacity-40 disabled:pointer-events-none"
-                        disabled={!ready}
-                      >
-                        API 지급 (준비중)
-                      </button>
-                    </td>
-                  </tr>
-                );
-              })}
-            </tbody>
-          </table>
-        </div>
+          {/* Mobile cards */}
+          <div className="mt-6 grid gap-3 md:hidden">
+            {rows.map((b) => {
+              const ready = isSettlementReady(b, now) && !holds[b.id];
+              const hold = Boolean(holds[b.id]);
+              return (
+                <div key={b.id} className="rounded-2xl border border-neutral-200 bg-neutral-50 p-4 space-y-3">
+                  <div className="flex items-start justify-between gap-2">
+                    <div className="min-w-0">
+                      <div className="font-semibold text-neutral-900 truncate">{b.listingTitle}</div>
+                      <div className="mt-0.5 text-xs text-neutral-500">{b.host.name ?? b.host.id} · {b.guestName ?? "—"}</div>
+                    </div>
+                    <span className={`shrink-0 inline-flex rounded-full px-2.5 py-1 text-xs font-semibold ${ready ? "bg-green-100 text-green-700" : "bg-red-100 text-red-700"}`}>
+                      {ready ? "가능" : "대기"}
+                    </span>
+                  </div>
+                  <div className="flex flex-wrap gap-x-4 gap-y-1 text-sm text-neutral-700">
+                    <span className="whitespace-nowrap">체크인 {new Date(b.checkIn).toLocaleDateString("ko-KR")}</span>
+                    <span className="whitespace-nowrap font-semibold">₩{b.totalKrw.toLocaleString()}</span>
+                  </div>
+                  <div className="flex flex-wrap gap-2">
+                    <button type="button" onClick={() => setHolds((h) => ({ ...h, [b.id]: !h[b.id] }))} className="rounded-full border border-neutral-200 bg-white px-3 py-1.5 text-xs hover:bg-neutral-50">
+                      {hold ? "보류 중" : "해제"}
+                    </button>
+                    <button type="button" onClick={() => comingSoon({ message: "정산 API 연동 준비중입니다." })} className="rounded-full bg-neutral-900 px-3 py-1.5 text-xs font-semibold text-white hover:opacity-95 disabled:opacity-40 disabled:pointer-events-none" disabled={!ready}>
+                      API 지급
+                    </button>
+                  </div>
+                </div>
+              );
+            })}
+          </div>
+        </>
       )}
 
       <div className="mt-6 flex flex-wrap gap-2">

@@ -1,5 +1,6 @@
 import { getPublicListings, getPublicListingsByIds } from "@/lib/repositories/listings";
 import { apiOk, apiError } from "@/lib/api/response";
+import { checkRateLimit, RATE_LIMITS, rateLimitResponse, getClientIp } from "@/lib/api/rate-limit";
 
 function one(param: string | null): string {
   return param ? param.trim() : "";
@@ -7,6 +8,8 @@ function one(param: string | null): string {
 
 export async function GET(req: Request) {
   try {
+    const rl = checkRateLimit(getClientIp(req), RATE_LIMITS.api);
+    if (!rl.allowed) return rateLimitResponse();
     const url = new URL(req.url);
     const idsParam = url.searchParams.get("ids");
     const ids = idsParam

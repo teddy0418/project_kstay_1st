@@ -2,13 +2,17 @@ import { z } from "zod";
 import { AMENITY_KEYS } from "@/lib/amenities";
 
 const optionalTrimmedString = z
-  .union([z.string(), z.null(), z.undefined()])
+  .union([z.string().max(1000), z.null(), z.undefined()])
+  .transform((value) => (typeof value === "string" ? value.trim() : undefined));
+
+const optionalTrimmedBio = z
+  .union([z.string().max(5000), z.null(), z.undefined()])
   .transform((value) => (typeof value === "string" ? value.trim() : undefined));
 
 export const createBookingSchema = z.object({
-  listingId: z.string().trim().min(1, "listingId is required"),
-  checkIn: z.string().trim().min(1, "checkIn is required"),
-  checkOut: z.string().trim().min(1, "checkOut is required"),
+  listingId: z.string().trim().min(1, "listingId is required").max(100),
+  checkIn: z.string().trim().min(1, "checkIn is required").max(10),
+  checkOut: z.string().trim().min(1, "checkOut is required").max(10),
   guestEmail: optionalTrimmedString,
   guestName: optionalTrimmedString,
   guestMessageToHost: z.string().trim().max(2000).optional().nullable(),
@@ -40,10 +44,10 @@ export const createHostListingSchema = z.object({
   basePriceKrw: z.coerce.number().int().positive(),
   checkInTime: z.string().trim().regex(/^\d{2}:\d{2}$/).optional(),
   checkOutTime: z.string().trim().regex(/^\d{2}:\d{2}$/).optional(),
-  hostBio: optionalTrimmedString,
-  hostBioKo: optionalTrimmedString,
-  hostBioJa: optionalTrimmedString,
-  hostBioZh: optionalTrimmedString,
+  hostBio: optionalTrimmedBio,
+  hostBioKo: optionalTrimmedBio,
+  hostBioJa: optionalTrimmedBio,
+  hostBioZh: optionalTrimmedBio,
   status: z.enum(["DRAFT", "PENDING"]).optional(),
 });
 
@@ -63,10 +67,10 @@ export const updateHostListingSchema = z
     checkOutTime: z.string().trim().regex(/^\d{2}:\d{2}$/).optional().nullable(),
     checkInGuideMessage: z.string().trim().max(3000).optional().nullable(),
     houseRulesMessage: z.string().trim().max(3000).optional().nullable(),
-    hostBio: optionalTrimmedString,
-    hostBioKo: optionalTrimmedString,
-    hostBioJa: optionalTrimmedString,
-    hostBioZh: optionalTrimmedString,
+    hostBio: optionalTrimmedBio,
+    hostBioKo: optionalTrimmedBio,
+    hostBioJa: optionalTrimmedBio,
+    hostBioZh: optionalTrimmedBio,
     lat: z.coerce.number().finite().optional().nullable(),
     lng: z.coerce.number().finite().optional().nullable(),
     amenities: z.array(z.string().trim().min(1)).optional(),

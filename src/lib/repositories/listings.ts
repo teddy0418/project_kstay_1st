@@ -45,6 +45,7 @@ function toListing(row: DbListing): Listing {
     images: row.images.sort((a, b) => a.sortOrder - b.sortOrder).map((x) => x.url),
     pricePerNightKRW: row.basePriceKrw,
     rating: row.rating,
+    reviewCount: row.reviewCount ?? 0,
     categories: ["homes"],
     lat: row.lat ?? 37.5665,
     lng: row.lng ?? 126.978,
@@ -261,7 +262,10 @@ export async function getPublicListingsBySection(
 ): Promise<SectionPageResult> {
   try {
     if (section === "kstay-black") {
-      const cursorObj = cursor ? (JSON.parse(cursor) as { id: string }) : null;
+      let cursorObj: { id: string } | null = null;
+      if (cursor) {
+        try { cursorObj = JSON.parse(cursor) as { id: string }; } catch { cursorObj = null; }
+      }
       const rows = await prisma.listing.findMany({
         where: { status: "APPROVED", kstayBlackSortOrder: { not: null } },
         select: publicListingSelectForSection,
@@ -269,9 +273,10 @@ export async function getPublicListingsBySection(
         ...(cursorObj?.id ? { cursor: { id: cursorObj.id }, skip: 1 } : {}),
         take: limit + 1,
       });
+      const hasNext = rows.length > limit;
       const list = rows.slice(0, limit).map((r) => toListing(r as unknown as DbListing));
-      const next = rows.length > limit ? rows[limit] : null;
-      const nextCursor = next ? JSON.stringify({ id: next.id }) : null;
+      const lastRow = hasNext && rows.length > 0 ? rows[limit - 1] : null;
+      const nextCursor = lastRow ? JSON.stringify({ id: lastRow.id }) : null;
       return { listings: list, nextCursor };
     }
 
@@ -286,7 +291,10 @@ export async function getPublicListingsBySection(
 
     const orderBy = [{ createdAt: "desc" as const }, { id: "desc" as const }];
     const selectWithCreatedAt = { ...publicListingSelectForSection, createdAt: true };
-    const cursorObj = cursor ? (JSON.parse(cursor) as { createdAt: string; id: string }) : null;
+    let cursorObj: { createdAt: string; id: string } | null = null;
+    if (cursor) {
+      try { cursorObj = JSON.parse(cursor) as { createdAt: string; id: string }; } catch { cursorObj = null; }
+    }
 
     const rows = await prisma.listing.findMany({
       where: baseWhere,
@@ -346,10 +354,11 @@ export async function getPublicListingsBySection(
     }
 
     const list = sortedRows.map((r) => toListing(r as unknown as DbListing));
-    const next = rows.length > limit ? rows[limit] : null;
+    const hasNext = rows.length > limit;
+    const lastRow = hasNext && limitedRows.length > 0 ? limitedRows[limitedRows.length - 1] : null;
     const nextCursor =
-      next && "createdAt" in next && next.createdAt
-        ? JSON.stringify({ createdAt: (next.createdAt as Date).toISOString(), id: next.id })
+      lastRow && "createdAt" in lastRow && lastRow.createdAt
+        ? JSON.stringify({ createdAt: (lastRow.createdAt as Date).toISOString(), id: lastRow.id })
         : null;
     return { listings: list, nextCursor };
   } catch (e) {

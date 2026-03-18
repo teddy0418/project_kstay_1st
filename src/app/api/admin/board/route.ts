@@ -1,5 +1,5 @@
 import { apiError, apiOk } from "@/lib/api/response";
-import { requireAdminUser } from "@/lib/auth/server";
+import { requireAdmin } from "@/lib/api/auth-guard";
 import { createBoardPost, getBoardPosts, type BoardPostI18n } from "@/lib/repositories/board";
 
 const LANGS = ["en", "ko", "ja", "zh"] as const;
@@ -17,8 +17,9 @@ function parseI18n(obj: unknown): BoardPostI18n | null {
 /** GET: 게시판 글 목록 (admin) */
 export async function GET() {
   try {
-    const admin = await requireAdminUser();
-    if (!admin) return apiError(403, "FORBIDDEN", "Admin access required");
+    const auth = await requireAdmin();
+    if (!auth.ok) return auth.response;
+    const admin = auth.user;
     const posts = await getBoardPosts();
     return apiOk(posts);
   } catch (err) {
@@ -30,8 +31,9 @@ export async function GET() {
 /** POST: 게시판 글 생성 (admin) */
 export async function POST(req: Request) {
   try {
-    const admin = await requireAdminUser();
-    if (!admin) return apiError(403, "FORBIDDEN", "Admin access required");
+    const auth = await requireAdmin();
+    if (!auth.ok) return auth.response;
+    const admin = auth.user;
 
     const body = await req.json().catch(() => ({}));
     const cover = typeof body.cover === "string" ? body.cover.trim() : "";

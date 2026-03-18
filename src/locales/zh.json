@@ -36,6 +36,7 @@
   "check_in": "入住",
   "check_out": "退房",
   "clear_dates": "清除日期",
+  "apply_dates": "確認",
   "close": "關閉",
   "calendar_booked": "已預訂",
   "calendar_blocked": "暫停銷售",
@@ -67,6 +68,7 @@
   "support_subject_placeholder": "主題（最多 500 字）",
   "support_body_placeholder": "輸入內容（最多 4000 字）",
   "support_no_tickets": "暫無諮詢記錄，請新建諮詢。",
+  "support_intro": "今天有什麼可以幫您的嗎？😊\n有任何關於住宿或預訂的問題，隨時在此聊天窗口留言。我們的工作人員確認後會盡快回覆您。",
   "support_sign_in_required": "聯絡客服請先登入。",
   "support_you": "我",
   "support_customer_support": "客服",
@@ -154,5 +156,6 @@
   "ad_a2_1": "節省下來的部分全部用於提升房東服務與房客價格。",
   "ad_q2": "Q. 與其他平台有什麼不同？",
   "ad_a1_2": "把街巷裡的隱藏好店介紹給世界，與小商戶共生，分享當地人情、活化地區經濟，創造有意義的旅行。",
-  "ad_a2_2": ""
+  "ad_a2_2": "",
+  "new_badge": "新上架"
 }

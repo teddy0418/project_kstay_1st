@@ -194,80 +194,76 @@ export default function AdminPromotionsPage() {
           해당하는 광고가 없습니다.
         </div>
       ) : (
-        <div className="w-full min-w-0 overflow-x-auto rounded-2xl border border-neutral-200 bg-white">
-          <table className="w-full min-w-[880px] text-sm">
-            <thead className="border-b border-neutral-200 bg-neutral-50 text-left text-neutral-600">
-              <tr>
-                <th className="p-4 font-semibold">숙소</th>
-                <th className="p-4 font-semibold">노출 위치</th>
-                <th className="p-4 font-semibold">기간</th>
-                <th className="p-4 font-semibold">우선순위</th>
-                <th className="p-4 font-semibold">금액</th>
-                <th className="p-4 font-semibold">상태</th>
-                <th className="p-4 font-semibold">생성일</th>
-                <th className="p-4 font-semibold">액션</th>
-              </tr>
-            </thead>
-            <tbody>
-              {items.map((row) => (
-                <tr key={row.id} className="border-b border-neutral-100 last:border-0">
-                  <td className="p-4">
-                    <div className="font-semibold text-neutral-900 truncate max-w-[220px]">
-                      {row.listing.title}
-                    </div>
-                    <div className="text-[11px] text-neutral-500 font-mono truncate max-w-[220px]">
-                      {row.listing.id}
-                    </div>
-                  </td>
-                  <td className="p-4 text-neutral-700">{getPlacementLabel(row.placement)}</td>
-                  <td className="p-4 text-neutral-700">
-                    <div className="text-xs">
-                      {new Date(row.startAt).toLocaleString("ko-KR")}{" "}
-                      <span className="text-neutral-400">~</span>
-                    </div>
-                    <div className="text-xs">
-                      {new Date(row.endAt).toLocaleString("ko-KR")}
-                    </div>
-                  </td>
-                  <td className="p-4 text-neutral-700">#{row.priority}</td>
-                  <td className="p-4 text-neutral-800">
-                    {row.amountKrw != null ? `₩${row.amountKrw.toLocaleString()}` : "—"}
-                  </td>
-                  <td className="p-4">
-                    <span
-                      className={`inline-flex rounded-full px-2.5 py-1 text-xs font-semibold ${
-                        row.status === "ACTIVE"
-                          ? "bg-green-100 text-green-700"
-                          : row.status === "PENDING"
-                          ? "bg-amber-100 text-amber-700"
-                          : row.status === "ENDED"
-                          ? "bg-neutral-100 text-neutral-600"
-                          : "bg-red-100 text-red-700"
-                      }`}
-                    >
-                      {getStatusLabel(row.status)}
-                    </span>
-                  </td>
-                  <td className="p-4 text-xs text-neutral-600">
-                    {new Date(row.createdAt).toLocaleString("ko-KR")}
-                  </td>
-                  <td className="p-4">
-                    <div className="flex flex-col gap-2">
-                      <button
-                        type="button"
-                        disabled={row.status !== "ACTIVE" || actingId === row.id}
-                        onClick={() => void endPromotion(row.id)}
-                        className="rounded-lg border border-neutral-200 bg-white px-3 py-1.5 text-xs font-semibold text-neutral-800 hover:bg-neutral-50 disabled:opacity-40 disabled:cursor-not-allowed"
-                      >
+        <>
+          {/* Desktop */}
+          <div className="hidden md:block w-full min-w-0 overflow-x-auto rounded-2xl border border-neutral-200 bg-white">
+            <table className="w-full text-sm">
+              <thead className="border-b border-neutral-200 bg-neutral-50 text-left text-neutral-600">
+                <tr>
+                  <th className="p-4 font-semibold whitespace-nowrap">숙소</th>
+                  <th className="p-4 font-semibold whitespace-nowrap">노출 위치</th>
+                  <th className="p-4 font-semibold whitespace-nowrap">기간</th>
+                  <th className="p-4 font-semibold whitespace-nowrap">우선순위</th>
+                  <th className="p-4 font-semibold whitespace-nowrap">금액</th>
+                  <th className="p-4 font-semibold whitespace-nowrap">상태</th>
+                  <th className="p-4 font-semibold whitespace-nowrap">액션</th>
+                </tr>
+              </thead>
+              <tbody>
+                {items.map((row) => (
+                  <tr key={row.id} className="border-b border-neutral-100 last:border-0">
+                    <td className="p-4">
+                      <div className="font-semibold text-neutral-900 truncate max-w-[220px]">{row.listing.title}</div>
+                    </td>
+                    <td className="p-4 text-neutral-700 whitespace-nowrap">{getPlacementLabel(row.placement)}</td>
+                    <td className="p-4 text-neutral-700 whitespace-nowrap">
+                      <div className="text-xs">{new Date(row.startAt).toLocaleDateString("ko-KR")} ~ {new Date(row.endAt).toLocaleDateString("ko-KR")}</div>
+                    </td>
+                    <td className="p-4 text-neutral-700 whitespace-nowrap">#{row.priority}</td>
+                    <td className="p-4 text-neutral-800 whitespace-nowrap">{row.amountKrw != null ? `₩${row.amountKrw.toLocaleString()}` : "—"}</td>
+                    <td className="p-4">
+                      <span className={`inline-flex rounded-full px-2.5 py-1 text-xs font-semibold ${row.status === "ACTIVE" ? "bg-green-100 text-green-700" : row.status === "PENDING" ? "bg-amber-100 text-amber-700" : row.status === "ENDED" ? "bg-neutral-100 text-neutral-600" : "bg-red-100 text-red-700"}`}>
+                        {getStatusLabel(row.status)}
+                      </span>
+                    </td>
+                    <td className="p-4">
+                      <button type="button" disabled={row.status !== "ACTIVE" || actingId === row.id} onClick={() => void endPromotion(row.id)} className="whitespace-nowrap rounded-lg border border-neutral-200 bg-white px-3 py-1.5 text-xs font-semibold text-neutral-800 hover:bg-neutral-50 disabled:opacity-40 disabled:cursor-not-allowed">
                         {actingId === row.id ? "처리 중..." : "조기 종료"}
                       </button>
-                    </div>
-                  </td>
-                </tr>
-              ))}
-            </tbody>
-          </table>
-        </div>
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+
+          {/* Mobile */}
+          <div className="grid gap-3 md:hidden">
+            {items.map((row) => (
+              <div key={row.id} className="rounded-2xl border border-neutral-200 bg-white p-4 space-y-2">
+                <div className="flex items-start justify-between gap-2">
+                  <div className="min-w-0">
+                    <div className="font-semibold text-neutral-900 truncate">{row.listing.title}</div>
+                    <div className="mt-0.5 text-xs text-neutral-500">{getPlacementLabel(row.placement)}</div>
+                  </div>
+                  <span className={`shrink-0 inline-flex rounded-full px-2.5 py-1 text-xs font-semibold ${row.status === "ACTIVE" ? "bg-green-100 text-green-700" : row.status === "PENDING" ? "bg-amber-100 text-amber-700" : row.status === "ENDED" ? "bg-neutral-100 text-neutral-600" : "bg-red-100 text-red-700"}`}>
+                    {getStatusLabel(row.status)}
+                  </span>
+                </div>
+                <div className="flex flex-wrap gap-x-4 gap-y-1 text-xs text-neutral-600">
+                  <span className="whitespace-nowrap">{new Date(row.startAt).toLocaleDateString("ko-KR")} ~ {new Date(row.endAt).toLocaleDateString("ko-KR")}</span>
+                  <span className="whitespace-nowrap">#{row.priority}</span>
+                  {row.amountKrw != null && <span className="whitespace-nowrap font-semibold text-neutral-800">₩{row.amountKrw.toLocaleString()}</span>}
+                </div>
+                {row.status === "ACTIVE" && (
+                  <button type="button" disabled={actingId === row.id} onClick={() => void endPromotion(row.id)} className="rounded-lg border border-neutral-200 bg-white px-3 py-1.5 text-xs font-semibold text-neutral-800 hover:bg-neutral-50 disabled:opacity-40">
+                    {actingId === row.id ? "처리 중..." : "조기 종료"}
+                  </button>
+                )}
+              </div>
+            ))}
+          </div>
+        </>
       )}
 
       {!loading && total > 0 && (

@@ -1,5 +1,5 @@
 import { apiError, apiOk } from "@/lib/api/response";
-import { requireAdminUser } from "@/lib/auth/server";
+import { requireAdmin } from "@/lib/api/auth-guard";
 import {
   getKstayBlackListingsForAdmin,
   setKstayBlackSortOrder,
@@ -9,8 +9,9 @@ import {
 /** GET: KSTAY Black 선정 목록 */
 export async function GET() {
   try {
-    const admin = await requireAdminUser();
-    if (!admin) return apiError(403, "FORBIDDEN", "Admin required");
+    const auth = await requireAdmin();
+    if (!auth.ok) return auth.response;
+    const admin = auth.user;
     const list = await getKstayBlackListingsForAdmin();
     return apiOk(list);
   } catch (e) {
@@ -22,8 +23,9 @@ export async function GET() {
 /** POST: KSTAY Black 선정 추가. body: { listingId: string } */
 export async function POST(req: Request) {
   try {
-    const admin = await requireAdminUser();
-    if (!admin) return apiError(403, "FORBIDDEN", "Admin required");
+    const auth = await requireAdmin();
+    if (!auth.ok) return auth.response;
+    const admin = auth.user;
     const body = await req.json().catch(() => ({}));
     const listingId = typeof body.listingId === "string" ? body.listingId.trim() : "";
     if (!listingId) return apiError(400, "BAD_REQUEST", "listingId required");

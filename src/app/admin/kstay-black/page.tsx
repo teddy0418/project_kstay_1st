@@ -1,6 +1,7 @@
 "use client";
 
 import { useCallback, useEffect, useState } from "react";
+import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { apiClient, ApiClientError } from "@/lib/api/client";
 
@@ -101,37 +102,50 @@ export default function AdminKstayBlackPage() {
                 선정된 숙소가 없습니다. 아래 승인된 숙소에서 &quot;KSTAY Black 선정&quot;으로 추가하세요.
               </div>
             ) : (
-              <div className="w-full min-w-0 overflow-x-auto rounded-2xl border border-neutral-200 bg-white">
-                <table className="w-full min-w-[480px] text-sm">
-                  <thead className="border-b border-neutral-200 bg-neutral-50 text-left text-neutral-600">
-                    <tr>
-                      <th className="p-4 font-semibold w-14">순서</th>
-                      <th className="p-4 font-semibold">숙소</th>
-                      <th className="p-4 font-semibold">지역</th>
-                      <th className="p-4 font-semibold w-28">액션</th>
-                    </tr>
-                  </thead>
-                  <tbody>
-                    {blackList.map((row) => (
-                      <tr key={row.id} className="border-b border-neutral-100 last:border-0">
-                        <td className="p-4 font-medium text-neutral-600">{row.kstayBlackSortOrder + 1}</td>
-                        <td className="p-4 font-semibold text-neutral-900">{row.title}</td>
-                        <td className="p-4 text-neutral-600">{row.city} · {row.area}</td>
-                        <td className="p-4">
-                          <button
-                            type="button"
-                            disabled={acting !== null}
-                            onClick={() => void removeFromBlack(row.id)}
-                            className="rounded-lg border border-red-300 bg-white px-3 py-1.5 text-xs font-semibold text-red-600 hover:bg-red-50 disabled:opacity-50"
-                          >
-                            {acting === row.id ? "처리 중" : "선정 해제"}
-                          </button>
-                        </td>
+              <>
+                {/* Desktop */}
+                <div className="hidden md:block w-full min-w-0 rounded-2xl border border-neutral-200 bg-white">
+                  <table className="w-full text-sm">
+                    <thead className="border-b border-neutral-200 bg-neutral-50 text-left text-neutral-600">
+                      <tr>
+                        <th className="p-4 font-semibold whitespace-nowrap w-14">순서</th>
+                        <th className="p-4 font-semibold whitespace-nowrap">숙소</th>
+                        <th className="p-4 font-semibold whitespace-nowrap">지역</th>
+                        <th className="p-4 font-semibold whitespace-nowrap w-28">액션</th>
                       </tr>
-                    ))}
-                  </tbody>
-                </table>
-              </div>
+                    </thead>
+                    <tbody>
+                      {blackList.map((row) => (
+                        <tr key={row.id} className="border-b border-neutral-100 last:border-0">
+                          <td className="p-4 font-medium text-neutral-600 whitespace-nowrap">{row.kstayBlackSortOrder + 1}</td>
+                          <td className="p-4"><Link href={`/admin/listings/${row.id}`} className="font-semibold text-neutral-900 hover:underline">{row.title}</Link></td>
+                          <td className="p-4 text-neutral-600 whitespace-nowrap">{row.city} · {row.area}</td>
+                          <td className="p-4">
+                            <button type="button" disabled={acting !== null} onClick={() => void removeFromBlack(row.id)} className="whitespace-nowrap rounded-lg border border-red-300 bg-white px-3 py-1.5 text-xs font-semibold text-red-600 hover:bg-red-50 disabled:opacity-50">
+                              {acting === row.id ? "처리 중" : "선정 해제"}
+                            </button>
+                          </td>
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
+                </div>
+
+                {/* Mobile */}
+                <div className="grid gap-3 md:hidden">
+                  {blackList.map((row) => (
+                    <div key={row.id} className="rounded-2xl border border-neutral-200 bg-white p-4 flex items-center justify-between gap-3">
+                      <div className="min-w-0">
+                        <Link href={`/admin/listings/${row.id}`} className="font-semibold text-neutral-900 truncate block hover:underline">#{row.kstayBlackSortOrder + 1} {row.title}</Link>
+                        <div className="text-xs text-neutral-500">{row.city} · {row.area}</div>
+                      </div>
+                      <button type="button" disabled={acting !== null} onClick={() => void removeFromBlack(row.id)} className="shrink-0 rounded-lg border border-red-300 bg-white px-3 py-1.5 text-xs font-semibold text-red-600 hover:bg-red-50 disabled:opacity-50">
+                        {acting === row.id ? "처리 중" : "해제"}
+                      </button>
+                    </div>
+                  ))}
+                </div>
+              </>
             )}
           </section>
 
@@ -142,35 +156,66 @@ export default function AdminKstayBlackPage() {
                 선정 가능한 승인 숙소가 없습니다.
               </div>
             ) : (
-              <div className="w-full min-w-0 overflow-x-auto rounded-2xl border border-neutral-200 bg-white">
-                <table className="w-full min-w-[480px] text-sm">
-                  <thead className="border-b border-neutral-200 bg-neutral-50 text-left text-neutral-600">
-                    <tr>
-                      <th className="p-4 font-semibold">숙소</th>
-                      <th className="p-4 font-semibold">지역</th>
-                      <th className="p-4 font-semibold w-36">액션</th>
-                    </tr>
-                  </thead>
-                  <tbody>
-                    {canAddList.map((row) => (
-                      <tr key={row.id} className="border-b border-neutral-100 last:border-0">
-                        <td className="p-4 font-semibold text-neutral-900">{row.title}</td>
-                        <td className="p-4 text-neutral-600">{row.city} · {row.area}</td>
-                        <td className="p-4">
-                          <button
-                            type="button"
-                            disabled={acting !== null}
-                            onClick={() => void addToBlack(row.id)}
-                            className="rounded-lg bg-neutral-900 px-3 py-1.5 text-xs font-semibold text-white hover:opacity-90 disabled:opacity-50"
-                          >
-                            {acting === row.id ? "처리 중" : "KSTAY Black 선정"}
-                          </button>
-                        </td>
+              <>
+                {/* Desktop */}
+                <div className="hidden md:block w-full min-w-0 rounded-2xl border border-neutral-200 bg-white">
+                  <table className="w-full text-sm">
+                    <thead className="border-b border-neutral-200 bg-neutral-50 text-left text-neutral-600">
+                      <tr>
+                        <th className="p-4 font-semibold whitespace-nowrap">숙소</th>
+                        <th className="p-4 font-semibold whitespace-nowrap">호스트</th>
+                        <th className="p-4 font-semibold whitespace-nowrap">지역</th>
+                        <th className="p-4 font-semibold whitespace-nowrap">가격</th>
+                        <th className="p-4 font-semibold whitespace-nowrap w-36">액션</th>
                       </tr>
-                    ))}
-                  </tbody>
-                </table>
-              </div>
+                    </thead>
+                    <tbody>
+                      {canAddList.map((row) => (
+                        <tr key={row.id} className="border-b border-neutral-100 last:border-0">
+                          <td className="p-4">
+                            <Link href={`/admin/listings/${row.id}`} className="font-semibold text-neutral-900 hover:underline">
+                              {row.title}
+                            </Link>
+                            {row.propertyType && <div className="text-xs text-neutral-400">{row.propertyType}</div>}
+                          </td>
+                          <td className="p-4 text-neutral-700 whitespace-nowrap">{row.host.name ?? row.host.id}</td>
+                          <td className="p-4 text-neutral-600 whitespace-nowrap">{row.city} · {row.area}</td>
+                          <td className="p-4 text-neutral-800 whitespace-nowrap">₩{row.basePriceKrw.toLocaleString()}</td>
+                          <td className="p-4">
+                            <button type="button" disabled={acting !== null} onClick={() => void addToBlack(row.id)} className="whitespace-nowrap rounded-lg bg-neutral-900 px-3 py-1.5 text-xs font-semibold text-white hover:opacity-90 disabled:opacity-50">
+                              {acting === row.id ? "처리 중" : "KSTAY Black 선정"}
+                            </button>
+                          </td>
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
+                </div>
+
+                {/* Mobile */}
+                <div className="grid gap-3 md:hidden">
+                  {canAddList.map((row) => (
+                    <div key={row.id} className="rounded-2xl border border-neutral-200 bg-white p-4 space-y-2">
+                      <div className="flex items-start justify-between gap-3">
+                        <div className="min-w-0">
+                          <Link href={`/admin/listings/${row.id}`} className="font-semibold text-neutral-900 truncate block hover:underline">
+                            {row.title}
+                          </Link>
+                          <div className="mt-0.5 text-xs text-neutral-500">{row.city} · {row.area}</div>
+                        </div>
+                        <button type="button" disabled={acting !== null} onClick={() => void addToBlack(row.id)} className="shrink-0 rounded-lg bg-neutral-900 px-3 py-1.5 text-xs font-semibold text-white hover:opacity-90 disabled:opacity-50">
+                          {acting === row.id ? "처리 중" : "선정"}
+                        </button>
+                      </div>
+                      <div className="flex flex-wrap gap-x-4 gap-y-1 text-xs text-neutral-600">
+                        <span className="whitespace-nowrap">호스트: {row.host.name ?? row.host.id}</span>
+                        <span className="whitespace-nowrap font-semibold text-neutral-800">₩{row.basePriceKrw.toLocaleString()}</span>
+                        {row.propertyType && <span className="whitespace-nowrap">{row.propertyType}</span>}
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              </>
             )}
           </section>
         </>

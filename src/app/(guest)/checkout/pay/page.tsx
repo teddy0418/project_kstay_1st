@@ -1,8 +1,8 @@
 "use client";
 
-import { useCallback, useEffect, useState } from "react";
+import { useCallback, useEffect, useMemo, useState } from "react";
 import Link from "next/link";
-import { useSearchParams } from "next/navigation";
+import { useRouter, useSearchParams } from "next/navigation";
 import Container from "@/components/layout/Container";
 import { useI18n } from "@/components/ui/LanguageProvider";
 import { requestPortonePayment, type PortonePayParams } from "@/lib/portone/requestPayment";
@@ -10,13 +10,14 @@ import { requestPortonePayment, type PortonePayParams } from "@/lib/portone/requ
 const STORAGE_KEY = "kstay_portone_pay_params";
 
 export default function CheckoutPayPage() {
+  const router = useRouter();
   const searchParams = useSearchParams();
   const { lang } = useI18n();
   const [params, setParams] = useState<PortonePayParams | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [paying, setPaying] = useState(false);
 
-  const c =
+  const c = useMemo(() =>
     lang === "ko"
       ? {
           title: "결제 진행",
@@ -59,7 +60,7 @@ export default function CheckoutPayPage() {
               paymentNotCompleted: "Payment was not completed.",
               invalidSession: "No payment info. Please try again from checkout.",
               backToCheckout: "Back to checkout",
-            };
+            }, [lang]);
 
   useEffect(() => {
     const token = searchParams.get("token");
@@ -90,13 +91,22 @@ export default function CheckoutPayPage() {
     setPaying(true);
     setError(null);
     try {
-      await requestPortonePayment(params);
+      const result = await requestPortonePayment(params);
+      if (result.success) {
+        if (typeof localStorage !== "undefined") {
+          localStorage.removeItem(STORAGE_KEY);
+        }
+        router.push(`/checkout/success/${encodeURIComponent(result.paymentId)}`);
+        router.refresh();
+        return;
+      }
+      setError(result.message || result.code || c.paymentNotCompleted);
     } catch (sdkErr) {
       const msg = sdkErr instanceof Error ? sdkErr.message : String(sdkErr);
       setError(msg);
     }
     setPaying(false);
-  }, [params, paying]);
+  }, [params, paying, router, c.paymentNotCompleted]);
 
   if (error && !params) {
     return (
@@ -117,7 +127,10 @@ export default function CheckoutPayPage() {
     return (
       <Container className="py-12">
         <h1 className="text-2xl font-semibold tracking-tight">{c.title}</h1>
-        <p className="mt-4 text-sm text-neutral-600">Loading...</p>
+        <div className="mt-6 flex items-center gap-3 text-sm text-neutral-500">
+          <span className="h-5 w-5 animate-spin rounded-full border-2 border-neutral-300 border-t-neutral-600" />
+          {lang === "ko" ? "결제 정보를 불러오는 중..." : lang === "ja" ? "読み込み中..." : lang === "zh" ? "加载中..." : "Loading payment info..."}
+        </div>
       </Container>
     );
   }

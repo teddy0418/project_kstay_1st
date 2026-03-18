@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
-import { getServerSessionUser } from "@/lib/auth/server";
+import { requireHost } from "@/lib/api/auth-guard";
+import { checkRateLimit, RATE_LIMITS, rateLimitResponse } from "@/lib/api/rate-limit";
 
 export type GeoAutocompleteResult = {
   label: string;
@@ -8,7 +9,6 @@ export type GeoAutocompleteResult = {
   lng: number;
   city?: string;
   area?: string;
-  /** 구조화: 시/도, 시/군/구, 도로명, 우편번호 */
   stateProvince?: string;
   cityDistrict?: string;
   roadAddress?: string;
@@ -18,51 +18,17 @@ export type GeoAutocompleteResult = {
 const NOMINATIM_BASE = "https://nominatim.openstreetmap.org";
 const KAKAO_BASE = "https://dapi.kakao.com/v2/local/search/address.json";
 const Q_MAX_LENGTH = 100;
-const RATE_LIMIT_WINDOW_MS = 60_000;
-const RATE_LIMIT_MAX = 30;
-
-const rateLimitMap = new Map<string, { count: number; resetAt: number }>();
-
-function checkRateLimit(userId: string): boolean {
-  const now = Date.now();
-  const entry = rateLimitMap.get(userId);
-  if (!entry) {
-    rateLimitMap.set(userId, { count: 1, resetAt: now + RATE_LIMIT_WINDOW_MS });
-    return true;
-  }
-  if (now >= entry.resetAt) {
-    entry.count = 1;
-    entry.resetAt = now + RATE_LIMIT_WINDOW_MS;
-    return true;
-  }
-  entry.count++;
-  if (entry.count > RATE_LIMIT_MAX) return false;
-  return true;
-}
 
 function safeString(v: unknown): string | undefined {
   return typeof v === "string" && v.trim().length > 0 ? v.trim() : undefined;
 }
 
-/**
- * 주소 자동완성: HOST/ADMIN 세션만 허용. 유저당 rate limit. API 키는 서버만 사용.
- * 우선순위: KAKAO_REST_API_KEY → Nominatim(무료, 레이트리밋 주의).
- */
 export async function GET(request: NextRequest) {
-  const user = await getServerSessionUser();
-  if (!user || (user.role !== "HOST" && user.role !== "ADMIN")) {
-    return NextResponse.json(
-      { error: { code: "UNAUTHORIZED", message: "호스트 또는 관리자 로그인이 필요합니다." } },
-      { status: 401 }
-    );
-  }
+  const auth = await requireHost();
+  if (!auth.ok) return auth.response;
 
-  if (!checkRateLimit(user.id)) {
-    return NextResponse.json(
-      { error: { code: "RATE_LIMIT", message: "요청이 너무 많습니다. 잠시 후 다시 시도해 주세요." } },
-      { status: 429 }
-    );
-  }
+  const rl = checkRateLimit(auth.user.id, RATE_LIMITS.api);
+  if (!rl.allowed) return rateLimitResponse();
 
   const q = request.nextUrl.searchParams.get("q")?.trim();
   if (!q || q.length < 2) {

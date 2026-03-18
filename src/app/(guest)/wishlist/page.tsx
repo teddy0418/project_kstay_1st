@@ -63,7 +63,10 @@ export default function WishlistPage() {
             </button>
 
             {loading ? (
-              <p className="py-8 text-sm text-neutral-500">{t("loading")}</p>
+              <div className="flex items-center gap-3 py-8 text-sm text-neutral-500">
+                <span className="h-5 w-5 animate-spin rounded-full border-2 border-neutral-300 border-t-neutral-600" />
+                {t("loading")}
+              </div>
             ) : error ? (
               <div className="rounded-2xl border border-neutral-200 bg-neutral-50 px-6 py-8 text-center text-sm text-neutral-600">
                 <p>{t("wishlist_list_error")}</p>

@@ -205,7 +205,7 @@ export default function DateDropdown({
   useEffect(() => {
     const shouldFetch = Boolean(listingId) && (basePricePerNightKRW ?? 0) > 0;
     if (!shouldFetch) return;
-    let cancelled = false;
+    const ac = new AbortController();
 
     const fetchPrices = async () => {
       try {
@@ -216,11 +216,11 @@ export default function DateDropdown({
         const to = toYmdUtc(end);
         const res = await fetch(
           `/api/listings/${encodeURIComponent(listingId as string)}/date-prices?from=${from}&to=${to}`,
-          { cache: "no-store" }
+          { cache: "no-store", signal: ac.signal }
         );
         const json = await res.json().catch(() => ({}));
         const pricesArr: Array<{ date: string; priceKrw: number }> = json?.data?.prices ?? [];
-        if (cancelled || !Array.isArray(pricesArr)) return;
+        if (!Array.isArray(pricesArr)) return;
         setDatePrices((prev) => {
           const next = { ...prev };
           for (const p of pricesArr) {
@@ -236,9 +236,7 @@ export default function DateDropdown({
     };
 
     fetchPrices();
-    return () => {
-      cancelled = true;
-    };
+    return () => ac.abort();
   }, [listingId, basePricePerNightKRW, visibleMonth, months, startOfMonth, endOfMonth]);
 
   useEffect(() => {
@@ -461,18 +459,11 @@ export default function DateDropdown({
             disabled={(date) => {
               if (date < today) return true;
               if (disabledRanges.length > 0 && isDateInRanges(date, disabledRanges)) return true;
-              // 구간 선택 시 중간에 예약/차단된 날이 있으면 선택 불가 (글로벌 표준)
-              if (disabledRanges.length > 0) {
-                if (range?.from) {
-                  const from = startOfDay(range.from);
-                  const to = startOfDay(date);
-                  if (to > from && rangeContainsDisabledDay(from, to, disabledRanges)) return true;
-                }
-                if (range?.to) {
-                  const from = startOfDay(date);
-                  const to = startOfDay(range.to);
-                  if (to > from && rangeContainsDisabledDay(from, to, disabledRanges)) return true;
-                }
+              const isSelectingCheckout = range?.from && !range?.to;
+              if (disabledRanges.length > 0 && isSelectingCheckout) {
+                const from = startOfDay(range.from!);
+                const to = startOfDay(date);
+                if (to > from && rangeContainsDisabledDay(from, to, disabledRanges)) return true;
               }
               return false;
             }}
@@ -532,7 +523,7 @@ export default function DateDropdown({
               onClick={onClose}
               className="rounded-xl bg-neutral-900 px-4 py-2 text-sm font-semibold text-white hover:opacity-95 transition"
             >
-              {showBookingHeader ? t("close") : t("done")}
+              {showBookingHeader ? t("apply_dates") : t("done")}
             </button>
           </div>
         </div>

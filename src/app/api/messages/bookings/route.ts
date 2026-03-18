@@ -1,5 +1,5 @@
-import { apiError, apiOk } from "@/lib/api/response";
-import { getOrCreateServerUser } from "@/lib/auth/server";
+import { apiOk } from "@/lib/api/response";
+import { requireAuthWithDb } from "@/lib/api/auth-guard";
 import {
   findConfirmedBookingsByGuestUserId,
   findConfirmedBookingsByHostId,
@@ -10,8 +10,9 @@ import { prisma } from "@/lib/db";
 
 /** GET /api/messages/bookings — 내 메시지함(예약 건별 스레드 목록). 게스트는 내 예약, 호스트는 내 숙소 예약. */
 export async function GET() {
-  const user = await getOrCreateServerUser();
-  if (!user) return apiError(401, "UNAUTHORIZED", "Sign in required");
+  const auth = await requireAuthWithDb();
+  if (!auth.ok) return auth.response;
+  const user = auth.user;
 
   const isHost = user.role === "HOST";
   const bookings = isHost

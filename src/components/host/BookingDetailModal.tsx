@@ -66,12 +66,13 @@ export default function BookingDetailModal({ open, onClose, bookingId }: Props) 
 
   useEffect(() => {
     if (!open || !bookingId) return;
+    const ac = new AbortController();
     queueMicrotask(() => {
       setDetail(null);
       setErrorMessage(null);
       setLoading(true);
     });
-    fetch(`/api/host/bookings/${bookingId}/detail`)
+    fetch(`/api/host/bookings/${bookingId}/detail`, { signal: ac.signal })
       .then(async (r) => {
         const text = await r.text();
         let body: { data?: BookingDetailData; error?: { code?: string; message?: string } } = {};
@@ -97,8 +98,9 @@ export default function BookingDetailModal({ open, onClose, bookingId }: Props) 
           setErrorMessage(msg);
         }
       })
-      .catch(() => setErrorMessage("네트워크 오류가 발생했습니다."))
+      .catch((err) => { if (err?.name !== "AbortError") setErrorMessage("네트워크 오류가 발생했습니다."); })
       .finally(() => setLoading(false));
+    return () => ac.abort();
   }, [open, bookingId]);
 
   if (!open) return null;

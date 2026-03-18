@@ -1,4 +1,5 @@
-import { getServerSessionUser, requireAdminUser } from "@/lib/auth/server";
+import { getServerSessionUser } from "@/lib/auth/server";
+import { requireAdmin } from "@/lib/api/auth-guard";
 import { apiError, apiOk } from "@/lib/api/response";
 import { getPendingApprovalItems } from "@/lib/repositories/admin-approvals";
 
@@ -7,8 +8,9 @@ export async function GET() {
     const sessionUser = await getServerSessionUser();
     if (!sessionUser) return apiError(401, "UNAUTHORIZED", "Login required");
 
-    const admin = await requireAdminUser();
-    if (!admin) return apiError(403, "FORBIDDEN", "Admin access required");
+    const auth = await requireAdmin();
+    if (!auth.ok) return auth.response;
+    const admin = auth.user;
 
     const items = await getPendingApprovalItems();
 

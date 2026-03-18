@@ -1,11 +1,12 @@
 import { apiError, apiOk } from "@/lib/api/response";
-import { requireAdminUser } from "@/lib/auth/server";
+import { requireAdmin } from "@/lib/api/auth-guard";
 import { getLatestPromotionByListing } from "@/lib/repositories/listing-promotions";
 
 export async function GET(req: Request) {
   try {
-    const admin = await requireAdminUser();
-    if (!admin) return apiError(403, "FORBIDDEN", "Admin access required");
+    const auth = await requireAdmin();
+    if (!auth.ok) return auth.response;
+    const admin = auth.user;
 
     const url = new URL(req.url);
     const listingId = url.searchParams.get("listingId") ?? "";

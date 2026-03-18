@@ -42,7 +42,7 @@ export default function SearchBar() {
     const start = sp.get("start");
     const end = sp.get("end");
     const rangeFromUrl: DateRange | undefined =
-      start && end ? { from: new Date(`${start}T00:00:00`), to: new Date(`${end}T00:00:00`) } : undefined;
+      start && end ? { from: new Date(`${start}T00:00:00Z`), to: new Date(`${end}T00:00:00Z`) } : undefined;
 
     return {
       where,
@@ -221,6 +221,7 @@ export default function SearchBar() {
             <button
               type="button"
               onClick={runSearch}
+              aria-label={t("search")}
               className="w-full sm:w-12 h-10 sm:h-12 inline-flex items-center justify-center gap-2 rounded-full bg-neutral-900 text-white hover:opacity-95 transition"
             >
               <Search className="h-5 w-5 text-[#E73587]" />

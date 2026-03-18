@@ -130,8 +130,26 @@ export function ExchangeRatesProvider({ children }: { children: React.ReactNode 
   return <ExchangeRatesContext.Provider value={value}>{children}</ExchangeRatesContext.Provider>;
 }
 
+const FALLBACK_EXCHANGE: Ctx = {
+  rates: null,
+  formatFromKRW: (amountKRW: number, currency: Currency) => formatWith(
+    currency === "KRW" ? amountKRW : amountKRW * (1 / KRW_PER[currency]) * EXCHANGE_RATE_MARKUP,
+    currency,
+    false
+  ),
+  formatFromKRWCompact: (amountKRW: number, currency: Currency) => formatWith(
+    currency === "KRW" ? amountKRW : amountKRW * (1 / KRW_PER[currency]) * EXCHANGE_RATE_MARKUP,
+    currency,
+    true
+  ),
+};
+
 export function useExchangeRates() {
   const ctx = useContext(ExchangeRatesContext);
-  if (!ctx) throw new Error("useExchangeRates must be used within ExchangeRatesProvider");
-  return ctx;
+  if (ctx) return ctx;
+
+  if (process.env.NODE_ENV !== "production") {
+    console.warn("[exchange] useExchangeRates called without <ExchangeRatesProvider/>; falling back to defaults");
+  }
+  return FALLBACK_EXCHANGE;
 }

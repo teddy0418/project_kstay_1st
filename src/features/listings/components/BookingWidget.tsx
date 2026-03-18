@@ -71,7 +71,12 @@ export default function BookingWidget({
   const [adults, setAdults] = useState(Math.max(1, defaultGuests ?? 2));
   const [childCount, setChildCount] = useState(0);
   const [openPanel, setOpenPanel] = useState<"date" | "guests" | null>(null);
+
+  const handleDateChange = useCallback((r: DateRange | undefined) => {
+    setRange(r);
+  }, []);
   const [isNonRefundableSpecial, setIsNonRefundableSpecial] = useState(false);
+  const [reserving, setReserving] = useState(false);
   const [disabledRanges, setDisabledRanges] = useState<Array<{ from: string; to: string }>>([]);
   const [bookedRanges, setBookedRanges] = useState<Array<{ from: string; to: string }>>([]);
   const [blockedRanges, setBlockedRanges] = useState<Array<{ from: string; to: string }>>([]);
@@ -79,7 +84,8 @@ export default function BookingWidget({
 
   useEffect(() => {
     if (!listingId) return;
-    fetch(`/api/listings/${encodeURIComponent(listingId)}/unavailable-dates`, { cache: "no-store" })
+    const ac = new AbortController();
+    fetch(`/api/listings/${encodeURIComponent(listingId)}/unavailable-dates`, { cache: "no-store", signal: ac.signal })
       .then((r) => r.json())
       .then((res) => {
         const data = res?.data;
@@ -88,6 +94,7 @@ export default function BookingWidget({
         if (data?.blockedRanges) setBlockedRanges(data.blockedRanges ?? []);
       })
       .catch(() => {});
+    return () => ac.abort();
   }, [listingId]);
 
   const cardRef = useRef<HTMLDivElement>(null);
@@ -112,12 +119,13 @@ export default function BookingWidget({
 
   useEffect(() => {
     if (!listingId || !range?.from) return;
+    const ac = new AbortController();
     const from = checkInISO;
     const lastNight = addDays(effectiveRange.from, Math.max(0, nights - 1));
     const to = toISO(lastNight);
     fetch(
       `/api/listings/${encodeURIComponent(listingId)}/date-prices?from=${from}&to=${to}`,
-      { cache: "no-store" }
+      { cache: "no-store", signal: ac.signal }
     )
       .then((r) => r.json())
       .then((res) => {
@@ -130,7 +138,8 @@ export default function BookingWidget({
         }
         setDatePrices(next);
       })
-      .catch(() => setDatePrices({}));
+      .catch(() => {});
+    return () => ac.abort();
   }, [listingId, checkInISO, effectiveRange.from, nights]);
 
   const overlapsDisabled = useMemo(() => {
@@ -138,23 +147,37 @@ export default function BookingWidget({
     return disabledRanges.some((r) => checkInISO < r.to && checkOutISO > r.from);
   }, [disabledRanges, checkInISO, checkOutISO]);
 
-  const basePerNightKRW =
-    nonRefundableSpecialEnabled && isNonRefundableSpecial
-      ? Math.round(basePricePerNightKRW * (1 - NON_REFUNDABLE_DISCOUNT_RATE))
-      : basePricePerNightKRW;
+  const discountRate = nonRefundableSpecialEnabled && isNonRefundableSpecial ? NON_REFUNDABLE_DISCOUNT_RATE : 0;
+  const applyDiscount = (krw: number) => discountRate > 0 ? Math.round(krw * (1 - discountRate)) : krw;
+  const basePerNightKRW = applyDiscount(basePricePerNightKRW);
   const totalKRW = useMemo(() => {
     let sum = 0;
     for (let i = 0; i < nights; i++) {
       const d = addDays(effectiveRange.from, i);
       const ymd = toISO(d);
-      const baseKrw = datePrices[ymd] ?? basePerNightKRW;
-      sum += totalGuestPriceKRW(baseKrw);
+      const rawKrw = datePrices[ymd] ?? basePricePerNightKRW;
+      sum += totalGuestPriceKRW(applyDiscount(rawKrw));
     }
     return sum;
-  }, [nights, effectiveRange.from, datePrices, basePerNightKRW]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [nights, effectiveRange.from, datePrices, basePricePerNightKRW, discountRate]);
   const nightlyAllInKRW = nights > 0 ? totalKRW / nights : totalGuestPriceKRW(basePerNightKRW);
   const totalDual = { main: formatFromKRW(totalKRW, currency), approxKRW: formatKRW(totalKRW) };
   const nightlyDual = { main: formatFromKRW(nightlyAllInKRW, currency), approxKRW: formatKRW(nightlyAllInKRW) };
+
+  const hasDiscount = nonRefundableSpecialEnabled && isNonRefundableSpecial;
+  const originalTotalKRW = useMemo(() => {
+    if (!hasDiscount) return 0;
+    let sum = 0;
+    for (let i = 0; i < nights; i++) {
+      const d = addDays(effectiveRange.from, i);
+      const ymd = toISO(d);
+      const baseKrw = datePrices[ymd] ?? basePricePerNightKRW;
+      sum += totalGuestPriceKRW(baseKrw);
+    }
+    return sum;
+  }, [hasDiscount, nights, effectiveRange.from, datePrices, basePricePerNightKRW]);
+  const originalNightlyKRW = hasDiscount && nights > 0 ? originalTotalKRW / nights : 0;
   const cancelText = freeCancelUntilKST(locale, effectiveRange.from);
 
   useEffect(() => {
@@ -197,6 +220,7 @@ export default function BookingWidget({
       openAuthModal({ next: checkoutUrl, role: "GUEST" });
       return;
     }
+    setReserving(true);
     router.push(checkoutUrl);
   };
 
@@ -257,13 +281,24 @@ export default function BookingWidget({
       <div ref={priceRef} className="booking-widget-price-block flex items-end justify-between">
         <div>
           <div className="text-xs text-neutral-500">{c.total}</div>
-          <div className="booking-widget-total mt-1 text-2xl font-semibold text-neutral-900">{totalDual.main}</div>
+          <div className="mt-1 flex items-baseline gap-2">
+            {hasDiscount && (
+              <span className="text-base text-neutral-400 line-through">{formatFromKRW(originalTotalKRW, currency)}</span>
+            )}
+            <span className={`booking-widget-total text-2xl font-semibold ${hasDiscount ? "text-red-600" : "text-neutral-900"}`}>{totalDual.main}</span>
+            {hasDiscount && (
+              <span className="rounded-full bg-red-100 px-1.5 py-0.5 text-[10px] font-bold text-red-600">-10%</span>
+            )}
+          </div>
           <div className="mt-1 text-xs text-neutral-500">
             {c.included}
           </div>
         </div>
         <div className="text-right text-xs text-neutral-500">
-          <div className="font-semibold text-neutral-900">{nightlyDual.main}</div>
+          {hasDiscount && (
+            <div className="text-neutral-400 line-through">{formatFromKRW(originalNightlyKRW, currency)}</div>
+          )}
+          <div className={`font-semibold ${hasDiscount ? "text-red-600" : "text-neutral-900"}`}>{nightlyDual.main}</div>
           <div>{c.perNight}</div>
         </div>
       </div>
@@ -289,7 +324,7 @@ export default function BookingWidget({
           {openPanel === "date" && (
             <DateDropdown
               range={range}
-              onChange={setRange}
+              onChange={handleDateChange}
               onClose={() => setOpenPanel(null)}
               overlay
               anchorRef={priceRef}
@@ -348,11 +383,16 @@ export default function BookingWidget({
       <button
         type="button"
         onClick={reserve}
-        disabled={overlapsDisabled}
+        disabled={overlapsDisabled || reserving}
         title={overlapsDisabled ? t("dates_unavailable") : undefined}
         className="booking-widget-reserve-btn mt-4 w-full rounded-full bg-neutral-900 py-3 text-sm font-semibold text-[#E73587] hover:opacity-95 transition disabled:opacity-50 disabled:cursor-not-allowed"
       >
-        {c.reserve}
+        {reserving ? (
+          <span className="inline-flex items-center gap-2">
+            <span className="h-4 w-4 animate-spin rounded-full border-2 border-[#E73587] border-t-transparent" />
+            {c.reserve}
+          </span>
+        ) : c.reserve}
       </button>
       <div className="booking-widget-not-charged mt-2 text-center text-xs text-neutral-500">
         {c.notCharged}

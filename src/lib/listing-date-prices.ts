@@ -7,13 +7,13 @@ function dateRange(from: string, to: string): string[] {
   const out: string[] = [];
   const [y0, m0, d0] = from.split("-").map(Number);
   const [y1, m1, d1] = to.split("-").map(Number);
-  const start = new Date(y0, m0 - 1, d0).getTime();
-  const end = new Date(y1, m1 - 1, d1).getTime();
+  const start = Date.UTC(y0, m0 - 1, d0);
+  const end = Date.UTC(y1, m1 - 1, d1);
   for (let t = start; t <= end; t += 86400 * 1000) {
     const d = new Date(t);
-    const y = d.getFullYear();
-    const m = String(d.getMonth() + 1).padStart(2, "0");
-    const day = String(d.getDate()).padStart(2, "0");
+    const y = d.getUTCFullYear();
+    const m = String(d.getUTCMonth() + 1).padStart(2, "0");
+    const day = String(d.getUTCDate()).padStart(2, "0");
     out.push(`${y}-${m}-${day}`);
   }
   return out;

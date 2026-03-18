@@ -46,8 +46,18 @@ export function CurrencyProvider({
   return <CurrencyContext.Provider value={value}>{children}</CurrencyContext.Provider>;
 }
 
+const FALLBACK_CURRENCY: Ctx = {
+  currency: DEFAULT_CURRENCY,
+  setCurrency: () => {},
+  supported: SUPPORTED_CURRENCIES,
+};
+
 export function useCurrency() {
   const ctx = useContext(CurrencyContext);
-  if (!ctx) throw new Error("useCurrency must be used within CurrencyProvider");
-  return ctx;
+  if (ctx) return ctx;
+
+  if (process.env.NODE_ENV !== "production") {
+    console.warn("[currency] useCurrency called without <CurrencyProvider/>; falling back to defaults");
+  }
+  return FALLBACK_CURRENCY;
 }

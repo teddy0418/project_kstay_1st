@@ -1,7 +1,7 @@
 # KSTAY 프로젝트 인수인계 문서
 
 > **목적:** AI(챗GPT 등) 또는 새 팀원이 이어받을 때 필요한 핵심 정보 정리.  
-> **기준일:** 2026-02-22
+> **기준일:** 2026-03-18
 
 ---
 
@@ -25,7 +25,7 @@
 | **언어** | TypeScript |
 | **스타일** | Tailwind CSS 4 |
 | **DB/ORM** | Prisma + PostgreSQL |
-| **인증** | NextAuth 4 (Google, Kakao, LINE) |
+| **인증** | NextAuth 4 (Google, Kakao, LINE, Facebook) |
 | **결제** | PortOne (포트원) |
 | **국제화** | ko / en / ja / zh — `getServerLang()`, `useI18n()`, `src/locales/*.json`, `src/lib/i18n.ts` |
 | **통화/환율** | USD·JPY·CNY·KRW, Frankfurter API (`/api/exchange`) |
@@ -65,25 +65,36 @@ npm run build  # 빌드 확인
 
 ---
 
-## 5. 최근 변경 사항 (이번 세션에서 반영된 것)
+## 5. 최근 개선 사항 (2026-03-18)
 
-1. **리스팅 상세 - 호스트 배지**
-   - "0% Host Fee" → "정부인증숙소" (4개 언어 지원)
-   - 검은 배경 + 우측 파란 ShieldCheck 아이콘
+1. **보안 강화**
+   - API 인증 가드 (`requireAuth`, `requireHost`, `requireAdmin`) 일원화
+   - Rate limiting (슬라이딩 윈도우)
+   - `proxy.ts`에 보안 헤더 통합 (X-Frame-Options, CSP 등)
 
-2. **리스팅 상세 - 지도 섹션 정리**
-   - 좌측 Location 섹션(주소 + View map 버튼) 제거
-   - 사진 아래 3카드의 Location 카드(iframe 포함)만 유지
+2. **버그 수정**
+   - SSR 컨텍스트 에러 해결 (AuthProvider 등 fallback 패턴)
+   - PortOne 결제 취소(환불) 기능 구현
 
-3. **리스팅 상세 - Location 카드 정렬**
-   - `items-center` → `items-start`로 Location 제목 정렬 조정
+3. **코드 품질**
+   - 대형 파일 분리 (ReviewsSection 추출)
+   - `<img>` → `next/image` 전환, `any` 타입 정리
+   - Zod 스키마 입력 길이 제한 강화
 
-4. **프로필 페이지 - 사진 업로드**
-   - Photo URL 입력 제거
-   - 프로필 원형 클릭 → 파일 선택(웹: 파일 탐색, 모바일: 사진첩)
-   - 프로필 우측 하단 카메라 아이콘(흰 배경, 회색 아이콘)으로 변경 가능 표시
-   - 검증: JPEG/PNG/WebP, 5MB, 200×2048px, 1:1 크롭 후 400×400 저장
-   - `document.createElement("img")` 사용 (Next.js Image와 충돌 방지)
+4. **UI/UX**
+   - 로딩/에러 상태 스피너 추가 (BookingWidget, 위시리스트, 메시지 등)
+   - 에러/404 페이지 다국어 지원
+   - 모바일 드롭다운 오버플로우 방지
+   - 로그인 플로우 개선
+
+5. **SEO & 성능**
+   - `sitemap.ts`, `robots.ts` 추가
+   - OG 태그, Twitter 카드, 키워드 메타데이터
+   - 접근성: `aria-expanded`, `aria-current`, ESC 키 지원
+
+6. **안정성**
+   - 라우트별 에러 바운더리 (checkout, host, admin)
+   - 서버 시작 시 환경변수 자동 검증 (`instrumentation.ts`)
 
 ---
 
@@ -98,7 +109,7 @@ npm run build  # 빌드 확인
 | `src/lib/policy.ts` | 수수료·취소 정책 |
 | `src/lib/i18n.ts`, `src/lib/i18n/server.ts` | 언어 감지(쿠키, Accept-Language) |
 | `src/locales/*.json` | 번역 키 |
-| `PROJECT_STATUS.md` | 상세 기능·파일 구조 |
+| `docs/PROJECT_STATUS.md` | 상세 기능·파일 구조 |
 
 ---
 
@@ -113,17 +124,17 @@ npm run build  # 빌드 확인
 
 ## 8. 다음 단계 (우선순위)
 
-1. 인증·DB 연동: 계정별 서버 저장, Wishlist/예약 연동
-2. 결제: PortOne 실제 연동, `pg_tid` 저장
-3. 정산: 화요일 정산 규칙, `settlement_id` 발급
-4. 디버그 로그 제거
+1. 관광사업자 등록 후 실 결제 연동 (PortOne 라이브 키)
+2. 정산 로직 완성 (화요일 정산 규칙, `settlement_id` 발급)
+3. 채널톡 등 실시간 메시징 도입
+4. 추가 기능 개발 (쿠폰, 프로모션, 호스트 통계 등)
 
 ---
 
 ## 9. AI에게 요청할 때 참고
 
 - **언어**: 프로필/리스팅 등 UI는 `getServerLang()` 또는 `useI18n()` 기반 ko/en/ja/zh 지원 필요
-- **이미지**: `next/image`는 일부 제거됨, `<img>` 사용 구간 있음
+- **이미지**: `next/image` 사용 원칙 (유저 업로드 이미지는 `unoptimized`)
 - **검색바**: `FloatingSearchWrapper`로 pathname에 따라 노출 구간 제어
 - **가격**: `formatDualPriceFromKRW`, `ExchangeRatesProvider` 사용
 
@@ -175,4 +186,4 @@ npm run build  # 빌드 확인
 
 ---
 
-*문서 수정 시 PROJECT_STATUS.md와 동기화 권장.*
+*문서 수정 시 docs/PROJECT_STATUS.md와 동기화 권장.*

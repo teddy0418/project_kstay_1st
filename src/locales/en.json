@@ -36,6 +36,7 @@
   "check_in": "Check-in",
   "check_out": "Check-out",
   "clear_dates": "Clear dates",
+  "apply_dates": "Apply",
   "close": "Close",
   "calendar_booked": "Booked",
   "calendar_blocked": "Blocked",
@@ -155,5 +156,6 @@
   "ad_a2_1": "Savings go to host service quality and guest prices.",
   "ad_q2": "Q. How is KSTAY different?",
   "ad_a1_2": "We share local hidden spots with the world, grow with small businesses, and revive local economies.",
-  "ad_a2_2": ""
+  "ad_a2_2": "",
+  "new_badge": "New"
 }

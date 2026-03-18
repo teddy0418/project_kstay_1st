@@ -45,10 +45,20 @@ export default function AuthModalProvider({ children }: { children: React.ReactN
   );
 }
 
+const FALLBACK_MODAL: Ctx = {
+  isOpen: false,
+  open: () => {},
+  close: () => {},
+};
+
 export function useAuthModal() {
   const ctx = useContext(AuthModalContext);
-  if (!ctx) throw new Error("useAuthModal must be used within <AuthModalProvider/>");
-  return ctx;
+  if (ctx) return ctx;
+
+  if (process.env.NODE_ENV !== "production") {
+    console.warn("[auth-modal] useAuthModal called without <AuthModalProvider/>; falling back to defaults");
+  }
+  return FALLBACK_MODAL;
 }
 
 function AuthModal({

@@ -1,5 +1,5 @@
 import { apiError, apiOk } from "@/lib/api/response";
-import { requireAdminUser } from "@/lib/auth/server";
+import { requireAdmin } from "@/lib/api/auth-guard";
 import { setKstayBlackSortOrder } from "@/lib/repositories/admin-listings";
 
 /** DELETE: KSTAY Black 선정 해제 */
@@ -8,8 +8,9 @@ export async function DELETE(
   ctx: { params: Promise<{ id: string }> }
 ) {
   try {
-    const admin = await requireAdminUser();
-    if (!admin) return apiError(403, "FORBIDDEN", "Admin required");
+    const auth = await requireAdmin();
+    if (!auth.ok) return auth.response;
+    const admin = auth.user;
     const { id: listingId } = await ctx.params;
     if (!listingId) return apiError(400, "BAD_REQUEST", "id required");
     const ok = await setKstayBlackSortOrder(listingId, null);

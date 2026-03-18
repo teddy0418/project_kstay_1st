@@ -1,8 +1,7 @@
 export type Category = {
   slug: string;
   label: string;
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  icon: any;
+  icon: React.ComponentType<{ className?: string }>;
 };
 
 export type Listing = {
@@ -13,6 +12,7 @@ export type Listing = {
   images: string[];
   pricePerNightKRW: number;
   rating: number;
+  reviewCount: number;
   categories: string[];
   lat: number;
   lng: number;

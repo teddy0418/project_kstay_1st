@@ -85,8 +85,19 @@ export default function WishlistProvider({ children }: { children: React.ReactNo
   return <WishlistContext.Provider value={value}>{children}</WishlistContext.Provider>;
 }
 
+const FALLBACK_WISHLIST: WishlistCtx = {
+  ids: [],
+  has: () => false,
+  toggle: async () => ({ ok: false, reason: "LOGIN_REQUIRED" as const }),
+  clear: async () => {},
+};
+
 export function useWishlist() {
   const ctx = useContext(WishlistContext);
-  if (!ctx) throw new Error("useWishlist must be used within <WishlistProvider/>");
-  return ctx;
+  if (ctx) return ctx;
+
+  if (process.env.NODE_ENV !== "production") {
+    console.warn("[wishlist] useWishlist called without <WishlistProvider/>; falling back to defaults");
+  }
+  return FALLBACK_WISHLIST;
 }

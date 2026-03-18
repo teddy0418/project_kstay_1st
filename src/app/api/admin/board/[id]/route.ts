@@ -1,5 +1,5 @@
 import { apiError, apiOk } from "@/lib/api/response";
-import { requireAdminUser } from "@/lib/auth/server";
+import { requireAdmin } from "@/lib/api/auth-guard";
 import { deleteBoardPost, getBoardPostById, updateBoardPost, type BoardPostI18n } from "@/lib/repositories/board";
 
 const LANGS = ["en", "ko", "ja", "zh"] as const;
@@ -17,8 +17,9 @@ function parseI18n(obj: unknown): BoardPostI18n | null {
 /** GET: 게시판 글 단일 (admin) */
 export async function GET(_req: Request, { params }: { params: Promise<{ id: string }> }) {
   try {
-    const admin = await requireAdminUser();
-    if (!admin) return apiError(403, "FORBIDDEN", "Admin access required");
+    const auth = await requireAdmin();
+    if (!auth.ok) return auth.response;
+    const admin = auth.user;
     const { id } = await params;
     const post = await getBoardPostById(id);
     if (!post) return apiError(404, "NOT_FOUND", "Board post not found");
@@ -32,8 +33,9 @@ export async function GET(_req: Request, { params }: { params: Promise<{ id: str
 /** PUT: 게시판 글 수정 (admin) */
 export async function PUT(req: Request, { params }: { params: Promise<{ id: string }> }) {
   try {
-    const admin = await requireAdminUser();
-    if (!admin) return apiError(403, "FORBIDDEN", "Admin access required");
+    const auth = await requireAdmin();
+    if (!auth.ok) return auth.response;
+    const admin = auth.user;
     const { id } = await params;
     const body = await req.json().catch(() => ({}));
 
@@ -59,8 +61,9 @@ export async function PUT(req: Request, { params }: { params: Promise<{ id: stri
 /** DELETE: 게시판 글 삭제 (admin) */
 export async function DELETE(_req: Request, { params }: { params: Promise<{ id: string }> }) {
   try {
-    const admin = await requireAdminUser();
-    if (!admin) return apiError(403, "FORBIDDEN", "Admin access required");
+    const auth = await requireAdmin();
+    if (!auth.ok) return auth.response;
+    const admin = auth.user;
     const { id } = await params;
     await deleteBoardPost(id);
     return apiOk({ deleted: true });

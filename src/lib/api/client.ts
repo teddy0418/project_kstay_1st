@@ -53,6 +53,13 @@ async function request<T>(input: string, options: RequestOptions = {}): Promise<
     }
 
     if (!res.ok) {
+      if (res.status === 401 && typeof window !== "undefined") {
+        const path = window.location.pathname;
+        const isPublicApi = input.startsWith("/api/bookings/public/") || input.startsWith("/api/listings");
+        if (!isPublicApi && !path.startsWith("/login")) {
+          window.dispatchEvent(new CustomEvent("kstay:session-expired"));
+        }
+      }
       const err = payload as ApiErrorShape | null;
       const code = err?.error?.code ?? "HTTP_ERROR";
       const message = err?.error?.message ?? `Request failed (${res.status})`;

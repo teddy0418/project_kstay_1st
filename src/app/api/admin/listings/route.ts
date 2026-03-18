@@ -1,13 +1,13 @@
 import { apiError, apiOk } from "@/lib/api/response";
-import { requireAdminUser } from "@/lib/auth/server";
+import { requireAdmin } from "@/lib/api/auth-guard";
 import { getAdminListings } from "@/lib/repositories/admin-listings";
 import { getApprovedListingsFromDb } from "@/lib/repositories/listings";
 
 /** GET: 관리자용. ?status=DRAFT|PENDING|APPROVED|REJECTED → 해당 상태 목록. ?approvedOnly=1 → 테스트 리뷰용 승인 숙소(전체 필드). 없으면 전체. */
 export async function GET(req: Request) {
   try {
-    const admin = await requireAdminUser();
-    if (!admin) return apiError(403, "FORBIDDEN", "Admin access required");
+    const auth = await requireAdmin();
+    if (!auth.ok) return auth.response;
 
     const url = new URL(req.url);
     const approvedOnly = url.searchParams.get("approvedOnly") === "1";

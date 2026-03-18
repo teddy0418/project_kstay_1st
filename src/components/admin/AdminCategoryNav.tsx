@@ -45,10 +45,10 @@ export default function AdminCategoryNav() {
       className="sticky top-14 z-30 border-b border-neutral-200 bg-white shadow-sm"
       aria-label="관리자 메뉴"
     >
-      <div className="mx-auto w-full max-w-screen-xl px-4 py-3">
-        <div className="flex flex-wrap items-center gap-x-1 gap-y-2 sm:gap-x-2">
+      <div className="mx-auto w-full max-w-screen-xl px-4 py-3 overflow-x-auto overscroll-x-contain scrollbar-none">
+        <div className="flex items-center gap-x-1 sm:gap-x-2 min-w-max sm:min-w-0 sm:flex-wrap sm:gap-y-2">
           {GROUPS.map((group, groupIndex) => (
-            <div key={group.sectionLabel} className="flex flex-wrap items-center gap-1 sm:gap-2">
+            <div key={group.sectionLabel} className="flex items-center gap-1 sm:gap-2 shrink-0 sm:shrink">
               {groupIndex > 0 && (
                 <span
                   className="hidden h-5 w-px bg-neutral-200 sm:inline-block"
@@ -61,7 +61,7 @@ export default function AdminCategoryNav() {
                   <Link
                     key={item.href}
                     href={item.href}
-                    className={`rounded-xl px-3 py-2.5 text-sm font-semibold transition sm:px-4 sm:py-3 sm:text-base ${
+                    className={`whitespace-nowrap rounded-xl px-3 py-2.5 text-sm font-semibold transition sm:px-4 sm:py-3 sm:text-base ${
                       active
                         ? "bg-neutral-900 text-white hover:bg-neutral-800"
                         : "text-neutral-600 hover:bg-neutral-100 hover:text-neutral-900"

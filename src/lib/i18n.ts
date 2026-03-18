@@ -79,6 +79,7 @@ const DICT = {
     provider_kakao: "Kakao",
     provider_line: "LINE",
     loading: "Loading...",
+    new_badge: "New",
   },
   ko: {
     stays: "숙소",
@@ -144,6 +145,7 @@ const DICT = {
     provider_kakao: "Kakao",
     provider_line: "LINE",
     loading: "로딩 중...",
+    new_badge: "신규",
   },
   ja: {
     stays: "宿泊",
@@ -209,6 +211,7 @@ const DICT = {
     provider_kakao: "Kakao",
     provider_line: "LINE",
     loading: "読み込み中...",
+    new_badge: "新着",
   },
   zh: {
     stays: "住宿",
@@ -274,6 +277,7 @@ const DICT = {
     provider_kakao: "Kakao",
     provider_line: "LINE",
     loading: "載入中...",
+    new_badge: "新上架",
   },
 } as const;
 

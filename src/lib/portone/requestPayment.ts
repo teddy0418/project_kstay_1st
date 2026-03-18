@@ -1,7 +1,9 @@
 import {
   requestPayment as portoneRequestPayment,
   PaymentCurrency,
+  PaymentPayMethod,
 } from "@portone/browser-sdk/v2";
+import type { PaymentResponse } from "@portone/browser-sdk/v2";
 
 export type PortonePayParams = {
   storeId: string;
@@ -13,11 +15,16 @@ export type PortonePayParams = {
   redirectUrl: string;
   guestName: string;
   guestEmail: string;
-  /** 엑심베이 채널에서는 미지원, 무시됨 */
-  forceRedirect?: boolean;
 };
 
-/** 엑심베이 DCC 12개국 등: PortOne SDK 지원 통화만 매핑, 나머지는 USD */
+export type PortonePayResult = {
+  success: boolean;
+  paymentId: string;
+  code?: string;
+  message?: string;
+};
+
+/** PortOne SDK 지원 통화만 매핑, 나머지는 USD */
 function mapToPortoneCurrency(code: string) {
   switch (code) {
     case "KRW":
@@ -29,30 +36,34 @@ function mapToPortoneCurrency(code: string) {
   }
 }
 
-/** PortOne 엑심베이(Eximbay) 채널: 카드 결제용 payMethod (SDK 타입에 없어 단언) */
-const EXIMBAY_CREDIT_CARD = "PAYMENTWALL_CREDIT_CARD" as const;
-
 /**
- * 엑심베이(Eximbay) 전용 결제 요청. PortOne 브라우저 SDK 호출.
- * 엑심베이 채널은 buyer_name/buyer_email 필수, forceRedirect 미지원.
+ * PortOne 결제 요청. 엑심베이(Eximbay) 채널 카드 결제.
+ *
+ * windowType 미지정 → PG(엑심베이) 기본 방식 사용.
+ * - PC: 팝업 (브라우저에서 팝업 허용 필요)
+ * - Mobile: 리다이렉트
  */
-export async function requestPortonePayment(params: PortonePayParams): Promise<void> {
-  const requestParams = {
+export async function requestPortonePayment(params: PortonePayParams): Promise<PortonePayResult> {
+  const resp: PaymentResponse | undefined = await portoneRequestPayment({
     storeId: params.storeId,
     channelKey: params.channelKey,
     paymentId: params.paymentId,
     orderName: params.orderName,
     totalAmount: params.totalAmount,
     currency: mapToPortoneCurrency(params.currency),
-    payMethod: EXIMBAY_CREDIT_CARD,
+    payMethod: PaymentPayMethod.CARD,
     redirectUrl: params.redirectUrl,
     customer: {
       fullName: params.guestName || "Guest",
       email: params.guestEmail,
     },
-  } as const;
+  });
 
-  await portoneRequestPayment(
-    requestParams as unknown as Parameters<typeof portoneRequestPayment>[0]
-  );
+  if (!resp) {
+    return { success: false, paymentId: params.paymentId, code: "NO_RESPONSE", message: "No response from payment gateway" };
+  }
+  if (resp.code) {
+    return { success: false, paymentId: resp.paymentId, code: resp.code, message: resp.message };
+  }
+  return { success: true, paymentId: resp.paymentId };
 }

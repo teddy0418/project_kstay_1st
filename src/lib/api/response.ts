@@ -9,6 +9,7 @@ export type ApiErrorCode =
   | "CONFLICT"
   | "INVALID_STATE"
   | "FREE_CANCEL_EXPIRED"
+  | "CONFIG_ERROR"
   | "INTERNAL_ERROR";
 
 export function apiError(status: number, code: ApiErrorCode, message: string) {

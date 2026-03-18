@@ -1,13 +1,15 @@
 import { prisma } from "@/lib/db";
-import { apiError, apiOk } from "@/lib/api/response";
-import { getServerSessionUser } from "@/lib/auth/server";
+import { apiOk } from "@/lib/api/response";
+import { apiError } from "@/lib/api/response";
+import { requireAuth } from "@/lib/api/auth-guard";
 import { parseJsonBody } from "@/lib/api/validation";
 import { updateProfileSchema } from "@/lib/validation/schemas";
 
 /** GET: 현재 로그인 유저의 프로필(displayName, profilePhotoUrl) */
 export async function GET() {
-  const user = await getServerSessionUser();
-  if (!user) return apiError(401, "UNAUTHORIZED", "Login required");
+  const auth = await requireAuth();
+  if (!auth.ok) return auth.response;
+  const user = auth.user;
 
   let userId = user.id;
   if (user.email) {
@@ -77,8 +79,9 @@ export async function GET() {
 
 /** PATCH: 프로필 표시 이름·사진 URL 저장 또는 온보딩 완료 */
 export async function PATCH(req: Request) {
-  const user = await getServerSessionUser();
-  if (!user) return apiError(401, "UNAUTHORIZED", "Login required");
+  const auth = await requireAuth();
+  if (!auth.ok) return auth.response;
+  const user = auth.user;
 
   const parsed = await parseJsonBody(req, updateProfileSchema);
   if (!parsed.ok) return parsed.response;

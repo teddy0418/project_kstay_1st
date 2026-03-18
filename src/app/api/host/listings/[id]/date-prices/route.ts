@@ -15,8 +15,8 @@ export async function GET(
   const fromStr = url.searchParams.get("from");
   const toStr = url.searchParams.get("to");
   if (!fromStr || !toStr) return apiError(400, "BAD_REQUEST", "from and to (YYYY-MM-DD) required");
-  const from = new Date(fromStr);
-  const to = new Date(toStr);
+  const from = new Date(`${fromStr}T00:00:00Z`);
+  const to = new Date(`${toStr}T00:00:00Z`);
   if (isNaN(from.getTime()) || isNaN(to.getTime())) return apiError(400, "BAD_REQUEST", "Invalid date");
 
   const prices = await getDatePrices(listingId, from, to);
@@ -36,7 +36,7 @@ export async function PUT(
   const dateStr = body.date;
   const priceKrw = typeof body.priceKrw === "number" ? body.priceKrw : parseInt(body.priceKrw, 10);
   if (!dateStr || Number.isNaN(priceKrw) || priceKrw < 0) return apiError(400, "BAD_REQUEST", "date and priceKrw required");
-  const date = new Date(dateStr);
+  const date = new Date(`${dateStr}T00:00:00Z`);
   if (isNaN(date.getTime())) return apiError(400, "BAD_REQUEST", "Invalid date");
 
   try {

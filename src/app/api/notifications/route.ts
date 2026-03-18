@@ -1,11 +1,12 @@
-import { apiError, apiOk } from "@/lib/api/response";
-import { getOrCreateServerUser } from "@/lib/auth/server";
+import { apiOk } from "@/lib/api/response";
+import { requireAuthWithDb } from "@/lib/api/auth-guard";
 import { getUnreadNotificationCount, getNotificationsByUserId } from "@/lib/repositories/booking-messages";
 
 /** GET /api/notifications — 내 알림 목록 + 미읽음 개수. */
 export async function GET() {
-  const user = await getOrCreateServerUser();
-  if (!user) return apiError(401, "UNAUTHORIZED", "Sign in required");
+  const auth = await requireAuthWithDb();
+  if (!auth.ok) return auth.response;
+  const user = auth.user;
 
   const [unreadCount, list] = await Promise.all([
     getUnreadNotificationCount(user.id),

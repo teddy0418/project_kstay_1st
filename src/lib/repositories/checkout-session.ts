@@ -73,25 +73,54 @@ export async function hasOverlappingBookingOrHold(
   return !!overlapBooking || !!overlapSession;
 }
 
-export async function createCheckoutSession(params: {
+/**
+ * 겹침 검사 + 세션 생성을 하나의 트랜잭션으로 수행하여
+ * 동시 요청 시 이중 홀드를 방지합니다.
+ */
+export async function createCheckoutSessionAtomic(params: {
   token: string;
   listingId: string;
   checkIn: Date;
   checkOut: Date;
   payload: CheckoutSessionPayload;
-}) {
-  const expiresAt = getCheckoutSessionExpiresAt();
-  return prisma.checkoutSession.create({
-    data: {
-      token: params.token,
-      listingId: params.listingId,
-      checkIn: params.checkIn,
-      checkOut: params.checkOut,
-      expiresAt,
-      payload: params.payload as object,
-    },
-    select: { token: true, expiresAt: true },
-  });
+}): Promise<{ token: string; expiresAt: Date } | null> {
+  return prisma.$transaction(async (tx) => {
+    const now = new Date();
+    const [overlapBooking, overlapSession] = await Promise.all([
+      tx.booking.findFirst({
+        where: {
+          listingId: params.listingId,
+          status: "CONFIRMED",
+          AND: [{ checkIn: { lt: params.checkOut } }, { checkOut: { gt: params.checkIn } }],
+        },
+        select: { id: true },
+      }),
+      tx.checkoutSession.findFirst({
+        where: {
+          listingId: params.listingId,
+          expiresAt: { gt: now },
+          AND: [{ checkIn: { lt: params.checkOut } }, { checkOut: { gt: params.checkIn } }],
+        },
+        select: { id: true },
+      }),
+    ]);
+
+    if (overlapBooking || overlapSession) return null;
+
+    const expiresAt = getCheckoutSessionExpiresAt();
+    const session = await tx.checkoutSession.create({
+      data: {
+        token: params.token,
+        listingId: params.listingId,
+        checkIn: params.checkIn,
+        checkOut: params.checkOut,
+        expiresAt,
+        payload: params.payload as object,
+      },
+      select: { token: true, expiresAt: true },
+    });
+    return session;
+  }, { isolationLevel: "Serializable" });
 }
 
 export async function findCheckoutSessionByToken(token: string) {
@@ -130,6 +159,21 @@ export async function createBookingFromCheckoutSession(
         : p.policyAgreedAt;
 
   const booking = await prisma.$transaction(async (tx) => {
+    const overlap = await tx.booking.findFirst({
+      where: {
+        listingId: session.listingId,
+        status: "CONFIRMED",
+        AND: [
+          { checkIn: { lt: session.checkOut } },
+          { checkOut: { gt: session.checkIn } },
+        ],
+      },
+      select: { id: true },
+    });
+    if (overlap) {
+      throw new Error(`OVERLAP_DETECTED: booking ${overlap.id} conflicts with dates`);
+    }
+
     const created = await tx.booking.create({
       data: {
         publicToken: sessionToken,

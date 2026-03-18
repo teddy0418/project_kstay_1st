@@ -36,6 +36,7 @@
   "check_in": "チェックイン",
   "check_out": "チェックアウト",
   "clear_dates": "日付をクリア",
+  "apply_dates": "適用",
   "close": "閉じる",
   "calendar_booked": "予約済み",
   "calendar_blocked": "販売停止",
@@ -67,6 +68,7 @@
   "support_subject_placeholder": "件名（500文字以内）",
   "support_body_placeholder": "内容を入力（4000文字以内）",
   "support_no_tickets": "問い合わせはまだありません。新規作成してください。",
+  "support_intro": "本日はどのようなご用件でしょうか？😊\nご質問がございましたら、いつでもこのチャットにメッセージをお寄せください。担当スタッフが確認後、丁寧にお返事いたします。",
   "support_sign_in_required": "お問い合わせにはログインが必要です。",
   "support_you": "あなた",
   "support_customer_support": "サポート",
@@ -154,5 +156,6 @@
   "ad_a2_1": "その分をホストのサービスとゲストの価格に還元しています。",
   "ad_q2": "Q. 他プラットフォームと何が違いますか？",
   "ad_a1_2": "隠れた地域の店を世界に発信し、小規模事業者と共に支え合い、現地の心を分かち合い地域経済を支える価値ある旅をつくります。",
-  "ad_a2_2": ""
+  "ad_a2_2": "",
+  "new_badge": "新着"
 }

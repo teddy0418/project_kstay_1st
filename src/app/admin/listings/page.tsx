@@ -266,83 +266,121 @@ export default function AdminListingsPage() {
       ) : items.length === 0 ? (
         <div className="rounded-2xl border border-neutral-200 bg-white p-8 text-center text-neutral-500">해당하는 숙소가 없습니다.</div>
       ) : (
-        <div className="w-full min-w-0 overflow-x-auto rounded-2xl border border-neutral-200 bg-white">
-          <table className="w-full min-w-[720px] text-sm">
-            <thead className="border-b border-neutral-200 bg-neutral-50 text-left text-neutral-600">
-              <tr>
-                <th className="p-4 font-semibold">숙소</th>
-                <th className="p-4 font-semibold">호스트</th>
-                <th className="p-4 font-semibold">가격</th>
-                <th className="p-4 font-semibold">상태</th>
-                <th className="p-4 font-semibold">등록일</th>
-                <th className="p-4 font-semibold">액션</th>
-              </tr>
-            </thead>
-            <tbody>
-              {items.map((row) => (
-                <tr key={row.id} className="border-b border-neutral-100 last:border-0">
-                  <td className="p-4">
-                    <Link href={`/admin/listings/${row.id}`} className="font-semibold text-neutral-900 truncate max-w-[200px] hover:underline block">
+        <>
+          {/* Desktop table */}
+          <div className="hidden md:block w-full min-w-0 overflow-x-auto rounded-2xl border border-neutral-200 bg-white">
+            <table className="w-full text-sm">
+              <thead className="border-b border-neutral-200 bg-neutral-50 text-left text-neutral-600">
+                <tr>
+                  <th className="p-4 font-semibold whitespace-nowrap">숙소</th>
+                  <th className="p-4 font-semibold whitespace-nowrap">호스트</th>
+                  <th className="p-4 font-semibold whitespace-nowrap">가격</th>
+                  <th className="p-4 font-semibold whitespace-nowrap">상태</th>
+                  <th className="p-4 font-semibold whitespace-nowrap">등록일</th>
+                  <th className="p-4 font-semibold whitespace-nowrap">액션</th>
+                </tr>
+              </thead>
+              <tbody>
+                {items.map((row) => (
+                  <tr key={row.id} className="border-b border-neutral-100 last:border-0">
+                    <td className="p-4">
+                      <Link href={`/admin/listings/${row.id}`} className="font-semibold text-neutral-900 truncate max-w-[200px] hover:underline block">
+                        {row.title}
+                      </Link>
+                      <div className="text-xs text-neutral-500 truncate max-w-[200px]">{row.city} · {row.area}</div>
+                      {row.status === "PENDING" && (
+                        <Link href={`/admin/listings/${row.id}`} className="mt-1 inline-block whitespace-nowrap text-xs font-medium text-blue-600 hover:underline">
+                          검토 (정보·서류 확인)
+                        </Link>
+                      )}
+                    </td>
+                    <td className="p-4 text-neutral-700 whitespace-nowrap">{row.host.name ?? row.host.id}</td>
+                    <td className="p-4 whitespace-nowrap">₩{row.basePriceKrw.toLocaleString()}</td>
+                    <td className="p-4">
+                      <span className={`inline-flex rounded-full px-2.5 py-1 text-xs font-semibold ${
+                        row.status === "APPROVED" ? "bg-green-100 text-green-700" :
+                        row.status === "PENDING" ? "bg-amber-100 text-amber-700" :
+                        row.status === "REJECTED" ? "bg-red-100 text-red-700" :
+                        "bg-neutral-100 text-neutral-700"
+                      }`}>
+                        {STATUS_LABEL[row.status] ?? row.status}
+                      </span>
+                    </td>
+                    <td className="p-4 text-neutral-600 whitespace-nowrap">
+                      {new Date(row.createdAt).toLocaleDateString("ko-KR")}
+                    </td>
+                    <td className="p-4">
+                      <div className="flex flex-col items-start gap-2">
+                        {row.status === "PENDING" && (
+                          <div className="flex gap-2">
+                            <button type="button" disabled={acting !== null} onClick={() => void approve(row.id)} className="rounded-lg bg-neutral-900 px-3 py-1.5 text-xs font-semibold text-white hover:opacity-90 disabled:opacity-50">
+                              {acting === row.id ? "처리 중" : "승인"}
+                            </button>
+                            <button type="button" disabled={acting !== null} onClick={() => void reject(row.id)} className="rounded-lg border border-red-300 bg-white px-3 py-1.5 text-xs font-semibold text-red-600 hover:bg-red-50 disabled:opacity-50">
+                              거절
+                            </button>
+                          </div>
+                        )}
+                        <button type="button" onClick={() => void openPromotionModal(row)} className="whitespace-nowrap rounded-xl border border-neutral-200 bg-white px-3 py-1.5 text-xs font-semibold text-neutral-700 hover:bg-neutral-50">
+                          상위 노출 설정
+                        </button>
+                      </div>
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+
+          {/* Mobile cards */}
+          <div className="grid gap-3 md:hidden">
+            {items.map((row) => (
+              <div key={row.id} className="rounded-2xl border border-neutral-200 bg-white p-4 space-y-3">
+                <div className="flex items-start justify-between gap-2">
+                  <div className="min-w-0">
+                    <Link href={`/admin/listings/${row.id}`} className="font-semibold text-neutral-900 truncate block hover:underline">
                       {row.title}
                     </Link>
-                    <div className="text-xs text-neutral-500 truncate max-w-[200px]">{row.city} · {row.area}</div>
-                    {row.status === "PENDING" && (
-                      <Link href={`/admin/listings/${row.id}`} className="mt-1 inline-block text-xs font-medium text-blue-600 hover:underline">
-                        검토 (정보·서류 확인)
-                      </Link>
-                    )}
-                  </td>
-                  <td className="p-4 text-neutral-700">{row.host.name ?? row.host.id}</td>
-                  <td className="p-4">₩{row.basePriceKrw.toLocaleString()}</td>
-                  <td className="p-4">
-                    <span className={`inline-flex rounded-full px-2.5 py-1 text-xs font-semibold ${
-                      row.status === "APPROVED" ? "bg-green-100 text-green-700" :
-                      row.status === "PENDING" ? "bg-amber-100 text-amber-700" :
-                      row.status === "REJECTED" ? "bg-red-100 text-red-700" :
-                      "bg-neutral-100 text-neutral-700"
-                    }`}>
-                      {STATUS_LABEL[row.status] ?? row.status}
-                    </span>
-                  </td>
-                  <td className="p-4 text-neutral-600">
-                    {new Date(row.createdAt).toLocaleDateString("ko-KR")}
-                  </td>
-                  <td className="p-4">
-                    <div className="flex flex-col items-start gap-2">
-                      {row.status === "PENDING" && (
-                        <div className="flex gap-2">
-                          <button
-                            type="button"
-                            disabled={acting !== null}
-                            onClick={() => void approve(row.id)}
-                            className="rounded-lg bg-neutral-900 px-3 py-1.5 text-xs font-semibold text-white hover:opacity-90 disabled:opacity-50"
-                          >
-                            {acting === row.id ? "처리 중" : "승인"}
-                          </button>
-                          <button
-                            type="button"
-                            disabled={acting !== null}
-                            onClick={() => void reject(row.id)}
-                            className="rounded-lg border border-red-300 bg-white px-3 py-1.5 text-xs font-semibold text-red-600 hover:bg-red-50 disabled:opacity-50"
-                          >
-                            거절
-                          </button>
-                        </div>
-                      )}
-                      <button
-                        type="button"
-                        onClick={() => void openPromotionModal(row)}
-                        className="rounded-xl border border-neutral-200 bg-white px-3 py-1.5 text-xs font-semibold text-neutral-700 hover:bg-neutral-50"
-                      >
-                        상위 노출 설정
+                    <div className="mt-0.5 text-xs text-neutral-500">{row.city} · {row.area}</div>
+                  </div>
+                  <span className={`shrink-0 inline-flex rounded-full px-2.5 py-1 text-xs font-semibold ${
+                    row.status === "APPROVED" ? "bg-green-100 text-green-700" :
+                    row.status === "PENDING" ? "bg-amber-100 text-amber-700" :
+                    row.status === "REJECTED" ? "bg-red-100 text-red-700" :
+                    "bg-neutral-100 text-neutral-700"
+                  }`}>
+                    {STATUS_LABEL[row.status] ?? row.status}
+                  </span>
+                </div>
+                <div className="flex flex-wrap gap-x-4 gap-y-1 text-sm text-neutral-700">
+                  <span className="whitespace-nowrap">호스트: {row.host.name ?? row.host.id}</span>
+                  <span className="whitespace-nowrap font-semibold">₩{row.basePriceKrw.toLocaleString()}</span>
+                  <span className="whitespace-nowrap text-xs text-neutral-500">{new Date(row.createdAt).toLocaleDateString("ko-KR")}</span>
+                </div>
+                <div className="flex flex-wrap gap-2">
+                  {row.status === "PENDING" && (
+                    <>
+                      <button type="button" disabled={acting !== null} onClick={() => void approve(row.id)} className="rounded-lg bg-neutral-900 px-3 py-1.5 text-xs font-semibold text-white hover:opacity-90 disabled:opacity-50">
+                        {acting === row.id ? "처리 중" : "승인"}
                       </button>
-                    </div>
-                  </td>
-                </tr>
-              ))}
-            </tbody>
-          </table>
-        </div>
+                      <button type="button" disabled={acting !== null} onClick={() => void reject(row.id)} className="rounded-lg border border-red-300 bg-white px-3 py-1.5 text-xs font-semibold text-red-600 hover:bg-red-50 disabled:opacity-50">
+                        거절
+                      </button>
+                    </>
+                  )}
+                  <button type="button" onClick={() => void openPromotionModal(row)} className="rounded-xl border border-neutral-200 bg-white px-3 py-1.5 text-xs font-semibold text-neutral-700 hover:bg-neutral-50">
+                    상위 노출
+                  </button>
+                  {row.status === "PENDING" && (
+                    <Link href={`/admin/listings/${row.id}`} className="text-xs font-medium text-blue-600 hover:underline self-center">
+                      검토
+                    </Link>
+                  )}
+                </div>
+              </div>
+            ))}
+          </div>
+        </>
       )}
       {promoTarget && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 px-4">

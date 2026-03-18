@@ -77,7 +77,7 @@ function DocBlock({ label, url }: { label: string; url: string | null }) {
         </a>
       ) : (
         <a href={url} target="_blank" rel="noopener noreferrer" className="block">
-          <img src={url} alt={label} className="max-h-64 w-auto rounded-lg object-contain" />
+          <Image src={url} alt={label} width={400} height={256} className="max-h-64 w-auto rounded-lg object-contain" unoptimized />
         </a>
       )}
     </div>

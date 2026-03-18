@@ -50,10 +50,17 @@ export default function PaymentRedirectPage() {
   const router = useRouter();
   const searchParams = useSearchParams();
 
-  const paymentId = searchParams.get("paymentId") || "";
-  const code = searchParams.get("code") || "";
-  const message = searchParams.get("message") || "";
-  const isFailure = code.startsWith("FAILURE_");
+  const paymentId =
+    searchParams.get("paymentId") ||
+    searchParams.get("merchant_order_ref") ||
+    "";
+  const code = searchParams.get("code") || searchParams.get("status_code") || "";
+  const message = searchParams.get("message") || searchParams.get("status_reason") || "";
+  const status = searchParams.get("status") || "";
+  const isFailure =
+    code.startsWith("FAILURE_") ||
+    status === "FAILED" ||
+    (code && /^[45678]\d{3}$/.test(String(code)));
 
   useEffect(() => {
     if (!paymentId) return;

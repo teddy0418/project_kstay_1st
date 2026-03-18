@@ -9,6 +9,7 @@ import { useAuth } from "@/components/ui/AuthProvider";
 import { useAuthModal } from "@/components/ui/AuthModalProvider";
 import { useCurrency } from "@/components/ui/CurrencyProvider";
 import { useI18n } from "@/components/ui/LanguageProvider";
+import { useToast } from "@/components/ui/ToastProvider";
 import { requestPortonePayment, type PortonePayParams } from "@/lib/portone/requestPayment";
 import { getFrozenQuote } from "@/lib/price-freeze";
 import {
@@ -41,7 +42,7 @@ const NATIONALITIES = [
   { value: "GB", label: "United Kingdom" },
   { value: "AU", label: "Australia" },
   { value: "DE", label: "Germany" },
-  { value: "OTHER", label: "기타" },
+  { value: "OTHER", label: { en: "Other", ko: "기타", ja: "その他", zh: "其他" } },
 ] as const;
 
 const NATIONALITY_TO_DIAL_CODE: Record<string, string> = {
@@ -134,12 +135,12 @@ type CreateBookingResponse = {
     totalAmount: number;
     currency: "USD" | "KRW";
     redirectUrl: string;
-    forceRedirect: true;
   };
 };
 
 export default function CheckoutPaymentCard(props: Props) {
   const router = useRouter();
+  const { toast } = useToast();
   const { user, isAuthed } = useAuth();
   const { open: openAuthModal } = useAuthModal();
   const { currency } = useCurrency();
@@ -302,7 +303,9 @@ export default function CheckoutPaymentCard(props: Props) {
     const rest = NATIONALITIES.slice(1);
     const selectLabel =
       lang === "ko" ? "국가 선택" : lang === "ja" ? "国を選択" : lang === "zh" ? "選擇國家" : "Select country";
-    return [{ value: first.value, label: selectLabel }, ...rest.map((n) => ({ value: n.value, label: n.label }))];
+    const resolveLabel = (l: string | Record<string, string>) =>
+      typeof l === "string" ? l : l[lang] ?? l.en ?? "";
+    return [{ value: first.value, label: selectLabel }, ...rest.map((n) => ({ value: n.value, label: resolveLabel(n.label) }))];
   }, [lang]);
 
   /** 엑심베이(Eximbay) 가이드라인: 글로벌 카드 / 간편결제 / 일본 econtext */
@@ -353,15 +356,24 @@ export default function CheckoutPaymentCard(props: Props) {
     setPaying(true);
     setPayModalError(null);
     try {
-      await requestPortonePayment(payParams);
-      setPayModalOpen(false);
-      setPayParams(null);
+      const result = await requestPortonePayment(payParams);
+      if (result.success) {
+        setPayModalOpen(false);
+        setPayParams(null);
+        if (typeof localStorage !== "undefined") {
+          localStorage.removeItem("kstay_portone_pay_params");
+        }
+        router.push(`/checkout/success/${encodeURIComponent(result.paymentId)}`);
+        router.refresh();
+      } else {
+        setPayModalError(result.message || result.code || "Payment was not completed.");
+      }
     } catch (sdkErr) {
       const msg = sdkErr instanceof Error ? sdkErr.message : String(sdkErr);
       setPayModalError(msg);
     }
     setPaying(false);
-  }, [payParams, paying]);
+  }, [payParams, paying, router]);
 
   useEffect(() => {
     if (!user) return;
@@ -486,7 +498,6 @@ export default function CheckoutPaymentCard(props: Props) {
           totalAmount: created.portone.totalAmount,
           currency: created.portone.currency,
           redirectUrl: created.portone.redirectUrl,
-          forceRedirect: created.portone.forceRedirect,
           guestName: guestName.trim() || user?.name || c.guestFallback,
           guestEmail,
         };
@@ -503,13 +514,13 @@ export default function CheckoutPaymentCard(props: Props) {
       router.push(created.nextUrl);
       router.refresh();
     } catch (err) {
-      if (err instanceof ApiClientError) {
-        alert(err.message);
-      } else if (err instanceof Error && err.message) {
-        alert(err.message);
-      } else {
-        alert(c.requestFailed);
-      }
+      const msg =
+        err instanceof ApiClientError
+          ? err.message
+          : err instanceof Error && err.message
+            ? err.message
+            : c.requestFailed;
+      toast(msg);
       setPaying(false);
     }
   };
@@ -577,8 +588,9 @@ export default function CheckoutPaymentCard(props: Props) {
       <p className="mt-2 text-sm text-neutral-600">{c.desc}</p>
       <div className="mt-4 space-y-3">
         <div className="rounded-xl border border-neutral-200 px-3 py-2">
-          <label className="text-xs font-semibold text-neutral-500">{c.name}</label>
+          <label htmlFor="checkout-name" className="text-xs font-semibold text-neutral-500">{c.name}</label>
           <input
+            id="checkout-name"
             value={guestName}
             onChange={(e) => setGuestName(e.target.value)}
             className="mt-1 w-full text-sm outline-none"
@@ -586,8 +598,9 @@ export default function CheckoutPaymentCard(props: Props) {
           />
         </div>
         <div className="rounded-xl border border-neutral-200 px-3 py-2">
-          <label className="text-xs font-semibold text-neutral-500">{c.country}</label>
+          <label htmlFor="checkout-country" className="text-xs font-semibold text-neutral-500">{c.country}</label>
           <select
+            id="checkout-country"
             value={guestNationality}
             onChange={(e) => setGuestNationality(e.target.value)}
             className="mt-1 w-full text-sm outline-none bg-transparent"
@@ -600,8 +613,9 @@ export default function CheckoutPaymentCard(props: Props) {
           </select>
         </div>
         <div className="rounded-xl border border-neutral-200 px-3 py-2">
-          <label className="text-xs font-semibold text-neutral-500">{c.email}</label>
+          <label htmlFor="checkout-email" className="text-xs font-semibold text-neutral-500">{c.email}</label>
           <input
+            id="checkout-email"
             value={guestEmail}
             onChange={(e) => setGuestEmail(e.target.value)}
             readOnly={emailReadonly}
@@ -612,12 +626,13 @@ export default function CheckoutPaymentCard(props: Props) {
           <p id="checkout-email-hint" className="mt-0.5 text-[11px] text-neutral-400">{c.emailHint}</p>
         </div>
         <div className="rounded-xl border border-neutral-200 px-3 py-2">
-          <label className="text-xs font-semibold text-neutral-500">{c.phone}</label>
+          <label htmlFor="checkout-phone" className="text-xs font-semibold text-neutral-500">{c.phone}</label>
           <div className="mt-1 flex items-center gap-1 rounded-lg border border-transparent bg-transparent">
             <span className="shrink-0 text-sm text-neutral-500 tabular-nums">
               {guestDialCode || (lang === "ko" ? "국가 선택 시 자동" : lang === "ja" ? "国選択で自動" : lang === "zh" ? "選國家後自動" : "Auto when country selected")}
             </span>
             <input
+              id="checkout-phone"
               value={guestPhoneLocal}
               onChange={(e) => setGuestPhoneLocal(e.target.value)}
               className="min-w-0 flex-1 text-sm outline-none"
@@ -626,8 +641,9 @@ export default function CheckoutPaymentCard(props: Props) {
           </div>
         </div>
         <div className="rounded-xl border border-neutral-200 px-3 py-2">
-          <label className="text-xs font-semibold text-neutral-500">{c.messageToHost}</label>
+          <label htmlFor="checkout-message" className="text-xs font-semibold text-neutral-500">{c.messageToHost}</label>
           <textarea
+            id="checkout-message"
             value={guestMessageToHost}
             onChange={(e) => setGuestMessageToHost(e.target.value)}
             placeholder={c.messageToHostPh}
@@ -778,32 +794,32 @@ export default function CheckoutPaymentCard(props: Props) {
       <div className="mt-4 grid gap-3">
         {paymentMethodBlock}
         <div className="rounded-xl border border-neutral-200 px-3 py-2">
-          <label className="text-xs font-semibold text-neutral-500">{c.name}</label>
-          <input value={guestName} onChange={(e) => setGuestName(e.target.value)} className="mt-1 w-full text-sm outline-none" placeholder={c.namePh} />
+          <label htmlFor="checkout-name-m" className="text-xs font-semibold text-neutral-500">{c.name}</label>
+          <input id="checkout-name-m" value={guestName} onChange={(e) => setGuestName(e.target.value)} className="mt-1 w-full text-sm outline-none" placeholder={c.namePh} />
         </div>
         <div className="rounded-xl border border-neutral-200 px-3 py-2">
-          <label className="text-xs font-semibold text-neutral-500">{c.country}</label>
-          <select value={guestNationality} onChange={(e) => setGuestNationality(e.target.value)} className="mt-1 w-full text-sm outline-none bg-transparent">
+          <label htmlFor="checkout-country-m" className="text-xs font-semibold text-neutral-500">{c.country}</label>
+          <select id="checkout-country-m" value={guestNationality} onChange={(e) => setGuestNationality(e.target.value)} className="mt-1 w-full text-sm outline-none bg-transparent">
             {nationalityOptions.map((opt) => (
               <option key={opt.value || "empty"} value={opt.value}>{opt.label}</option>
             ))}
           </select>
         </div>
         <div className="rounded-xl border border-neutral-200 px-3 py-2">
-          <label className="text-xs font-semibold text-neutral-500">{c.email}</label>
-          <input value={guestEmail} onChange={(e) => setGuestEmail(e.target.value)} readOnly={emailReadonly} className="mt-1 w-full text-sm outline-none read-only:text-neutral-500" placeholder={c.emailPh} aria-describedby="checkout-email-hint" />
-          <p id="checkout-email-hint" className="mt-0.5 text-[11px] text-neutral-400">{c.emailHint}</p>
+          <label htmlFor="checkout-email-m" className="text-xs font-semibold text-neutral-500">{c.email}</label>
+          <input id="checkout-email-m" value={guestEmail} onChange={(e) => setGuestEmail(e.target.value)} readOnly={emailReadonly} className="mt-1 w-full text-sm outline-none read-only:text-neutral-500" placeholder={c.emailPh} aria-describedby="checkout-email-hint-m" />
+          <p id="checkout-email-hint-m" className="mt-0.5 text-[11px] text-neutral-400">{c.emailHint}</p>
         </div>
         <div className="rounded-xl border border-neutral-200 px-3 py-2">
-          <label className="text-xs font-semibold text-neutral-500">{c.phone}</label>
+          <label htmlFor="checkout-phone-m" className="text-xs font-semibold text-neutral-500">{c.phone}</label>
           <div className="mt-1 flex items-center gap-1">
             <span className="shrink-0 text-sm text-neutral-500 tabular-nums">{guestDialCode || "—"}</span>
-            <input value={guestPhoneLocal} onChange={(e) => setGuestPhoneLocal(e.target.value)} className="min-w-0 flex-1 text-sm outline-none" placeholder={guestDialCode ? "10-1234-5678" : c.phonePh} />
+            <input id="checkout-phone-m" value={guestPhoneLocal} onChange={(e) => setGuestPhoneLocal(e.target.value)} className="min-w-0 flex-1 text-sm outline-none" placeholder={guestDialCode ? "10-1234-5678" : c.phonePh} />
           </div>
         </div>
         <div className="rounded-xl border border-neutral-200 px-3 py-2">
-          <label className="text-xs font-semibold text-neutral-500">{c.messageToHost}</label>
-          <textarea value={guestMessageToHost} onChange={(e) => setGuestMessageToHost(e.target.value)} placeholder={c.messageToHostPh} rows={6} className="mt-1 w-full min-h-[140px] resize-y text-sm outline-none placeholder:text-neutral-400" />
+          <label htmlFor="checkout-message-m" className="text-xs font-semibold text-neutral-500">{c.messageToHost}</label>
+          <textarea id="checkout-message-m" value={guestMessageToHost} onChange={(e) => setGuestMessageToHost(e.target.value)} placeholder={c.messageToHostPh} rows={6} className="mt-1 w-full min-h-[140px] resize-y text-sm outline-none placeholder:text-neutral-400" />
         </div>
       </div>
       <p className="mt-3 text-xs text-neutral-500">* {c.disclaimer}</p>

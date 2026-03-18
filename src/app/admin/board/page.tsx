@@ -2,6 +2,7 @@
 
 import { useCallback, useEffect, useState } from "react";
 import Link from "next/link";
+import Image from "next/image";
 import { useRouter } from "next/navigation";
 import { apiClient, ApiClientError } from "@/lib/api/client";
 
@@ -80,57 +81,71 @@ export default function AdminBoardPage() {
       ) : items.length === 0 ? (
         <div className="rounded-2xl border border-neutral-200 bg-white p-8 text-center text-neutral-500">등록된 글이 없습니다.</div>
       ) : (
-        <div className="w-full min-w-0 overflow-x-auto rounded-2xl border border-neutral-200 bg-white">
-          <table className="w-full min-w-[640px] text-sm">
-            <thead className="border-b border-neutral-200 bg-neutral-50 text-left text-neutral-600">
-              <tr>
-                <th className="p-4 font-semibold">썸네일</th>
-                <th className="p-4 font-semibold">제목</th>
-                <th className="p-4 font-semibold">순서</th>
-                <th className="p-4 font-semibold">등록일</th>
-                <th className="p-4 font-semibold">액션</th>
-              </tr>
-            </thead>
-            <tbody>
-              {items.map((row) => (
-                <tr key={row.id} className="border-b border-neutral-100 last:border-0">
-                  <td className="p-4">
-                    {row.cover ? (
-                      <img src={row.cover} alt="" className="h-12 w-16 rounded-lg object-cover" />
-                    ) : (
-                      <span className="text-neutral-400">—</span>
-                    )}
-                  </td>
-                  <td className="p-4">
-                    <div className="font-semibold text-neutral-900 truncate max-w-[240px]">{pickTitle(row.title)}</div>
-                  </td>
-                  <td className="p-4 text-neutral-600">{row.sortOrder}</td>
-                  <td className="p-4 text-neutral-600">
-                    {new Date(row.createdAt).toLocaleDateString("ko-KR")}
-                  </td>
-                  <td className="p-4">
-                    <div className="flex gap-2">
-                      <Link
-                        href={`/admin/board/${row.id}/edit`}
-                        className="rounded-lg bg-neutral-900 px-3 py-1.5 text-xs font-semibold text-white hover:opacity-90"
-                      >
-                        편집
-                      </Link>
-                      <button
-                        type="button"
-                        disabled={deletingId !== null}
-                        onClick={() => void deletePost(row.id)}
-                        className="rounded-lg border border-red-300 bg-white px-3 py-1.5 text-xs font-semibold text-red-600 hover:bg-red-50 disabled:opacity-50"
-                      >
-                        {deletingId === row.id ? "삭제 중" : "삭제"}
-                      </button>
-                    </div>
-                  </td>
+        <>
+          {/* Desktop */}
+          <div className="hidden md:block w-full min-w-0 rounded-2xl border border-neutral-200 bg-white">
+            <table className="w-full text-sm">
+              <thead className="border-b border-neutral-200 bg-neutral-50 text-left text-neutral-600">
+                <tr>
+                  <th className="p-4 font-semibold whitespace-nowrap">썸네일</th>
+                  <th className="p-4 font-semibold whitespace-nowrap">제목</th>
+                  <th className="p-4 font-semibold whitespace-nowrap">순서</th>
+                  <th className="p-4 font-semibold whitespace-nowrap">등록일</th>
+                  <th className="p-4 font-semibold whitespace-nowrap">액션</th>
                 </tr>
-              ))}
-            </tbody>
-          </table>
-        </div>
+              </thead>
+              <tbody>
+                {items.map((row) => (
+                  <tr key={row.id} className="border-b border-neutral-100 last:border-0">
+                    <td className="p-4">
+                      {row.cover ? (
+                        <Image src={row.cover} alt="" width={64} height={48} className="h-12 w-16 rounded-lg object-cover" unoptimized />
+                      ) : (
+                        <span className="text-neutral-400">—</span>
+                      )}
+                    </td>
+                    <td className="p-4">
+                      <div className="font-semibold text-neutral-900 truncate max-w-[240px]">{pickTitle(row.title)}</div>
+                    </td>
+                    <td className="p-4 text-neutral-600 whitespace-nowrap">{row.sortOrder}</td>
+                    <td className="p-4 text-neutral-600 whitespace-nowrap">{new Date(row.createdAt).toLocaleDateString("ko-KR")}</td>
+                    <td className="p-4">
+                      <div className="flex gap-2">
+                        <Link href={`/admin/board/${row.id}/edit`} className="rounded-lg bg-neutral-900 px-3 py-1.5 text-xs font-semibold text-white hover:opacity-90">편집</Link>
+                        <button type="button" disabled={deletingId !== null} onClick={() => void deletePost(row.id)} className="rounded-lg border border-red-300 bg-white px-3 py-1.5 text-xs font-semibold text-red-600 hover:bg-red-50 disabled:opacity-50">
+                          {deletingId === row.id ? "삭제 중" : "삭제"}
+                        </button>
+                      </div>
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+
+          {/* Mobile */}
+          <div className="grid gap-3 md:hidden">
+            {items.map((row) => (
+              <div key={row.id} className="rounded-2xl border border-neutral-200 bg-white p-4 flex gap-3">
+                {row.cover ? (
+                  <Image src={row.cover} alt="" width={64} height={48} className="h-14 w-20 shrink-0 rounded-lg object-cover" unoptimized />
+                ) : (
+                  <div className="h-14 w-20 shrink-0 rounded-lg bg-neutral-100" />
+                )}
+                <div className="min-w-0 flex-1 space-y-1.5">
+                  <div className="font-semibold text-neutral-900 truncate">{pickTitle(row.title)}</div>
+                  <div className="text-xs text-neutral-500">순서 {row.sortOrder} · {new Date(row.createdAt).toLocaleDateString("ko-KR")}</div>
+                  <div className="flex gap-2">
+                    <Link href={`/admin/board/${row.id}/edit`} className="rounded-lg bg-neutral-900 px-3 py-1.5 text-xs font-semibold text-white hover:opacity-90">편집</Link>
+                    <button type="button" disabled={deletingId !== null} onClick={() => void deletePost(row.id)} className="rounded-lg border border-red-300 bg-white px-3 py-1.5 text-xs font-semibold text-red-600 hover:bg-red-50 disabled:opacity-50">
+                      {deletingId === row.id ? "삭제 중" : "삭제"}
+                    </button>
+                  </div>
+                </div>
+              </div>
+            ))}
+          </div>
+        </>
       )}
     </div>
   );

@@ -51,8 +51,18 @@ export default function Header() {
       if (menuRef.current && !menuRef.current.contains(tNode)) setOpenMenu(false);
       if (langRef.current && !langRef.current.contains(tNode)) setOpenLang(false);
     };
+    const onKey = (e: KeyboardEvent) => {
+      if (e.key === "Escape") {
+        setOpenMenu(false);
+        setOpenLang(false);
+      }
+    };
     document.addEventListener("mousedown", onDown);
-    return () => document.removeEventListener("mousedown", onDown);
+    document.addEventListener("keydown", onKey);
+    return () => {
+      document.removeEventListener("mousedown", onDown);
+      document.removeEventListener("keydown", onKey);
+    };
   }, []);
 
   const isBoard = pathname.startsWith("/board");
@@ -169,9 +179,11 @@ export default function Header() {
             <AccountIndicator />
           </div>
           <div className="relative" ref={langRef}>
-            <button
+              <button
               type="button"
               onClick={() => setOpenLang((v) => !v)}
+              aria-expanded={openLang}
+              aria-haspopup="true"
               className="inline-flex h-10 w-10 items-center justify-center rounded-full hover:bg-neutral-100 transition translate-x-[4px] md:translate-x-0"
               aria-label="Language & currency"
             >
@@ -179,7 +191,7 @@ export default function Header() {
             </button>
 
             {openLang && (
-              <div className="absolute right-0 mt-2 z-[100] w-64 rounded-2xl border border-neutral-200 bg-white shadow-elevated overflow-hidden">
+              <div className="absolute right-0 mt-2 z-[100] w-64 max-w-[calc(100vw-2rem)] rounded-2xl border border-neutral-200 bg-white shadow-elevated overflow-hidden">
                 <div className="px-4 py-3 text-xs font-semibold text-neutral-500">{t("language").toUpperCase()}</div>
                 {options.map((o) => (
                   <button
@@ -225,6 +237,8 @@ export default function Header() {
             <button
               type="button"
               onClick={() => setOpenMenu((v) => !v)}
+              aria-expanded={openMenu}
+              aria-haspopup="true"
               className="inline-flex items-center gap-2 rounded-full border border-neutral-200 bg-white px-3 py-2 shadow-soft hover:shadow-elevated transition"
               aria-label="Menu"
             >
@@ -233,7 +247,7 @@ export default function Header() {
             </button>
 
             {openMenu && (
-              <div className="absolute right-0 mt-2 z-[100] w-64 rounded-2xl border border-neutral-200 bg-white shadow-elevated overflow-hidden">
+              <div className="absolute right-0 mt-2 z-[100] w-64 max-w-[calc(100vw-2rem)] rounded-2xl border border-neutral-200 bg-white shadow-elevated overflow-hidden">
                 {!loggedIn ? (
                   <button
                     type="button"

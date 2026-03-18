@@ -107,7 +107,15 @@ export async function findPublicBookingByToken(token: string) {
     where: { publicToken: token },
     include: {
       listing: {
-        select: { id: true, title: true, city: true, area: true, address: true },
+        select: {
+          id: true,
+          title: true,
+          city: true,
+          area: true,
+          address: true,
+          checkInTime: true,
+          images: { orderBy: { sortOrder: "asc" }, take: 1, select: { url: true } },
+        },
       },
     },
   });

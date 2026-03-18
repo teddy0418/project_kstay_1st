@@ -4,6 +4,23 @@ import imageSize from "image-size";
 import { getOrCreateServerUser } from "@/lib/auth/server";
 import { apiError, apiOk } from "@/lib/api/response";
 import { findHostListingOwnership, countListingImages } from "@/lib/repositories/host-listings";
+import { checkRateLimit, RATE_LIMITS, rateLimitResponse, getClientIp } from "@/lib/api/rate-limit";
+
+function matchesMagicBytes(buf: Buffer, mime: string): boolean {
+  if (buf.length < 4) return false;
+  switch (mime) {
+    case "image/jpeg":
+      return buf[0] === 0xFF && buf[1] === 0xD8 && buf[2] === 0xFF;
+    case "image/png":
+      return buf[0] === 0x89 && buf[1] === 0x50 && buf[2] === 0x4E && buf[3] === 0x47;
+    case "image/gif":
+      return buf[0] === 0x47 && buf[1] === 0x49 && buf[2] === 0x46;
+    case "image/webp":
+      return buf.length >= 12 && buf.slice(0, 4).toString() === "RIFF" && buf.slice(8, 12).toString() === "WEBP";
+    default:
+      return false;
+  }
+}
 
 /** 글로벌 표준: 최대 20MB (VRBO·부킹닷컴 등) */
 const MAX_SIZE = 20 * 1024 * 1024;
@@ -17,6 +34,9 @@ export async function POST(
   ctx: { params: Promise<{ id: string }> }
 ) {
   try {
+    const rl = checkRateLimit(getClientIp(req), RATE_LIMITS.upload);
+    if (!rl.allowed) return rateLimitResponse();
+
     const user = await getOrCreateServerUser();
     if (!user) return apiError(401, "UNAUTHORIZED", "Login required");
 
@@ -53,6 +73,10 @@ export async function POST(
 
     const bytes = await file.arrayBuffer();
     const buffer = Buffer.from(bytes);
+
+    if (!matchesMagicBytes(buffer, file.type)) {
+      return apiError(400, "VALIDATION_ERROR", "파일 내용이 지정된 이미지 형식과 일치하지 않습니다.");
+    }
 
     try {
       const dimensions = imageSize(buffer);

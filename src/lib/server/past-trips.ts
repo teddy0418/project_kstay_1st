@@ -35,6 +35,7 @@ function toListingForTrip(row: {
     images,
     pricePerNightKRW: row.basePriceKrw,
     rating: row.rating ?? 0,
+    reviewCount: row.reviewCount ?? 0,
     categories: ["homes"],
     lat: 37.5665,
     lng: 126.978,

@@ -1,5 +1,5 @@
 import { apiError, apiOk } from "@/lib/api/response";
-import { requireAdminUser } from "@/lib/auth/server";
+import { requireAdmin } from "@/lib/api/auth-guard";
 import {
   deleteHostAnnouncement,
   getHostAnnouncementById,
@@ -12,8 +12,9 @@ export async function GET(
   ctx: { params: Promise<{ id: string }> }
 ) {
   try {
-    const admin = await requireAdminUser();
-    if (!admin) return apiError(403, "FORBIDDEN", "Admin 권한이 필요합니다.");
+    const auth = await requireAdmin();
+    if (!auth.ok) return auth.response;
+    const admin = auth.user;
     const { id } = await ctx.params;
     const item = await getHostAnnouncementById(id);
     if (!item) return apiError(404, "NOT_FOUND", "공지를 찾을 수 없습니다.");
@@ -30,8 +31,9 @@ export async function PUT(
   ctx: { params: Promise<{ id: string }> }
 ) {
   try {
-    const admin = await requireAdminUser();
-    if (!admin) return apiError(403, "FORBIDDEN", "Admin 권한이 필요합니다.");
+    const auth = await requireAdmin();
+    if (!auth.ok) return auth.response;
+    const admin = auth.user;
     const { id } = await ctx.params;
     const body = await req.json().catch(() => ({}));
     const data: { type?: string; title?: string; body?: string | null; sortOrder?: number } = {};
@@ -55,8 +57,9 @@ export async function DELETE(
   ctx: { params: Promise<{ id: string }> }
 ) {
   try {
-    const admin = await requireAdminUser();
-    if (!admin) return apiError(403, "FORBIDDEN", "Admin 권한이 필요합니다.");
+    const auth = await requireAdmin();
+    if (!auth.ok) return auth.response;
+    const admin = auth.user;
     const { id } = await ctx.params;
     await deleteHostAnnouncement(id);
     return apiOk({ ok: true });

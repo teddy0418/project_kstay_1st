@@ -2,15 +2,20 @@ import { NextRequest } from "next/server";
 import { prisma } from "@/lib/db";
 import { apiError, apiOk } from "@/lib/api/response";
 import { parseJsonBody } from "@/lib/api/validation";
-import { getServerSessionUser } from "@/lib/auth/server";
+import { requireAuth } from "@/lib/api/auth-guard";
 import { createReviewSchema } from "@/lib/validation/schemas";
 import { createReview, findReviewsByUserId } from "@/lib/repositories/reviews";
+import { checkRateLimit, RATE_LIMITS, rateLimitResponse, getClientIp } from "@/lib/api/rate-limit";
 
 /** POST: 리뷰 작성. 본인 예약(CONFIRMED, 체크아웃 완료)에만 가능, 예약당 1회. */
 export async function POST(req: NextRequest) {
   try {
-    const user = await getServerSessionUser();
-    if (!user) return apiError(401, "UNAUTHORIZED", "Login required");
+    const rl = checkRateLimit(getClientIp(req), RATE_LIMITS.mutation);
+    if (!rl.allowed) return rateLimitResponse();
+
+    const auth = await requireAuth();
+    if (!auth.ok) return auth.response;
+    const user = auth.user;
 
     const parsed = await parseJsonBody(req, createReviewSchema);
     if (!parsed.ok) return parsed.response;
@@ -54,8 +59,9 @@ export async function POST(req: NextRequest) {
 // eslint-disable-next-line @typescript-eslint/no-unused-vars -- Route handler signature
 export async function GET(_req: NextRequest) {
   try {
-    const user = await getServerSessionUser();
-    if (!user) return apiError(401, "UNAUTHORIZED", "Login required");
+    const auth = await requireAuth();
+    if (!auth.ok) return auth.response;
+    const user = auth.user;
 
     const list = await findReviewsByUserId(user.id);
     const reviews = list.map((r) => ({

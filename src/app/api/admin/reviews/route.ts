@@ -2,7 +2,7 @@ import { NextRequest } from "next/server";
 import { prisma } from "@/lib/db";
 import { apiError, apiOk } from "@/lib/api/response";
 import { parseJsonBody } from "@/lib/api/validation";
-import { requireAdminUser } from "@/lib/auth/server";
+import { requireAdmin } from "@/lib/api/auth-guard";
 import { adminCreateReviewSchema } from "@/lib/validation/schemas";
 import { createReview } from "@/lib/repositories/reviews";
 import { randomBytes } from "crypto";
@@ -15,8 +15,9 @@ import { randomBytes } from "crypto";
  */
 export async function POST(req: NextRequest) {
   try {
-    const admin = await requireAdminUser();
-    if (!admin) return apiError(403, "FORBIDDEN", "Admin access required");
+    const auth = await requireAdmin();
+    if (!auth.ok) return auth.response;
+    const admin = auth.user;
 
     const parsed = await parseJsonBody(req, adminCreateReviewSchema);
     if (!parsed.ok) return parsed.response;

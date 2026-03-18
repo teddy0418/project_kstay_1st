@@ -1,6 +1,7 @@
 import { NextRequest } from "next/server";
 import { apiError, apiOk } from "@/lib/api/response";
 import { getOrCreateServerUser } from "@/lib/auth/server";
+import { checkRateLimit, RATE_LIMITS, rateLimitResponse, getClientIp } from "@/lib/api/rate-limit";
 import {
   findTicketsByUserId,
   findAllTickets,
@@ -81,6 +82,9 @@ export async function GET(req: NextRequest) {
 
 /** POST /api/support/tickets — 새 티켓 생성 (첫 메시지 포함). body: { body } */
 export async function POST(req: NextRequest) {
+  const rl = checkRateLimit(getClientIp(req), RATE_LIMITS.mutation);
+  if (!rl.allowed) return rateLimitResponse();
+
   const user = await getOrCreateServerUser();
   if (!user) return apiError(401, "UNAUTHORIZED", "Sign in required");
 

@@ -2,7 +2,8 @@ import { randomUUID } from "crypto";
 import { prisma } from "@/lib/db";
 import { apiError, apiOk } from "@/lib/api/response";
 import { parseJsonBody } from "@/lib/api/validation";
-import { getServerSessionUser } from "@/lib/auth/server";
+import { requireAuth } from "@/lib/api/auth-guard";
+import { checkRateLimit, RATE_LIMITS, rateLimitResponse, getClientIp } from "@/lib/api/rate-limit";
 import {
   buildCancellationSnapshot,
   nightsBetween,
@@ -10,7 +11,7 @@ import {
 } from "@/lib/bookings/utils";
 import { createBookingSchema } from "@/lib/validation/schemas";
 import {
-  createCheckoutSession,
+  createCheckoutSessionAtomic,
   deleteExpiredCheckoutSessions,
   hasOverlappingBookingOrHold,
 } from "@/lib/repositories/checkout-session";
@@ -35,7 +36,6 @@ type CreateBookingResponse = {
     totalAmount: number;
     currency: "USD" | "KRW" | "JPY";
     redirectUrl: string;
-    forceRedirect: true;
   };
 };
 
@@ -73,6 +73,7 @@ function toListingForTrip(row: {
     images,
     pricePerNightKRW: row.basePriceKrw,
     rating: row.rating ?? 0,
+    reviewCount: row.reviewCount ?? 0,
     categories: ["homes"],
     lat: 37.5665,
     lng: 126.978,
@@ -93,8 +94,9 @@ function toListingForTrip(row: {
 /** GET: 로그인한 게스트의 체크아웃 완료 숙소(Your trips). */
 export async function GET() {
   try {
-    const user = await getServerSessionUser();
-    if (!user) return apiError(401, "UNAUTHORIZED", "Login required");
+    const auth = await requireAuth();
+    if (!auth.ok) return auth.response;
+    const user = auth.user;
 
     // 세션 id가 JWT와 어긋날 수 있으므로, 이메일이 있으면 DB 유저 id로 한 번 더 확정
     let guestUserId = user.id;
@@ -138,6 +140,14 @@ export async function GET() {
 
 export async function POST(req: Request) {
   try {
+    const ip = getClientIp(req);
+    const rl = checkRateLimit(ip, RATE_LIMITS.mutation);
+    if (!rl.allowed) return rateLimitResponse();
+
+    const auth = await requireAuth();
+    if (!auth.ok) return auth.response;
+    const sessionUser = auth.user;
+
     const providerMode = (process.env.PAYMENT_PROVIDER || "MOCK").toUpperCase();
     const parsedBody = await parseJsonBody(req, createBookingSchema);
     if (!parsedBody.ok) return parsedBody.response;
@@ -156,13 +166,10 @@ export async function POST(req: Request) {
     const listing = await findListingPricingById(listingId);
     if (!listing) return apiError(404, "NOT_FOUND", "Listing not found");
 
-    const overlapping = await hasOverlappingBookingOrHold(listingId, checkInDate, checkOutDate);
-    if (overlapping) {
+    const preCheck = await hasOverlappingBookingOrHold(listingId, checkInDate, checkOutDate);
+    if (preCheck) {
       return apiError(409, "CONFLICT", "Selected dates are not available");
     }
-
-    const sessionUser = await getServerSessionUser();
-    if (!sessionUser) return apiError(401, "UNAUTHORIZED", "Login required to complete booking");
 
     const guestEmail = (body.guestEmail ?? sessionUser.email ?? "").trim();
     if (!guestEmail) return apiError(400, "BAD_REQUEST", "guestEmail is required");
@@ -274,13 +281,16 @@ export async function POST(req: Request) {
       refundSchedule: snapshot.refundSchedule,
       policyAgreedAt: policyAgreedAt.toISOString(),
     };
-    await createCheckoutSession({
+    const sessionResult = await createCheckoutSessionAtomic({
       token: publicToken,
       listingId: listing.id,
       checkIn: checkInDate,
       checkOut: checkOutDate,
       payload: sessionPayload,
     });
+    if (!sessionResult) {
+      return apiError(409, "CONFLICT", "Selected dates are not available");
+    }
 
     const payload: CreateBookingResponse = {
       token: publicToken,
@@ -297,7 +307,7 @@ export async function POST(req: Request) {
       ).trim();
 
       const siteUrl = String(
-        process.env.NEXT_PUBLIC_SITE_URL || process.env.AUTH_URL || "http://localhost:3001"
+        process.env.NEXT_PUBLIC_SITE_URL || process.env.AUTH_URL || "https://kstay.co.kr"
       ).replace(/\/+$/, "");
 
       if (!storeId || !channelKey) {
@@ -312,7 +322,6 @@ export async function POST(req: Request) {
         totalAmount: paymentAmount,
         currency: paymentCurrency,
         redirectUrl: `${siteUrl}/payment-redirect`,
-        forceRedirect: true,
       };
     }
 

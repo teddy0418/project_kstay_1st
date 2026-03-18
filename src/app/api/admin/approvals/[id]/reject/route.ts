@@ -1,11 +1,12 @@
 import { apiError, apiOk } from "@/lib/api/response";
-import { requireAdminUser } from "@/lib/auth/server";
+import { requireAdmin } from "@/lib/api/auth-guard";
 import { findApprovalListingById, rejectListingById } from "@/lib/repositories/admin-approvals";
 
 export async function POST(_: Request, ctx: { params: Promise<{ id: string }> }) {
   try {
-    const admin = await requireAdminUser();
-    if (!admin) return apiError(403, "FORBIDDEN", "Admin access required");
+    const auth = await requireAdmin();
+    if (!auth.ok) return auth.response;
+    const admin = auth.user;
 
     const { id } = await ctx.params;
     if (!id) return apiError(400, "BAD_REQUEST", "listing id is required");

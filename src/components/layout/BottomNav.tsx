@@ -25,7 +25,7 @@ export default function BottomNav() {
   );
 
   return (
-    <nav className="sm:hidden fixed inset-x-0 bottom-3 z-[70] flex justify-center pb-[env(safe-area-inset-bottom)] pointer-events-none">
+    <nav aria-label="Main navigation" className="sm:hidden fixed inset-x-0 bottom-3 z-[70] flex justify-center pb-[env(safe-area-inset-bottom)] pointer-events-none">
       <div className="pointer-events-auto mx-auto w-[min(94vw,420px)] sm:w-[min(92vw,480px)] rounded-full border border-neutral-200/70 bg-white/40 px-4 py-1.5 shadow-soft backdrop-blur supports-[backdrop-filter]:bg-white/20">
         <div className="relative grid grid-cols-5">
           <div
@@ -40,6 +40,7 @@ export default function BottomNav() {
               <Link
                 key={it.href}
                 href={it.href}
+                aria-current={active ? "page" : undefined}
                 className={cn(
                   "relative z-10 flex flex-col items-center justify-center gap-0.5 rounded-full px-1.5 py-1.5 text-[10px] min-[375px]:text-[11px] transition-colors min-w-0",
                   active ? "text-[#E73587]" : "text-neutral-600/90"

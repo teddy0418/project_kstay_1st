@@ -9,6 +9,7 @@ import {
 } from "@/lib/bookings/utils";
 import { findPublicBookingByToken } from "@/lib/repositories/bookings";
 import { cancelGuestBookingByToken } from "@/lib/repositories/payment-processing";
+import { cancelPortonePayment } from "@/lib/portone/cancel";
 
 /** POST: 게스트 예약 취소. 무료 취소 기한 내에서만 성공. */
 export async function POST(_: Request, ctx: { params: Promise<{ token: string }> }) {
@@ -24,7 +25,14 @@ export async function POST(_: Request, ctx: { params: Promise<{ token: string }>
       return apiError(400, "BAD_REQUEST", "Cannot cancel");
     }
 
-    // TODO: PAYMENT_PROVIDER=PORTONE일 때 PG 취소/환불 API 호출 (현재 MOCK은 DB 상태만 변경)
+    const providerMode = (process.env.PAYMENT_PROVIDER || "MOCK").toUpperCase();
+    if (providerMode === "PORTONE") {
+      const refundResult = await cancelPortonePayment(token, "Guest free cancellation");
+      if (!refundResult.ok) {
+        console.error("[api/bookings/public/:token] PortOne refund failed", refundResult.reason);
+      }
+    }
+
     return apiOk({ cancelled: true, bookingId: result.bookingId });
   } catch (error) {
     console.error("[api/bookings/public/:token] POST cancel failed", error);
@@ -41,10 +49,29 @@ export async function GET(_: Request, ctx: { params: Promise<{ token: string }> 
 
     if (!booking) return apiError(404, "NOT_FOUND", "Booking not found");
 
+    const listing = booking.listing as {
+      id: string;
+      title: string;
+      city: string;
+      area: string;
+      address: string;
+      checkInTime?: string | null;
+      images?: Array<{ url: string }>;
+    };
+    const imageUrl = listing.images?.[0]?.url ?? null;
     return apiOk({
       token: booking.publicToken,
       status: booking.status,
-      listing: booking.listing,
+      guestEmail: booking.guestEmail,
+      listing: {
+        id: listing.id,
+        title: listing.title,
+        city: listing.city,
+        area: listing.area,
+        address: listing.address,
+        checkInTime: listing.checkInTime ?? "15:00",
+        imageUrl,
+      },
       checkIn: booking.checkIn.toISOString(),
       checkOut: booking.checkOut.toISOString(),
       nights: booking.nights,

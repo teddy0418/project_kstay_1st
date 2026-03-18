@@ -72,61 +72,67 @@ export default function AdminHostAnnouncementsPage() {
       ) : items.length === 0 ? (
         <div className="rounded-2xl border border-neutral-200 bg-white p-8 text-center text-neutral-500">등록된 공지가 없습니다.</div>
       ) : (
-        <div className="w-full min-w-0 overflow-x-auto rounded-2xl border border-neutral-200 bg-white">
-          <table className="w-full min-w-[520px] text-sm">
-            <thead className="border-b border-neutral-200 bg-neutral-50 text-left text-neutral-600">
-              <tr>
-                <th className="p-4 font-semibold">유형</th>
-                <th className="p-4 font-semibold">제목</th>
-                <th className="p-4 font-semibold">순서</th>
-                <th className="p-4 font-semibold">등록일</th>
-                <th className="p-4 font-semibold">액션</th>
-              </tr>
-            </thead>
-            <tbody>
-              {items.map((row) => (
-                <tr key={row.id} className="border-b border-neutral-100 last:border-0">
-                  <td className="p-4">
-                    <span
-                      className={
-                        row.type === "공지"
-                          ? "rounded-full bg-neutral-900 px-2.5 py-0.5 text-xs font-semibold text-white"
-                          : row.type === "가이드"
-                            ? "rounded-full bg-emerald-100 px-2.5 py-0.5 text-xs font-semibold text-emerald-800"
-                            : "rounded-full bg-neutral-100 px-2.5 py-0.5 text-xs font-semibold text-neutral-700"
-                      }
-                    >
-                      {row.type}
-                    </span>
-                  </td>
-                  <td className="p-4">
-                    <div className="font-semibold text-neutral-900 truncate max-w-[280px]">{row.title || "—"}</div>
-                  </td>
-                  <td className="p-4 text-neutral-600">{row.sortOrder}</td>
-                  <td className="p-4 text-neutral-600">{new Date(row.createdAt).toLocaleDateString("ko-KR")}</td>
-                  <td className="p-4">
-                    <div className="flex gap-2">
-                      <Link
-                        href={`/admin/host-announcements/${row.id}/edit`}
-                        className="rounded-lg bg-neutral-900 px-3 py-1.5 text-xs font-semibold text-white hover:opacity-90"
-                      >
-                        편집
-                      </Link>
-                      <button
-                        type="button"
-                        disabled={deletingId !== null}
-                        onClick={() => void deleteItem(row.id)}
-                        className="rounded-lg border border-red-300 bg-white px-3 py-1.5 text-xs font-semibold text-red-600 hover:bg-red-50 disabled:opacity-50"
-                      >
-                        {deletingId === row.id ? "삭제 중" : "삭제"}
-                      </button>
-                    </div>
-                  </td>
+        <>
+          {/* Desktop */}
+          <div className="hidden md:block w-full min-w-0 rounded-2xl border border-neutral-200 bg-white">
+            <table className="w-full text-sm">
+              <thead className="border-b border-neutral-200 bg-neutral-50 text-left text-neutral-600">
+                <tr>
+                  <th className="p-4 font-semibold whitespace-nowrap">유형</th>
+                  <th className="p-4 font-semibold whitespace-nowrap">제목</th>
+                  <th className="p-4 font-semibold whitespace-nowrap">순서</th>
+                  <th className="p-4 font-semibold whitespace-nowrap">등록일</th>
+                  <th className="p-4 font-semibold whitespace-nowrap">액션</th>
                 </tr>
-              ))}
-            </tbody>
-          </table>
-        </div>
+              </thead>
+              <tbody>
+                {items.map((row) => (
+                  <tr key={row.id} className="border-b border-neutral-100 last:border-0">
+                    <td className="p-4">
+                      <span className={row.type === "공지" ? "rounded-full bg-neutral-900 px-2.5 py-0.5 text-xs font-semibold text-white" : row.type === "가이드" ? "rounded-full bg-emerald-100 px-2.5 py-0.5 text-xs font-semibold text-emerald-800" : "rounded-full bg-neutral-100 px-2.5 py-0.5 text-xs font-semibold text-neutral-700"}>
+                        {row.type}
+                      </span>
+                    </td>
+                    <td className="p-4"><div className="font-semibold text-neutral-900 truncate max-w-[280px]">{row.title || "—"}</div></td>
+                    <td className="p-4 text-neutral-600 whitespace-nowrap">{row.sortOrder}</td>
+                    <td className="p-4 text-neutral-600 whitespace-nowrap">{new Date(row.createdAt).toLocaleDateString("ko-KR")}</td>
+                    <td className="p-4">
+                      <div className="flex gap-2">
+                        <Link href={`/admin/host-announcements/${row.id}/edit`} className="rounded-lg bg-neutral-900 px-3 py-1.5 text-xs font-semibold text-white hover:opacity-90">편집</Link>
+                        <button type="button" disabled={deletingId !== null} onClick={() => void deleteItem(row.id)} className="rounded-lg border border-red-300 bg-white px-3 py-1.5 text-xs font-semibold text-red-600 hover:bg-red-50 disabled:opacity-50">
+                          {deletingId === row.id ? "삭제 중" : "삭제"}
+                        </button>
+                      </div>
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+
+          {/* Mobile */}
+          <div className="grid gap-3 md:hidden">
+            {items.map((row) => (
+              <div key={row.id} className="rounded-2xl border border-neutral-200 bg-white p-4 space-y-2">
+                <div className="flex items-start justify-between gap-2">
+                  <div className="min-w-0">
+                    <div className="font-semibold text-neutral-900 truncate">{row.title || "—"}</div>
+                    <div className="mt-0.5 text-xs text-neutral-500">순서 {row.sortOrder} · {new Date(row.createdAt).toLocaleDateString("ko-KR")}</div>
+                  </div>
+                  <span className={`shrink-0 ${row.type === "공지" ? "rounded-full bg-neutral-900 px-2.5 py-0.5 text-xs font-semibold text-white" : row.type === "가이드" ? "rounded-full bg-emerald-100 px-2.5 py-0.5 text-xs font-semibold text-emerald-800" : "rounded-full bg-neutral-100 px-2.5 py-0.5 text-xs font-semibold text-neutral-700"}`}>
+                    {row.type}
+                  </span>
+                </div>
+                <div className="flex gap-2">
+                  <Link href={`/admin/host-announcements/${row.id}/edit`} className="rounded-lg bg-neutral-900 px-3 py-1.5 text-xs font-semibold text-white hover:opacity-90">편집</Link>
+                  <button type="button" disabled={deletingId !== null} onClick={() => void deleteItem(row.id)} className="rounded-lg border border-red-300 bg-white px-3 py-1.5 text-xs font-semibold text-red-600 hover:bg-red-50 disabled:opacity-50">
+                    {deletingId === row.id ? "삭제 중" : "삭제"}
+                  </button>
+                </div>
+              </div>
+            ))}
+          </div>
+        </>
       )}
     </div>
   );

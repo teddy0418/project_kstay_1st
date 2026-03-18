@@ -87,8 +87,24 @@ export default function AuthProvider({
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;
 }
 
+const FALLBACK_AUTH: AuthCtx = {
+  user: null,
+  isAuthed: false,
+  isLoading: true,
+  signInWithGoogle: async () => {},
+  signInWithKakao: async () => {},
+  signInWithLine: async () => {},
+  signInWithFacebook: async () => {},
+  signOut: async () => {},
+};
+
 export function useAuth() {
   const ctx = useContext(AuthContext);
-  if (!ctx) throw new Error("useAuth must be used within <AuthProvider/>");
-  return ctx;
+  if (ctx) return ctx;
+
+  if (process.env.NODE_ENV !== "production") {
+    console.warn("[auth] useAuth called without <AuthProvider/>; falling back to defaults");
+  }
+
+  return FALLBACK_AUTH;
 }

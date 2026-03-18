@@ -180,64 +180,78 @@ export default function AdminBookingsPage() {
       ) : items.length === 0 ? (
         <div className="rounded-2xl border border-neutral-200 bg-white p-8 text-center text-neutral-500">해당하는 예약이 없습니다.</div>
       ) : (
-        <div className="w-full min-w-0 overflow-x-auto rounded-2xl border border-neutral-200 bg-white">
-          <table className="w-full min-w-[800px] text-sm">
-            <thead className="border-b border-neutral-200 bg-neutral-50 text-left text-neutral-600">
-              <tr>
-                <th className="p-4 font-semibold">예약 ID</th>
-                <th className="p-4 font-semibold">게스트</th>
-                <th className="p-4 font-semibold">숙소</th>
-                <th className="p-4 font-semibold">호스트</th>
-                <th className="p-4 font-semibold">체크인 / 체크아웃</th>
-                <th className="p-4 font-semibold">금액</th>
-                <th className="p-4 font-semibold">상태</th>
-                <th className="p-4 font-semibold">취소 시각</th>
-                <th className="p-4 font-semibold">결제</th>
-              </tr>
-            </thead>
-            <tbody>
-              {items.map((row) => (
-                <tr key={row.id} className="border-b border-neutral-100 last:border-0">
-                  <td className="p-4 font-mono text-xs text-neutral-600">{row.id}</td>
-                  <td className="p-4">
-                    <div className="font-medium text-neutral-900">{row.guestName ?? "게스트"}</div>
-                    <div className="text-xs text-neutral-500 truncate max-w-[160px]">{row.guestEmail}</div>
-                  </td>
-                  <td className="p-4 truncate max-w-[180px]" title={row.listing.title}>{row.listing.title}</td>
-                  <td className="p-4 text-neutral-700">{row.host.name ?? row.host.id}</td>
-                  <td className="p-4 text-neutral-700">
-                    {new Date(row.checkIn).toLocaleDateString("ko-KR")} ~ {new Date(row.checkOut).toLocaleDateString("ko-KR")}
-                  </td>
-                  <td className="p-4">₩{row.totalKrw.toLocaleString()}</td>
-                  <td className="p-4">
-                    <span className={`inline-flex rounded-full px-2.5 py-1 text-xs font-semibold ${
-                      row.status === "CONFIRMED" ? "bg-green-100 text-green-700" :
-                      row.status === "CANCELLED" ? "bg-red-100 text-red-700" :
-                      "bg-amber-100 text-amber-700"
-                    }`}>
-                      {getStatusLabel(row)}
-                    </span>
-                  </td>
-                  <td className="p-4 text-neutral-600 text-xs">
-                    {row.status === "CANCELLED" ? formatCancelledAt(row.updatedAt) : "—"}
-                  </td>
-                  <td className="p-4">
-                    {row.payment?.status === "PAID" ? (
-                      <span className="text-xs text-green-700">결제완료</span>
-                    ) : row.payment ? (
-                      <span className="text-xs text-neutral-500">{row.payment.status}</span>
-                    ) : (
-                      <span className="text-xs text-neutral-400">—</span>
-                    )}
-                    {row.payment?.pgTid && (
-                      <div className="font-mono text-xs text-neutral-400 mt-0.5 truncate max-w-[120px]" title={row.payment.pgTid}>{row.payment.pgTid}</div>
-                    )}
-                  </td>
+        <>
+          {/* Desktop table */}
+          <div className="hidden md:block w-full min-w-0 overflow-x-auto rounded-2xl border border-neutral-200 bg-white">
+            <table className="w-full text-sm">
+              <thead className="border-b border-neutral-200 bg-neutral-50 text-left text-neutral-600">
+                <tr>
+                  <th className="p-4 font-semibold whitespace-nowrap">게스트</th>
+                  <th className="p-4 font-semibold whitespace-nowrap">숙소</th>
+                  <th className="p-4 font-semibold whitespace-nowrap">체크인 / 체크아웃</th>
+                  <th className="p-4 font-semibold whitespace-nowrap">금액</th>
+                  <th className="p-4 font-semibold whitespace-nowrap">상태</th>
                 </tr>
-              ))}
-            </tbody>
-          </table>
-        </div>
+              </thead>
+              <tbody>
+                {items.map((row) => (
+                  <tr key={row.id} className="border-b border-neutral-100 last:border-0">
+                    <td className="p-4">
+                      <div className="font-medium text-neutral-900">{row.guestName ?? "게스트"}</div>
+                      <div className="text-xs text-neutral-500 truncate max-w-[160px]">{row.guestEmail}</div>
+                    </td>
+                    <td className="p-4">
+                      <div className="truncate max-w-[180px]">{row.listing.title}</div>
+                      <div className="text-xs text-neutral-500">호스트: {row.host.name ?? row.host.id}</div>
+                    </td>
+                    <td className="p-4 text-neutral-700 whitespace-nowrap">
+                      {new Date(row.checkIn).toLocaleDateString("ko-KR")} ~ {new Date(row.checkOut).toLocaleDateString("ko-KR")}
+                    </td>
+                    <td className="p-4 whitespace-nowrap">₩{row.totalKrw.toLocaleString()}</td>
+                    <td className="p-4">
+                      <span className={`whitespace-nowrap inline-flex rounded-full px-2.5 py-1 text-xs font-semibold ${
+                        row.status === "CONFIRMED" ? "bg-green-100 text-green-700" :
+                        row.status === "CANCELLED" ? "bg-red-100 text-red-700" :
+                        "bg-amber-100 text-amber-700"
+                      }`}>
+                        {getStatusLabel(row)}
+                      </span>
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+
+          {/* Mobile cards */}
+          <div className="grid gap-3 md:hidden">
+            {items.map((row) => (
+              <div key={row.id} className="rounded-2xl border border-neutral-200 bg-white p-4 space-y-3">
+                <div className="flex items-start justify-between gap-2">
+                  <div className="min-w-0">
+                    <div className="font-semibold text-neutral-900 truncate">{row.listing.title}</div>
+                    <div className="mt-0.5 text-xs text-neutral-500 whitespace-nowrap">게스트: {row.guestName ?? "—"} · 호스트: {row.host.name ?? "—"}</div>
+                    <div className="mt-0.5 text-xs text-neutral-400 truncate">{row.guestEmail}</div>
+                  </div>
+                  <span className={`shrink-0 whitespace-nowrap inline-flex rounded-full px-2.5 py-1 text-xs font-semibold ${
+                    row.status === "CONFIRMED" ? "bg-green-100 text-green-700" :
+                    row.status === "CANCELLED" ? "bg-red-100 text-red-700" :
+                    "bg-amber-100 text-amber-700"
+                  }`}>
+                    {getStatusLabel(row)}
+                  </span>
+                </div>
+                <div className="flex flex-wrap gap-x-4 gap-y-1 text-sm text-neutral-700">
+                  <span className="whitespace-nowrap">{new Date(row.checkIn).toLocaleDateString("ko-KR")} ~ {new Date(row.checkOut).toLocaleDateString("ko-KR")}</span>
+                  <span className="whitespace-nowrap font-semibold">₩{row.totalKrw.toLocaleString()}</span>
+                </div>
+                {row.status === "CANCELLED" && (
+                  <div className="text-xs text-neutral-500">취소: {formatCancelledAt(row.updatedAt)}</div>
+                )}
+              </div>
+            ))}
+          </div>
+        </>
       )}
 
       {!loading && total > 0 && (

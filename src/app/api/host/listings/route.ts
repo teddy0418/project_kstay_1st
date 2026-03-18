@@ -1,15 +1,14 @@
-import { getOrCreateServerUser } from "@/lib/auth/server";
 import { apiError, apiOk } from "@/lib/api/response";
 import { parseJsonBody } from "@/lib/api/validation";
+import { requireAuthWithDb } from "@/lib/api/auth-guard";
 import { createHostListingSchema } from "@/lib/validation/schemas";
 import { createPendingHostListing } from "@/lib/repositories/host-listings";
 
 export async function POST(req: Request) {
   try {
-    const user = await getOrCreateServerUser();
-    if (!user) {
-      return apiError(401, "UNAUTHORIZED", "Login required");
-    }
+    const auth = await requireAuthWithDb();
+    if (!auth.ok) return auth.response;
+    const user = auth.user;
 
     const parsedBody = await parseJsonBody(req, createHostListingSchema);
     if (!parsedBody.ok) return parsedBody.response;

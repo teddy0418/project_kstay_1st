@@ -133,7 +133,7 @@ export default function AuthModal({
                   onClick={() => setMode("main")}
                   className="w-full rounded-xl border border-neutral-300 bg-white px-4 py-3 text-sm font-semibold hover:bg-neutral-50 transition"
                 >
-                  Back
+                  {t("back")}
                 </button>
 
                 <div className="text-xs text-neutral-500 leading-5">

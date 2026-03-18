@@ -1,6 +1,7 @@
-import { getOrCreateServerUser } from "@/lib/auth/server";
-import { apiError, apiOk } from "@/lib/api/response";
+import { apiOk } from "@/lib/api/response";
+import { apiError } from "@/lib/api/response";
 import { parseJsonBody } from "@/lib/api/validation";
+import { requireAuthWithDb } from "@/lib/api/auth-guard";
 import { wishlistMutationSchema } from "@/lib/validation/schemas";
 import {
   addWishlistItem,
@@ -8,13 +9,14 @@ import {
   getWishlistListingIdsByUser,
   listingExistsForWishlist,
 } from "@/lib/repositories/wishlist";
+import { checkRateLimit, RATE_LIMITS, rateLimitResponse, getClientIp } from "@/lib/api/rate-limit";
 
-export async function GET() {
+export async function GET(req: Request) {
   try {
-    const user = await getOrCreateServerUser();
-    if (!user) return apiError(401, "UNAUTHORIZED", "Login required");
+    const auth = await requireAuthWithDb();
+    if (!auth.ok) return auth.response;
 
-    const listingIds = await getWishlistListingIdsByUser(user.id);
+    const listingIds = await getWishlistListingIdsByUser(auth.user.id);
     return apiOk(listingIds);
   } catch (error) {
     console.error("[api/wishlist] failed to fetch wishlist", error);
@@ -24,8 +26,11 @@ export async function GET() {
 
 export async function POST(req: Request) {
   try {
-    const user = await getOrCreateServerUser();
-    if (!user) return apiError(401, "UNAUTHORIZED", "Login required");
+    const rl = checkRateLimit(getClientIp(req), RATE_LIMITS.mutation);
+    if (!rl.allowed) return rateLimitResponse();
+
+    const auth = await requireAuthWithDb();
+    if (!auth.ok) return auth.response;
 
     const parsedBody = await parseJsonBody(req, wishlistMutationSchema);
     if (!parsedBody.ok) return parsedBody.response;
@@ -34,7 +39,7 @@ export async function POST(req: Request) {
     const listingExists = await listingExistsForWishlist(listingId);
     if (!listingExists) return apiError(404, "NOT_FOUND", "Listing not found");
 
-    await addWishlistItem(user.id, listingId);
+    await addWishlistItem(auth.user.id, listingId);
 
     return apiOk({ listingId }, 201);
   } catch (error) {
@@ -45,10 +50,10 @@ export async function POST(req: Request) {
 
 export async function DELETE() {
   try {
-    const user = await getOrCreateServerUser();
-    if (!user) return apiError(401, "UNAUTHORIZED", "Login required");
+    const auth = await requireAuthWithDb();
+    if (!auth.ok) return auth.response;
 
-    await clearWishlist(user.id);
+    await clearWishlist(auth.user.id);
 
     return apiOk({ cleared: true });
   } catch (error) {

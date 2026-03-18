@@ -9,6 +9,7 @@ import GeoDetector from "@/components/ui/GeoDetector";
 import InAppBrowserGate from "@/components/ui/InAppBrowserGate";
 import type { Currency } from "@/lib/currency";
 import { ToastProvider } from "@/components/ui/ToastProvider";
+import SessionExpiredListener from "@/components/ui/SessionExpiredListener";
 
 import AuthProvider from "@/components/ui/AuthProvider";
 import AuthModalProvider from "@/components/ui/AuthModalProvider";
@@ -35,6 +36,7 @@ export default function Providers({
                 <ExchangeRatesProvider>
                   <GeoDetector />
                   <ToastProvider>
+                    <SessionExpiredListener />
                     <InAppBrowserGate />
                     {children}
                   </ToastProvider>

@@ -12,8 +12,9 @@ import { langToLocale } from "@/lib/i18n/detect";
 import { formatDate, addDays, parseISODate, formatNumber } from "@/lib/format";
 import Link from "next/link";
 import Image from "next/image";
-import { ChevronRight, MapPin, Star, Sparkles, CheckCircle2, Key, MessageCircle, Tag, ShieldCheck } from "lucide-react";
+import { ChevronRight, MapPin, Star, ShieldCheck } from "lucide-react";
 import AmenitiesList from "@/features/listings/components/AmenitiesList";
+import ReviewsSection, { type DbReview } from "@/features/listings/components/ReviewsSection";
 
 const LISTING_DETAIL_ERROR_COPY: Record<
   "en" | "ko" | "ja" | "zh",
@@ -48,10 +49,24 @@ export async function generateMetadata({
   if (!listing) return { title: "KSTAY" };
   const title = `${listing.title} | KSTAY`;
   const description = [listing.location, listing.address].filter(Boolean).join(" · ") || undefined;
+  const siteUrl = process.env.NEXT_PUBLIC_SITE_URL || "https://kstay.co.kr";
+  const firstUrl = listing.images?.[0];
+  const ogImage = firstUrl
+    ? firstUrl.startsWith("http")
+      ? firstUrl
+      : `${siteUrl}${firstUrl}`
+    : undefined;
   return {
     title,
     ...(description && { description }),
-    openGraph: { title, ...(description && { description }) },
+    openGraph: {
+      title,
+      ...(description && { description }),
+      type: "website",
+      url: `${siteUrl}/listings/${id}`,
+      siteName: "KSTAY",
+      ...(ogImage && { images: [{ url: ogImage, width: 1200, height: 630, alt: listing.title }] }),
+    },
   };
 }
 
@@ -113,388 +128,6 @@ function localizeHostBio(
   return table[listing.id]?.[lang] ?? fallbackBio;
 }
 
-type DbReview = {
-  id: string;
-  userId?: string;
-  userName: string;
-  userImage?: string | null;
-  rating: number;
-  body: string;
-  bodyEn?: string | null;
-  bodyKo?: string | null;
-  bodyJa?: string | null;
-  bodyZh?: string | null;
-  createdAt: string;
-  cleanliness?: number | null;
-  accuracy?: number | null;
-  checkIn?: number | null;
-  communication?: number | null;
-  location?: number | null;
-  value?: number | null;
-};
-
-function getReviewBodyForLang(r: DbReview, lang: "en" | "ko" | "ja" | "zh"): string {
-  const byLang = lang === "ko" ? r.bodyKo : lang === "ja" ? r.bodyJa : lang === "zh" ? r.bodyZh : r.bodyEn;
-  return (byLang?.trim() || r.body) ?? "";
-}
-
-function avatarLetterFromId(id: string): string {
-  let n = 0;
-  for (let i = 0; i < id.length; i++) n = (n * 31 + id.charCodeAt(i)) >>> 0;
-  return "ABCDEFGHIJKLMNOPQRSTUVWXYZ"[n % 26];
-}
-function ReviewsSection({
-  rating,
-  count,
-  lang,
-  locale,
-  dbReviews,
-}: {
-  rating: number;
-  count: number;
-  lang: "en" | "ko" | "ja" | "zh";
-  locale: string;
-  dbReviews?: DbReview[];
-}) {
-  const t =
-    lang === "ko"
-      ? {
-          reviews: "리뷰",
-          overall: "전체 평점",
-          cats: {
-            cleanliness: "청결도",
-            accuracy: "정확성",
-            checkIn: "체크인",
-            communication: "소통",
-            location: "위치",
-            value: "가성비",
-          },
-          reviewsData: [
-            {
-              id: "r1",
-              name: "Chaewon",
-              meta: "5년차 회원",
-              date: "2주 전",
-              stars: 5,
-              body: "매우 깔끔하고 편안한 숙소였어요. 뷰도 좋고 시설도 만족스러웠습니다. 다음에 한국 방문하면 다시 예약하고 싶어요.",
-            },
-            {
-              id: "r2",
-              name: "Jungwoo",
-              meta: "7년차 회원",
-              date: "2025년 12월",
-              stars: 5,
-              body: "위치가 정말 좋고 사진과 실제가 거의 같았어요. 주변 편의시설도 많고 체크인도 매우 매끄러웠습니다.",
-            },
-            {
-              id: "r3",
-              name: "Hyejin",
-              meta: "8년차 회원",
-              date: "2025년 9월",
-              stars: 5,
-              body: "가격 대비 만족도가 높았습니다. 침구가 편안하고 객실도 매우 깨끗했어요. 호스트 응답도 빨랐습니다.",
-            },
-            {
-              id: "r4",
-              name: "Jiyoung",
-              meta: "8년차 회원",
-              date: "2025년 9월",
-              stars: 5,
-              body: "설명 그대로였고 전체 경험이 좋았습니다. 동네가 안전하고 교통 접근성도 좋아서 편리했어요.",
-            },
-          ],
-        }
-      : lang === "ja"
-        ? {
-            reviews: "件のレビュー",
-            overall: "総合評価",
-            cats: {
-              cleanliness: "清潔さ",
-              accuracy: "掲載内容の正確さ",
-              checkIn: "チェックイン",
-              communication: "コミュニケーション",
-              location: "ロケーション",
-              value: "コストパフォーマンス",
-            },
-            reviewsData: [
-              {
-                id: "r1",
-                name: "Chaewon",
-                meta: "メンバー歴 5年",
-                date: "2週間前",
-                stars: 5,
-                body: "とても清潔で快適な滞在でした。景色も良く設備も充実していて、また韓国に来るときに利用したいです。",
-              },
-              {
-                id: "r2",
-                name: "Jungwoo",
-                meta: "メンバー歴 7年",
-                date: "2025年12月",
-                stars: 5,
-                body: "立地が素晴らしく、写真どおりのお部屋でした。周辺施設も便利でチェックインもスムーズでした。",
-              },
-              {
-                id: "r3",
-                name: "Hyejin",
-                meta: "メンバー歴 8年",
-                date: "2025年9月",
-                stars: 5,
-                body: "価格以上の価値がありました。ベッドも快適で部屋も清潔、ホストの対応も迅速でした。",
-              },
-              {
-                id: "r4",
-                name: "Jiyoung",
-                meta: "メンバー歴 8年",
-                date: "2025年9月",
-                stars: 5,
-                body: "説明どおりで全体的に満足です。周辺も安全で交通アクセスも良く、移動がしやすかったです。",
-              },
-            ],
-          }
-        : lang === "zh"
-          ? {
-              reviews: "条评价",
-              overall: "综合评分",
-              cats: {
-                cleanliness: "清洁度",
-                accuracy: "信息准确度",
-                checkIn: "入住体验",
-                communication: "沟通",
-                location: "位置",
-                value: "性价比",
-              },
-              reviewsData: [
-                {
-                  id: "r1",
-                  name: "Chaewon",
-                  meta: "会员 5 年",
-                  date: "2 周前",
-                  stars: 5,
-                  body: "房间非常干净舒适，景观也很好，设施齐全。下次来韩国还会再次预订。",
-                },
-                {
-                  id: "r2",
-                  name: "Jungwoo",
-                  meta: "会员 7 年",
-                  date: "2025年12月",
-                  stars: 5,
-                  body: "地理位置很棒，房间和图片一致。周边配套方便，入住流程也很顺畅。",
-                },
-                {
-                  id: "r3",
-                  name: "Hyejin",
-                  meta: "会员 8 年",
-                  date: "2025年9月",
-                  stars: 5,
-                  body: "性价比很高，床很舒服，房间非常整洁。房东回复及时，整体体验很好。",
-                },
-                {
-                  id: "r4",
-                  name: "Jiyoung",
-                  meta: "会员 8 年",
-                  date: "2025年9月",
-                  stars: 5,
-                  body: "与描述一致，整体体验非常好。社区安全，交通便利，出行很方便。",
-                },
-              ],
-            }
-          : {
-              reviews: "reviews",
-              overall: "Overall rating",
-              cats: {
-                cleanliness: "Cleanliness",
-                accuracy: "Accuracy",
-                checkIn: "Check-in",
-                communication: "Communication",
-                location: "Location",
-                value: "Value",
-              },
-              reviewsData: [
-                {
-                  id: "r1",
-                  name: "Chaewon",
-                  meta: "Member for 5 years",
-                  date: "2 weeks ago",
-                  stars: 5,
-                  body:
-                    "Very clean and comfortable stay. Great view and the facilities were excellent. Would definitely book again next time I visit Korea.",
-                },
-                {
-                  id: "r2",
-                  name: "Jungwoo",
-                  meta: "Member for 7 years",
-                  date: "Dec 2025",
-                  stars: 5,
-                  body:
-                    "The location was perfect and the room looked exactly like the photos. Lots of convenient amenities nearby. Smooth check-in process!",
-                },
-                {
-                  id: "r3",
-                  name: "Hyejin",
-                  meta: "Member for 8 years",
-                  date: "Sep 2025",
-                  stars: 5,
-                  body:
-                    "Great value for money. The bed was comfy and the room was spotless. The host was responsive and helpful throughout the stay.",
-                },
-                {
-                  id: "r4",
-                  name: "Jiyoung",
-                  meta: "Member for 8 years",
-                  date: "Sep 2025",
-                  stars: 5,
-                  body:
-                    "Everything was as described and the overall experience was amazing. The neighborhood felt safe and the transportation options were easy.",
-                },
-              ],
-            };
-  const reviewsWithCategories = (dbReviews ?? []).filter(
-    (r): r is DbReview & { cleanliness: number; accuracy: number; checkIn: number; communication: number; location: number; value: number } =>
-      r.cleanliness != null &&
-      r.accuracy != null &&
-      r.checkIn != null &&
-      r.communication != null &&
-      r.location != null &&
-      r.value != null
-  );
-
-  const categoryKeys = ["cleanliness", "accuracy", "checkIn", "communication", "location", "value"] as const;
-  const categoryAverages = categoryKeys.map((key) => {
-    if (reviewsWithCategories.length === 0) return null;
-    const sum = reviewsWithCategories.reduce((a, r) => a + r[key], 0);
-    return Math.round((sum / reviewsWithCategories.length) * 10) / 10;
-  });
-
-  const dist = (() => {
-    if (!dbReviews?.length) {
-      return [
-        { stars: 5, pct: 72 },
-        { stars: 4, pct: 18 },
-        { stars: 3, pct: 7 },
-        { stars: 2, pct: 2 },
-        { stars: 1, pct: 1 },
-      ];
-    }
-    const counts = [0, 0, 0, 0, 0];
-    dbReviews.forEach((r) => {
-      const idx = Math.min(5, Math.max(1, r.rating)) - 1;
-      counts[idx]++;
-    });
-    const total = counts.reduce((a, b) => a + b, 0);
-    return counts.map((c, i) => ({ stars: i + 1, pct: total > 0 ? Math.round((c / total) * 100) : 0 }));
-  })();
-
-  const displayRating = dbReviews?.length
-    ? dbReviews.reduce((a, r) => a + r.rating, 0) / dbReviews.length
-    : rating;
-  const cats = [
-    { label: t.cats.cleanliness, icon: Sparkles, value: categoryAverages[0] ?? 4.9 },
-    { label: t.cats.accuracy, icon: CheckCircle2, value: categoryAverages[1] ?? 4.9 },
-    { label: t.cats.checkIn, icon: Key, value: categoryAverages[2] ?? 4.8 },
-    { label: t.cats.communication, icon: MessageCircle, value: categoryAverages[3] ?? 4.9 },
-    { label: t.cats.location, icon: MapPin, value: categoryAverages[4] ?? 4.8 },
-    { label: t.cats.value, icon: Tag, value: categoryAverages[5] ?? 4.9 },
-  ];
-  const reviews =
-    dbReviews && dbReviews.length > 0
-      ? dbReviews.map((r) => {
-          const name = r.userName ?? "Guest";
-          const letter = name.trim().slice(0, 1).toUpperCase() || avatarLetterFromId(r.userId ?? r.id);
-          return {
-            id: r.id,
-            name,
-            letter,
-            meta: "",
-            date: formatDate(locale, r.createdAt, { year: "numeric", month: "short", day: "numeric" }),
-            stars: r.rating,
-            body: getReviewBodyForLang(r, lang),
-          };
-        })
-      : t.reviewsData.map((r) => ({ ...r, letter: r.name.slice(0, 1) }));
-
-  return (
-    <section id="reviews" className="mt-12">
-      <div className="flex items-center gap-2 text-lg font-semibold">
-        <Star className="h-5 w-5" />
-        <span>{displayRating.toFixed(2)}</span>
-        <span className="text-neutral-400">·</span>
-        <span>{formatNumber(locale, count)} {t.reviews}</span>
-      </div>
-
-      <div className="mt-6 grid gap-6 lg:grid-cols-[200px_minmax(0,1fr)]">
-        {/* distribution: 좁게 해서 오른쪽 카테고리 그리드에 공간 확보 */}
-        <div className="rounded-2xl border border-neutral-200 p-4">
-          <div className="text-sm font-semibold">{t.overall}</div>
-          <div className="mt-4 grid gap-2">
-            {dist.map((d) => (
-              <div key={d.stars} className="flex items-center gap-3 text-sm">
-                <div className="w-4 text-xs text-neutral-500">{d.stars}</div>
-                <div className="flex-1 h-2 rounded-full bg-neutral-200 overflow-hidden">
-                  <div className="h-full bg-neutral-900" style={{ width: `${d.pct}%` }} />
-                </div>
-              </div>
-            ))}
-          </div>
-        </div>
-
-        {/* 모바일: 한 카드 안에 6개 항목 컴팩트 배치 / 데스크톱: 기존 6개 카드 */}
-        <div className="md:hidden rounded-2xl border border-neutral-200 p-4">
-          <div className="grid grid-cols-2 gap-x-4 gap-y-3">
-            {cats.map((c) => {
-              const Icon = c.icon;
-              return (
-                <div key={c.label} className="flex items-center justify-between gap-2 min-w-0">
-                  <div className="flex items-center gap-1.5 min-w-0">
-                    <Icon className="h-3.5 w-3.5 shrink-0 text-neutral-500" />
-                    <span className="text-xs font-medium text-neutral-700 truncate">{c.label}</span>
-                  </div>
-                  <span className="text-sm font-semibold tabular-nums shrink-0">{c.value.toFixed(1)}</span>
-                </div>
-              );
-            })}
-          </div>
-        </div>
-        <div className="hidden md:grid min-w-0 grid-cols-2 gap-4 xl:grid-cols-3">
-          {cats.map((c) => {
-            const Icon = c.icon;
-            return (
-              <div key={c.label} className="rounded-2xl border border-neutral-200 p-5">
-                <div className="flex items-center gap-2 text-sm font-semibold text-neutral-700 min-w-0">
-                  <Icon className="h-4 w-4 shrink-0" />
-                  <span className="min-w-0 truncate">{c.label}</span>
-                </div>
-                <div className="mt-2 text-xl font-semibold">{c.value.toFixed(1)}</div>
-              </div>
-            );
-          })}
-        </div>
-      </div>
-
-      {/* list */}
-      <div className="mt-8 grid gap-6 md:grid-cols-2">
-        {reviews.map((r) => (
-          <div key={r.id} className="rounded-2xl border border-neutral-200 p-5">
-            <div className="flex items-start gap-3">
-              <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-neutral-900 text-sm font-semibold text-white">
-                {(r as { letter?: string }).letter ?? r.name.slice(0, 1)}
-              </div>
-              <div className="min-w-0">
-                <div className="text-sm font-semibold">{r.name}</div>
-                <div className="text-xs text-neutral-500">{r.meta}</div>
-
-                <div className="mt-2 text-xs text-neutral-500">
-                  {"★".repeat(r.stars)} <span className="mx-2">·</span> {r.date}
-                </div>
-                <p className="mt-2 text-sm text-neutral-700 leading-7">{r.body}</p>
-              </div>
-            </div>
-          </div>
-        ))}
-      </div>
-    </section>
-  );
-}
-
 export default async function ListingDetailPage({
   params,
   searchParams,
@@ -511,7 +144,8 @@ export default async function ListingDetailPage({
           availableIds: "사용 가능한 숙소 ID",
           home: "홈",
           reviews: "리뷰",
-          reviewsDesc: "가성비가 좋고, 청결도와 위치 만족도가 높습니다.",
+          newBadge: "신규",
+          noReviews: "아직 리뷰가 없습니다. 첫 번째 리뷰를 남겨보세요!",
           viewReviews: "리뷰 보기 →",
           amenities: "어메니티",
           location: "위치",
@@ -542,7 +176,8 @@ export default async function ListingDetailPage({
             availableIds: "利用可能な宿泊先ID",
             home: "ホーム",
             reviews: "レビュー",
-            reviewsDesc: "高コスパで、清潔さと立地の評価が高い宿です。",
+            newBadge: "新着",
+            noReviews: "まだレビューがありません。最初のレビューを投稿してみましょう！",
             viewReviews: "レビューを見る →",
             amenities: "アメニティ",
             location: "ロケーション",
@@ -573,7 +208,8 @@ export default async function ListingDetailPage({
               availableIds: "可用房源 ID",
               home: "首页",
               reviews: "评价",
-              reviewsDesc: "高性价比住宿，住客对清洁度和位置评价很高。",
+              newBadge: "新上架",
+              noReviews: "还没有评价。成为第一个写评价的人吧！",
               viewReviews: "查看评价 →",
               amenities: "设施",
               location: "位置",
@@ -603,7 +239,8 @@ export default async function ListingDetailPage({
               availableIds: "Available listing IDs",
               home: "Home",
               reviews: "reviews",
-              reviewsDesc: "Best value stay. Guests love the clean rooms and convenient location.",
+              newBadge: "New",
+              noReviews: "No reviews yet. Be the first to leave a review!",
               viewReviews: "View reviews →",
               amenities: "Amenities",
               location: "Location",
@@ -671,6 +308,14 @@ export default async function ListingDetailPage({
   const dbReviews = await findReviewsByListingId(listing.id);
   const reviewCount =
     dbReviews.length > 0 ? dbReviews.length : Number((listing as { reviewCount?: number }).reviewCount ?? 0) || 0;
+
+  const featuredReview = dbReviews.length > 0
+    ? [...dbReviews].sort((a, b) => {
+        if (b.rating !== a.rating) return b.rating - a.rating;
+        return (b.body?.length ?? 0) - (a.body?.length ?? 0);
+      })[0]
+    : null;
+
   const cancelUntil = freeCancelUntilKST(localeStr, start);
 
   const mapSrc =
@@ -698,14 +343,23 @@ export default async function ListingDetailPage({
         <div className="min-w-0">
           <h1 className="text-xl font-semibold tracking-tight md:text-2xl">{listing.title}</h1>
           <div className="mt-2 flex flex-wrap items-center gap-2 text-sm text-neutral-600">
-            <span className="inline-flex items-center gap-1 text-neutral-900">
-              <Star className="h-4 w-4" />
-              <span className="font-medium">{listing.rating.toFixed(2)}</span>
-            </span>
-            <span>·</span>
-            <a href="#reviews" className="hover:underline">
-              {formatNumber(localeStr, reviewCount)} {tx.reviews}
-            </a>
+            {reviewCount > 0 ? (
+              <>
+                <span className="inline-flex items-center gap-1 text-neutral-900">
+                  <Star className="h-4 w-4" />
+                  <span className="font-medium">{listing.rating.toFixed(2)}</span>
+                </span>
+                <span>·</span>
+                <a href="#reviews" className="hover:underline">
+                  {formatNumber(localeStr, reviewCount)} {tx.reviews}
+                </a>
+              </>
+            ) : (
+              <span className="inline-flex items-center gap-1">
+                <Star className="h-4 w-4 text-neutral-900" />
+                <span className="font-semibold text-neutral-900">{tx.newBadge}</span>
+              </span>
+            )}
             <span>·</span>
             <span className="inline-flex items-center gap-1">
               <MapPin className="h-4 w-4" />
@@ -742,16 +396,27 @@ export default async function ListingDetailPage({
           className="rounded-2xl border border-neutral-200 bg-white p-5 shadow-sm hover:shadow-md transition"
         >
           <div className="flex items-center gap-2">
-            <span className="inline-flex items-center gap-1 rounded-full bg-neutral-900 px-3 py-1 text-xs font-semibold text-white">
-              <Star className="h-4 w-4" />
-              {listing.rating.toFixed(2)}
-            </span>
-            <div className="text-sm font-semibold">{formatNumber(localeStr, reviewCount)} {tx.reviews}</div>
+            {reviewCount > 0 ? (
+              <>
+                <span className="inline-flex items-center gap-1 rounded-full bg-neutral-900 px-3 py-1 text-xs font-semibold text-white">
+                  <Star className="h-4 w-4" />
+                  {listing.rating.toFixed(2)}
+                </span>
+                <div className="text-sm font-semibold">{formatNumber(localeStr, reviewCount)} {tx.reviews}</div>
+              </>
+            ) : (
+              <span className="inline-flex items-center gap-1 rounded-full bg-neutral-900 px-3 py-1 text-xs font-semibold text-white">
+                <Star className="h-4 w-4" />
+                {tx.newBadge}
+              </span>
+            )}
           </div>
-          <p className="mt-3 text-sm text-neutral-600 leading-6">
-            {tx.reviewsDesc}
+          <p className="mt-3 text-sm text-neutral-600 leading-6 line-clamp-3">
+            {featuredReview
+              ? `"${(featuredReview.body ?? "").slice(0, 120)}${(featuredReview.body?.length ?? 0) > 120 ? "…" : ""}" — ${(featuredReview.user?.displayName?.trim() || featuredReview.user?.name) ?? "Guest"}`
+              : tx.noReviews}
           </p>
-          <div className="mt-4 text-sm font-semibold text-neutral-900">{tx.viewReviews}</div>
+          {reviewCount > 0 && <div className="mt-4 text-sm font-semibold text-neutral-900">{tx.viewReviews}</div>}
         </a>
 
         {/* Amenities card */}

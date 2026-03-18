@@ -1,6 +1,6 @@
 import { NextRequest } from "next/server";
 import { apiError, apiOk } from "@/lib/api/response";
-import { getOrCreateServerUser } from "@/lib/auth/server";
+import { requireAuthWithDb } from "@/lib/api/auth-guard";
 import {
   getMessagesByBookingId,
   createBookingMessage,
@@ -15,8 +15,9 @@ export async function GET(
   _req: NextRequest,
   { params }: { params: Promise<{ bookingId: string }> }
 ) {
-  const user = await getOrCreateServerUser();
-  if (!user) return apiError(401, "UNAUTHORIZED", "Sign in required");
+  const auth = await requireAuthWithDb();
+  if (!auth.ok) return auth.response;
+  const user = auth.user;
 
   const { bookingId } = await params;
   const isGuest = await isBookingGuest(bookingId, user.id);
@@ -45,8 +46,9 @@ export async function POST(
   req: NextRequest,
   { params }: { params: Promise<{ bookingId: string }> }
 ) {
-  const user = await getOrCreateServerUser();
-  if (!user) return apiError(401, "UNAUTHORIZED", "Sign in required");
+  const auth = await requireAuthWithDb();
+  if (!auth.ok) return auth.response;
+  const user = auth.user;
 
   const { bookingId } = await params;
   const isGuest = await isBookingGuest(bookingId, user.id);

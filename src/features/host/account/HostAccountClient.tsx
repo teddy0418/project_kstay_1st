@@ -19,7 +19,8 @@ export default function HostAccountClient() {
   });
 
   useEffect(() => {
-    fetch("/api/host/profile")
+    const ac = new AbortController();
+    fetch("/api/host/profile", { signal: ac.signal })
       .then((r) => r.json())
       .then((res) => {
         if (res.data) {
@@ -31,7 +32,9 @@ export default function HostAccountClient() {
           });
         }
       })
+      .catch(() => {})
       .finally(() => setLoading(false));
+    return () => ac.abort();
   }, []);
 
   const save = () => {

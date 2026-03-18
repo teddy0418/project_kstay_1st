@@ -141,7 +141,10 @@ export default function MessagesInboxClient() {
   if (loading) {
     return (
       <Container className="py-10">
-        <p className="text-neutral-500">{t("loading")}</p>
+        <div className="flex items-center gap-3 text-sm text-neutral-500">
+          <span className="h-5 w-5 animate-spin rounded-full border-2 border-neutral-300 border-t-neutral-600" />
+          {t("loading")}
+        </div>
       </Container>
     );
   }

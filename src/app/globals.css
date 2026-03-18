@@ -581,6 +581,15 @@ body {
   box-shadow: none !important;
   border: 1px solid rgba(0, 0, 0, 0.12);
 }
+/* Scrollbar hide utility */
+.scrollbar-none {
+  -ms-overflow-style: none;
+  scrollbar-width: none;
+}
+.scrollbar-none::-webkit-scrollbar {
+  display: none;
+}
+
 /* 과거 날짜: 대각선 제거, 연한 회색 + 낮은 투명도로만 표시 (깔끔하게) */
 .rdp-compact .rdp-day.rdp-disabled .rdp-day_button {
   color: rgb(163 163 163);

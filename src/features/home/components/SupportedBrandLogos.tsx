@@ -1,5 +1,6 @@
 import { readdir } from "node:fs/promises";
 import path from "node:path";
+import Image from "next/image";
 
 type Lang = "en" | "ko" | "ja" | "zh";
 
@@ -89,66 +90,77 @@ export default async function SupportedBrandLogos({ lang }: { lang: Lang }) {
             <div className="flex w-full items-center justify-center gap-2">
               {firstRow.map((x) => (
                 <div key={x.key} aria-label={x.label} title={x.label} className="flex items-center justify-center">
-                  <img
+                  <Image
                     src={x.src}
                     alt={x.label}
+                    width={x.key === "visa" ? 40 : 64}
+                    height={x.key === "visa" ? 12 : 20}
                     className={`object-contain opacity-90 ${
                       x.key === "visa" ? "h-3 w-auto max-w-[40px]" : "h-5 w-auto max-w-[64px]"
                     }`}
-                    loading="lazy"
-                    decoding="async"
+                    unoptimized={x.src.endsWith(".svg")}
                   />
                 </div>
               ))}
             </div>
             {secondRow.length > 0 && (
               <div className="flex w-full items-center justify-center gap-2">
-                {secondRow.map((x) => (
-                  <div key={x.key} aria-label={x.label} title={x.label} className="flex items-center justify-center">
-                    <img
-                      src={x.src}
-                      alt={x.label}
-                      className={`object-contain opacity-90 ${
-                        x.key === "paypay" || x.key === "tng"
-                          ? "h-6 w-auto max-w-[72px]"
-                          : x.key === "dana"
-                          ? "h-4 w-auto max-w-[56px]"
-                          : "h-5 w-auto max-w-[64px]"
-                      }`}
-                      loading="lazy"
-                      decoding="async"
-                    />
-                  </div>
-                ))}
+                {secondRow.map((x) => {
+                  const w = x.key === "paypay" || x.key === "tng" ? 72 : x.key === "dana" ? 56 : 64;
+                  const h = x.key === "paypay" || x.key === "tng" ? 24 : x.key === "dana" ? 16 : 20;
+                  return (
+                    <div key={x.key} aria-label={x.label} title={x.label} className="flex items-center justify-center">
+                      <Image
+                        src={x.src}
+                        alt={x.label}
+                        width={w}
+                        height={h}
+                        className={`object-contain opacity-90 ${
+                          x.key === "paypay" || x.key === "tng"
+                            ? "h-6 w-auto max-w-[72px]"
+                            : x.key === "dana"
+                            ? "h-4 w-auto max-w-[56px]"
+                            : "h-5 w-auto max-w-[64px]"
+                        }`}
+                        unoptimized={x.src.endsWith(".svg")}
+                      />
+                    </div>
+                  );
+                })}
               </div>
             )}
           </div>
 
           {/* PC 이상: 모든 로고를 한 줄에서, 결제 레이아웃 안에 들어가도록 적당한 크기로 배치 */}
           <div className="hidden xl:flex w-full items-center justify-center gap-6 md:gap-8">
-            {logos.map((x) => (
-              <div key={x.key} aria-label={x.label} title={x.label} className="flex items-center justify-center">
-                <img
-                  src={x.src}
-                  alt={x.label}
-                  className={`object-contain opacity-90 ${
-                    x.key === "visa"
-                      ? "h-5 w-auto max-w-[56px]"
-                      : x.key === "paypay" || x.key === "tng"
-                      ? "h-8 w-auto max-w-[96px]"
-                      : x.key === "mastercard" ||
-                        x.key === "dana" ||
-                        x.key === "gcash"
-                      ? "h-7 w-auto max-w-[88px]"
-                      : x.key === "alipayhk"
-                      ? "h-5 w-auto max-w-[72px]"
-                      : "h-6 w-auto max-w-[80px]"
-                  }`}
-                  loading="lazy"
-                  decoding="async"
-                />
-              </div>
-            ))}
+            {logos.map((x) => {
+              const w = x.key === "visa" ? 56 : x.key === "paypay" || x.key === "tng" ? 96 : x.key === "mastercard" || x.key === "dana" || x.key === "gcash" ? 88 : x.key === "alipayhk" ? 72 : 80;
+              const h = x.key === "visa" ? 20 : x.key === "paypay" || x.key === "tng" ? 32 : x.key === "mastercard" || x.key === "dana" || x.key === "gcash" ? 28 : x.key === "alipayhk" ? 20 : 24;
+              return (
+                <div key={x.key} aria-label={x.label} title={x.label} className="flex items-center justify-center">
+                  <Image
+                    src={x.src}
+                    alt={x.label}
+                    width={w}
+                    height={h}
+                    className={`object-contain opacity-90 ${
+                      x.key === "visa"
+                        ? "h-5 w-auto max-w-[56px]"
+                        : x.key === "paypay" || x.key === "tng"
+                        ? "h-8 w-auto max-w-[96px]"
+                        : x.key === "mastercard" ||
+                          x.key === "dana" ||
+                          x.key === "gcash"
+                        ? "h-7 w-auto max-w-[88px]"
+                        : x.key === "alipayhk"
+                        ? "h-5 w-auto max-w-[72px]"
+                        : "h-6 w-auto max-w-[80px]"
+                    }`}
+                    unoptimized={x.src.endsWith(".svg")}
+                  />
+                </div>
+              );
+            })}
           </div>
         </div>
       </div>

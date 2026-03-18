@@ -1,51 +1,29 @@
  "use client";
 
+import Image from "next/image";
+
 type LogoProps = { className?: string };
 
 /** 글로벌 카드: VISA, Mastercard, JCB, AMEX (Eximbay 가이드라인) */
 export function CardBrandLogos({ className }: LogoProps) {
   return (
     <div className={`flex flex-wrap items-center gap-2 ${className ?? ""}`}>
-      <img
-        src="/brands/visa.svg.png"
-        alt="Visa"
-        className="h-4 w-auto max-w-[40px] object-contain opacity-90"
-        loading="lazy"
-        decoding="async"
-      />
-      <img
-        src="/brands/mastercard.svg.png"
-        alt="Mastercard"
-        className="h-4 w-auto max-w-[40px] object-contain opacity-90"
-        loading="lazy"
-        decoding="async"
-      />
-      <img
-        src="/brands/jcb.svg.png"
-        alt="JCB"
-        className="h-4 w-auto max-w-[40px] object-contain opacity-90"
-        loading="lazy"
-        decoding="async"
-      />
-      <img
-        src="/brands/amex.svg.png"
-        alt="American Express"
-        className="h-4 w-auto max-w-[40px] object-contain opacity-90"
-        loading="lazy"
-        decoding="async"
-      />
+      <Image src="/brands/visa.svg.png" alt="Visa" width={40} height={16} className="h-4 w-auto object-contain opacity-90" />
+      <Image src="/brands/mastercard.svg.png" alt="Mastercard" width={40} height={16} className="h-4 w-auto object-contain opacity-90" />
+      <Image src="/brands/jcb.svg.png" alt="JCB" width={40} height={16} className="h-4 w-auto object-contain opacity-90" />
+      <Image src="/brands/amex.svg.png" alt="American Express" width={40} height={16} className="h-4 w-auto object-contain opacity-90" />
     </div>
   );
 }
 
 export function PayPalLogo({ className }: LogoProps) {
   return (
-    <img
+    <Image
       src="/brands/paypal.svg.png"
       alt="PayPal"
-      className={`h-6 w-auto max-w-[72px] object-contain opacity-90 ${className ?? ""}`}
-      loading="lazy"
-      decoding="async"
+      width={72}
+      height={24}
+      className={`h-6 w-auto object-contain opacity-90 ${className ?? ""}`}
     />
   );
 }
@@ -62,12 +40,12 @@ export function LinePayLogo({ className }: LogoProps) {
 
 export function AlipayHKLogo({ className }: LogoProps) {
   return (
-    <img
+    <Image
       src="/brands/alipayhk.svg.png"
       alt="Alipay HK"
-      className={`h-5 w-auto max-w-[64px] object-contain opacity-90 ${className ?? ""}`}
-      loading="lazy"
-      decoding="async"
+      width={64}
+      height={20}
+      className={`h-5 w-auto object-contain opacity-90 ${className ?? ""}`}
     />
   );
 }
@@ -94,36 +72,36 @@ export function KakaoPayLogo({ className }: LogoProps) {
 
 export function TouchNGoLogo({ className }: LogoProps) {
   return (
-    <img
+    <Image
       src="/brands/tng.svg.png"
       alt="Touch 'n Go"
-      className={`h-8 w-auto max-w-[96px] object-contain opacity-90 ${className ?? ""}`}
-      loading="lazy"
-      decoding="async"
+      width={96}
+      height={32}
+      className={`h-8 w-auto object-contain opacity-90 ${className ?? ""}`}
     />
   );
 }
 
 export function DanaLogo({ className }: LogoProps) {
   return (
-    <img
+    <Image
       src="/brands/dana.svg.png"
       alt="DANA"
-      className={`h-5 w-auto max-w-[64px] object-contain opacity-90 ${className ?? ""}`}
-      loading="lazy"
-      decoding="async"
+      width={64}
+      height={20}
+      className={`h-5 w-auto object-contain opacity-90 ${className ?? ""}`}
     />
   );
 }
 
 export function GCashLogo({ className }: LogoProps) {
   return (
-    <img
+    <Image
       src="/brands/gcash.svg.png"
       alt="GCash"
-      className={`h-5 w-auto max-w-[64px] object-contain opacity-90 ${className ?? ""}`}
-      loading="lazy"
-      decoding="async"
+      width={64}
+      height={20}
+      className={`h-5 w-auto object-contain opacity-90 ${className ?? ""}`}
     />
   );
 }
@@ -140,24 +118,24 @@ export function TrueMoneyLogo({ className }: LogoProps) {
 
 export function PayPayLogo({ className }: LogoProps) {
   return (
-    <img
+    <Image
       src="/brands/paypay.svg.png"
       alt="PayPay"
-      className={`h-6 w-auto max-w-[72px] object-contain opacity-90 ${className ?? ""}`}
-      loading="lazy"
-      decoding="async"
+      width={72}
+      height={24}
+      className={`h-6 w-auto object-contain opacity-90 ${className ?? ""}`}
     />
   );
 }
 
 export function EcontextLogo({ className }: LogoProps) {
   return (
-    <img
+    <Image
       src="/brands/econtext.svg.png"
       alt="econtext"
-      className={`h-6 w-auto max-w-[72px] object-contain opacity-90 ${className ?? ""}`}
-      loading="lazy"
-      decoding="async"
+      width={72}
+      height={24}
+      className={`h-6 w-auto object-contain opacity-90 ${className ?? ""}`}
     />
   );
 }

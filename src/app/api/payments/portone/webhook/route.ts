@@ -11,6 +11,7 @@ import {
   findBookingForPaymentSync,
 } from "@/lib/repositories/payment-processing";
 import { sendBookingConfirmedEmailIfNeeded } from "@/lib/services/booking-confirmation-email";
+import { cancelPortonePayment } from "@/lib/portone/cancel";
 
 export const runtime = "nodejs";
 
@@ -71,6 +72,7 @@ export async function POST(req: Request) {
       paymentId,
       error: e instanceof Error ? e.message : String(e),
     });
+    return new Response("Processing failed", { status: 500 });
   }
 
   return new Response("OK", { status: 200 });
@@ -129,15 +131,25 @@ async function syncPaymentAndBookingFromPortOne(paymentId: string) {
       const p = session.payload as { totalKrw: number; totalUsd: number };
       if (!verifyAmountMatchesSession(p, portoneAmount, portoneCurrency)) {
         console.warn("[portone-webhook] amount mismatch for checkout session", { paymentId });
+        await autoRefund(paymentId, "Amount mismatch between PortOne and checkout session");
         return;
       }
-      const created = await createBookingFromCheckoutSession(paymentId, {
-        paymentId,
-        storeId,
-        pgTid,
-        paymentRawJson: paymentRawJson,
-      });
-      if (created) await sendBookingConfirmedEmailIfNeeded(created.id);
+      try {
+        const created = await createBookingFromCheckoutSession(paymentId, {
+          paymentId,
+          storeId,
+          pgTid,
+          paymentRawJson: paymentRawJson,
+        });
+        if (created) await sendBookingConfirmedEmailIfNeeded(created.id);
+      } catch (bookingErr) {
+        console.error("[portone-webhook] booking creation failed, initiating auto-refund", {
+          paymentId,
+          error: bookingErr instanceof Error ? bookingErr.message : String(bookingErr),
+        });
+        await autoRefund(paymentId, "Booking creation failed after payment");
+        throw bookingErr;
+      }
     }
     return;
   }
@@ -228,6 +240,22 @@ function verifyAmountMatchesSession(
   if (portoneCurrency === "KRW") return portoneAmount === payload.totalKrw;
   if (portoneCurrency === "USD") return portoneAmount === payload.totalUsd;
   return true;
+}
+
+async function autoRefund(paymentId: string, reason: string) {
+  try {
+    const result = await cancelPortonePayment(paymentId, `[auto-refund] ${reason}`);
+    if (result.ok) {
+      console.info("[portone-webhook] auto-refund succeeded", { paymentId });
+    } else {
+      console.error("[portone-webhook] auto-refund failed", { paymentId, reason: result.reason });
+    }
+  } catch (refundErr) {
+    console.error("[portone-webhook] auto-refund threw", {
+      paymentId,
+      error: refundErr instanceof Error ? refundErr.message : String(refundErr),
+    });
+  }
 }
 
 function safeParseJson(value: string): {

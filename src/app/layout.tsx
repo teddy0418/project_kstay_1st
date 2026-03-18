@@ -17,16 +17,44 @@ const outfit = Outfit({
 
 type Lang = "en" | "ko" | "ja" | "zh";
 
+const SITE_URL =
+  process.env.NEXT_PUBLIC_SITE_URL ||
+  process.env.NEXTAUTH_URL ||
+  "https://kstay.co.kr";
+
 export const metadata: Metadata = {
-  title: "KSTAY",
-  description: "KSTAY — Best value stays in Korea (MVP)",
+  title: { default: "KSTAY — Best Value Stays in Korea", template: "%s | KSTAY" },
+  description:
+    "Book affordable, quality accommodation in Korea. Apartments, guesthouses, and more across Seoul, Busan, Jeju and beyond.",
+  keywords: [
+    "Korea accommodation",
+    "Seoul hotel",
+    "Busan stay",
+    "Jeju guesthouse",
+    "한국 숙소",
+    "한국 여행",
+    "KSTAY",
+  ],
+  metadataBase: new URL(SITE_URL),
   manifest: "/manifest.webmanifest",
   icons: {
-    apple: "/icons/apple-touch-icon.png",
+    apple: "/icons/apple-touch-icon.svg",
     icon: [
-      { url: "/icons/icon-192.png", sizes: "192x192", type: "image/png" },
-      { url: "/icons/icon-512.png", sizes: "512x512", type: "image/png" },
+      { url: "/icons/icon-192.svg", sizes: "192x192", type: "image/svg+xml" },
+      { url: "/icons/icon-512.svg", sizes: "512x512", type: "image/svg+xml" },
     ],
+  },
+  openGraph: {
+    type: "website",
+    siteName: "KSTAY",
+    title: "KSTAY — Best Value Stays in Korea",
+    description: "Book affordable, quality accommodation in Korea.",
+    url: SITE_URL,
+  },
+  twitter: {
+    card: "summary_large_image",
+    title: "KSTAY — Best Value Stays in Korea",
+    description: "Book affordable, quality accommodation in Korea.",
   },
 };
 
